@@ -34,7 +34,7 @@ const Sidebar = () => {
                 </li>
 
                 <li className="listItem">
-                    <a href='#' className = 'menuLink flex'> 
+                    <a href='/appointment' className = 'menuLink flex'> 
                     <IoCalendarOutline  className='icon'/>
                     <span className="smallText">
                         Appointments

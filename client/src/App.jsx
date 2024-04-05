@@ -16,6 +16,8 @@ import InPerson from './Dashboard/Components/Annual/InPerson/InPerson';
 import InPerson2 from './Dashboard/Components/Annual/InPerson/components/inPerson2';
 import InPerson3 from './Dashboard/Components/Annual/InPerson/components/inPerson3';
 import ResultInPerson from './Dashboard/Components/Annual/InPerson/Result/ResultIP';
+import Appointments from './Dashboard/Components/Annual/Appointment/Appointment';
+import ScheduleAppointment from './Dashboard/Components/Annual/Appointment/pages/scheduleAppointment';
 
 import PrivateRoute from './components/PrivateRoute';
 
@@ -44,6 +46,8 @@ export default function App() {
           <Route path="/inPerson2" element={<InPerson2 />} />
           <Route path="/inPerson3" element={<InPerson3 />} />
           <Route path="/result-inperson" element={<ResultInPerson />} />
+          <Route path="/appointment" element={<Appointments />} />
+          <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
         </Route>
       </Routes>
     </BrowserRouter>
