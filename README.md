@@ -3,15 +3,15 @@ npm install
 
 
 cd client
-upv-shu/client/npm install
+upv-shu\client\npm install
 
 cd api
-upv-shu/api/npm install 
+upv-shu\api\npm install 
 
 To build frontend: 
-upv-hsu/client
-/npm run dev 
+upv-hsu\client
+\npm run dev 
 
 To build backend: 
-upv-hsu/api
-/nodemon index.js
+upv-hsu\api
+\nodemon index.js
