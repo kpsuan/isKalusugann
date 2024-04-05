@@ -9,9 +9,9 @@ cd api
 upv-shu/api/npm install 
 
 To build frontend: 
-upv-shu/client
+upv-hsu/client
 npm run dev 
 
 To build backend: 
-upv-shu/api
+upv-hsu/api
 nodemon index.js
