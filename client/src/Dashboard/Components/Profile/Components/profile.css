@@ -1,0 +1,9 @@
+.mainContent {
+  width: 100%;
+  padding: 2rem;
+  overflow: auto;
+}
+.mainContent .bottom {
+  margin-top: 2rem;
+  align-items: flex-start;
+}/*# sourceMappingURL=profile.css.map */

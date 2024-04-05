@@ -1,0 +1,45 @@
+.mainContent {
+    width: 100%;
+    padding: 1rem;
+    //overflow: auto;
+
+
+    .titleOnlinePE {
+        display: flex;
+        color: #31A1AD;
+        height: max-content;
+        flex-direction: column;
+        height: 100vh;
+        padding: 2rem;
+        margin-top: 40px;
+        overflow: auto;
+        background-color: var(--white);
+        gap: 1rem;
+
+        .lighter-font {
+            font-weight: lighter;
+        }
+
+        .text2 {
+            color: var(--black);
+            font-size: 22px;
+            align-items: center;
+            font-weight: 600;
+            justify-content: center;
+        }
+
+        .buttons {
+            gap: 1rem;
+            margin-top: 1rem;
+
+            .btn {
+                box-shadow: none;
+                padding: .8rem 1.5rem;
+                color: #31A1AD;
+                border-radius: 2px solid transparent;
+            }
+        }
+    }
+
+
+}

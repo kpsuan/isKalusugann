@@ -1,0 +1,37 @@
+.mainContent {
+  width: 100%;
+  padding: 1rem;
+}
+.mainContent .titleOnlinePE {
+  display: flex;
+  color: #31A1AD;
+  height: -moz-max-content;
+  height: max-content;
+  flex-direction: column;
+  height: 100vh;
+  padding: 2rem;
+  margin-top: 40px;
+  overflow: auto;
+  background-color: var(--white);
+  gap: 1rem;
+}
+.mainContent .titleOnlinePE .lighter-font {
+  font-weight: lighter;
+}
+.mainContent .titleOnlinePE .text2 {
+  color: var(--black);
+  font-size: 22px;
+  align-items: center;
+  font-weight: 600;
+  justify-content: center;
+}
+.mainContent .titleOnlinePE .buttons {
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.mainContent .titleOnlinePE .buttons .btn {
+  box-shadow: none;
+  padding: 0.8rem 1.5rem;
+  color: #31A1AD;
+  border-radius: 2px solid transparent;
+}/*# sourceMappingURL=onlinePE.css.map */

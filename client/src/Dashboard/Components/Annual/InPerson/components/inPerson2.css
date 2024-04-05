@@ -1,0 +1,86 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=Poppins:wght@600&display=swap");
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+}
+
+:root {
+  --primaryColor: hsl(207, 55%, 56%);
+  --hoverColor: hsl(204, 100%, 85%);
+  --paleGreen: hsl(207, 75%, 89%);
+  --white: hsl(0, 0%, 100%);
+  --black: hsl(0, 0%, 18%);
+  --greyText: hsl(0, 0%, 75%);
+  --bgColor: hsl(113, 11%, 85%);
+  --inputColor: hsl(330, 12%, 97%);
+  --biggestFontSize: 2.5rem;
+  --h1FontSize: 1.5rem;
+  --h2FontSize: 1.25rem;
+  --h3FontSize: 1rem;
+  --normalFontSize: .938rem;
+  --smallFontSize: .813rem;
+  --smallestFontSize: .75rem;
+}
+
+.mainContent {
+  width: 100%;
+  padding: 1rem;
+  margin-left: 24px;
+}
+.mainContent .titleUpload2 {
+  display: flex;
+  color: #31A1AD;
+  margin-top: 550px;
+  flex-direction: column;
+  padding: 2rem;
+  margin-top: 100px;
+  overflow: auto;
+  background-color: var(--white);
+  gap: 1rem;
+}
+.mainContent .titleUpload2 .lighter-font {
+  font-weight: lighter;
+}
+.mainContent .titleUpload2 .text2 {
+  color: var(--black);
+  margin-top: 40px;
+  font-size: 22px;
+  align-items: center;
+  font-weight: 600;
+  justify-content: center;
+}
+.mainContent .titleUpload2 .text4 {
+  margin-top: 20px;
+  width: 780px;
+  color: var(--black);
+  font-size: 22px;
+  align-items: center;
+  font-weight: 300;
+  text-align: center;
+}
+.mainContent .button-sub {
+  display: flex;
+  flex-direction: column;
+}
+.mainContent .button-sub .btn {
+  border: none;
+  width: 250px;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  color: var(--greyText);
+  margin-top: 8px;
+  background: #FFFFFF;
+  border: 1px solid #D5D5D5;
+  border-radius: 4px;
+  /* CTA */
+}
+.mainContent .button-sub .btn .icon {
+  margin-left: 0.5rem;
+}
+.mainContent .button-sub .btn:hover {
+  color: var(--black);
+  background: #BDF9FF;
+}/*# sourceMappingURL=inPerson2.css.map */

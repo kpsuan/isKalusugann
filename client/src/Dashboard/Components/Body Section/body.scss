@@ -1,0 +1,23 @@
+.mainContent {
+    width: 82%;
+    height: 100%;
+    padding: 2rem;
+    overflow: auto;
+
+    .topSection {
+        .headerSection {
+            .title {
+                h1 {
+                    font-size: 1.1em;
+                    font-weight: 400;
+                }
+            }
+        }
+    }
+
+    .bottom {
+        margin-top: 2rem;
+        gap: 2rem;
+        align-items: flex-start;
+    }
+}

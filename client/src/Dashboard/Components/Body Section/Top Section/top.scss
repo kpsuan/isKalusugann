@@ -1,0 +1,225 @@
+:root {
+    --primaryColor2: hsl(185, 100%, 87%);
+    --hoverColor: hsl(204, 100%, 85%);
+    --smallColor: hsl(204, 60%, 52%);
+    --paleGreen: hsl(207, 75%, 89%);
+    --white: hsl(0, 0%, 100%);
+    --black: hsl(0, 0%, 24%);
+    --greyText: hsl(0, 0%, 75%);
+    --bgColor: hsl(113, 11%, 85%);
+    --inputColor: hsl(330, 12%, 97%);
+    --textColor: hsl(180, 1%, 27%);
+    //--inputColor: hsl(0, 0%, 96%);
+
+    --biggestFontSize: 2.5rem;
+    --h1FontSize: 1.5rem;
+    --h2FontSize: 1.25rem;
+    --h3FontSize: 1rem;
+    --normalFontSize: .938rem;
+    --smallFontSize: .813rem;
+    --smallestFontSize: .75rem;
+}
+
+
+.topSection {
+    .headerSection {
+        justify-content: space-between;
+
+        .title {
+            h1 {
+                font-size: var(--h1FontSize);
+                color: var(--black);
+                font-weight: 700;
+            }
+
+            p {
+                font-size: var(--normalFontSize);
+                color: var(--textColor);
+                font-weight: 500;
+            }
+        }
+
+        .searchBar {
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-radius: 5px;
+            gap: 1rem;
+            box-shadow: 0 2px 4px var(--inputColor);
+
+            input {
+                border: none;
+                outline: none;
+                background: none;
+            }
+
+            .icon {
+                color: var(--textColor);
+
+                &:hover {
+                    color: var(--primaryColor2);
+                }
+            }
+        }
+
+        .adminDiv {
+            gap: 1rem;
+
+            .icon {
+                font-size: var(--biggestFontSize);
+                background: var(--white);
+                border-radius: 5px;
+                padding: 5px;
+                box-shadow: 0 2px 4px var(--inputColor);
+                color: var(--textColor);
+            }
+
+            .adminImage {
+                border: 3px solid var(--white);
+                border-radius: 10px;
+                width: 2.5rem;
+                overflow: hidden;
+                box-shadow: 0 2px 4px var(--inputColor);
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 10px;
+                }
+            }
+        }
+    }
+
+    .cardSection {
+        margin-top: 3rem;
+        gap: 1rem;
+
+        .rightCard {
+            position: relative;
+            flex-basis: 70%;
+            height: 250px;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+
+            .videoDiv {
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+
+                video {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+            }
+
+            h1,
+            p,
+            .btn {
+                z-index: 100;
+            }
+
+            h1 {
+                margin-top: 1rem;
+                font-size: var(--h1FontSize);
+                color: var(--white);
+                font-weight: 800;
+            }
+
+            .cont {
+                background: rgba(0, 0, 0, 0.1);
+                z-index: 100;
+
+                p {
+                    padding: 1rem;
+                    color: var(--paleGreen);
+                    font-weight: 500;
+                }
+
+            }
+
+
+            .buttons {
+                gap: 1rem;
+                margin-top: 1rem;
+
+                .btn {
+                    box-shadow: none;
+                    padding: .8rem 1.5rem;
+                    color: var(--textColor);
+                    border-radius: 2px solid transparent;
+                }
+            }
+        }
+
+        .leftCard {
+            flex-basis: 30%;
+
+            .main {
+                position: relative;
+                padding: 1rem;
+                height: 250px;
+                border-radius: 1rem;
+                justify-content: space-between;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    height: 100%;
+                    width: 100%;
+                    background: var(--primaryColor2);
+                    left: 0;
+                    bottom: 0;
+                    border-radius: 1rem;
+
+                }
+
+                .textDiv {
+                    z-index: 100;
+
+                    h1 {
+                        font-size: var(--h1FontSize);
+                        padding-bottom: 1rem;
+                        color: var(--black);
+                    }
+
+                    .flex {
+                        gap: 1.5rem;
+                        font-weight: 500;
+                        color: var(--black);
+
+                        small {
+                            font-size: var(--normalFontSize);
+                            display: block;
+                            color: var(--smallColor);
+                            font-weight: 500;
+                            padding: .5rem 0;
+                        }
+                    }
+
+                    .link {
+                        margin-top: 2rem;
+                        cursor: pointer;
+
+                        &:hover {
+                            color: var(--smallColor);
+
+                            .icon {
+                                transform: translateX(10px);
+                                transition: .3s ease;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

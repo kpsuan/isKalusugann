@@ -1,0 +1,23 @@
+.resultTable {
+  text-align: center;
+ 
+  flex-direction: row;
+  width: 100%;
+  padding-top: 10px;
+}
+
+.head {
+  background-color: #d8f9fd;
+  width: 224px;
+  font-size: 20px;
+}
+
+.data {
+  background-color: #fcffff;
+}
+
+.row-style {
+  background-color: #d7d3d3;
+  padding: 15px;
+  border: solid rgb(218, 218, 218) 0.4px;
+}
