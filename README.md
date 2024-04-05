@@ -10,8 +10,8 @@ upv-shu/api/npm install
 
 To build frontend: 
 upv-hsu/client
-npm run dev 
+/npm run dev 
 
 To build backend: 
 upv-hsu/api
-nodemon index.js
+/nodemon index.js
