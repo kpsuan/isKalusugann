@@ -3,10 +3,10 @@ npm install
 
 
 cd client
-upv-shu\client\npm install
+upv-hsu\client\npm install
 
 cd api
-upv-shu\api\npm install 
+upv-hsu\api\npm install 
 
 To build frontend: 
 upv-hsu\client
