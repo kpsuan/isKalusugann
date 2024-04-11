@@ -18,8 +18,12 @@ import InPerson3 from './Dashboard/Components/Annual/InPerson/components/inPerso
 import ResultInPerson from './Dashboard/Components/Annual/InPerson/Result/ResultIP';
 import Appointments from './Dashboard/Components/Annual/Appointment/Appointment';
 import ScheduleAppointment from './Dashboard/Components/Annual/Appointment/pages/scheduleAppointment';
+import AdminPE from './Dashboard/Components/Admin/AnnualPE/AnnualAdmin'
 
 import PrivateRoute from './components/PrivateRoute';
+import OnlyAdminPrivateRoute from './components/OnlyAdminPrivateRoute';
+import Announcement from './Dashboard/Components/Admin/Announcements/Announcement';
+import CreatePost from './Dashboard/Components/Admin/Announcements/CreatePost';
 
 
 export default function App() {
@@ -35,6 +39,7 @@ export default function App() {
        
         <Route element={<PrivateRoute />}>
           <Route path='/profile' element={<Profile />} />
+          <Route path='/my-Profile' element={<MoreInfo />} />
           <Route path='/moreInfo' element={<MoreInfo />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/annualPE" element={<AnnualPe />} />
@@ -48,7 +53,14 @@ export default function App() {
           <Route path="/result-inperson" element={<ResultInPerson />} />
           <Route path="/appointment" element={<Appointments />} />
           <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
+          <Route path="/announcement" element={<Announcement />} />
         </Route>
+
+        <Route element={<OnlyAdminPrivateRoute />}>
+          <Route path="/adminPE" element={<AdminPE />} />
+          <Route path="/create-post" element={<CreatePost />} />
+        </Route>
+       
       </Routes>
     </BrowserRouter>
   );

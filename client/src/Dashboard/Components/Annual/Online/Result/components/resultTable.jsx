@@ -5,14 +5,9 @@ import TableRow from '@mui/material/TableRow';
 import { makeStyles } from '@mui/styles';
 import './resultT.css';
 
-const useStyles = makeStyles({
-  table: {
-    width: '95%',
-    // Add any other custom styles here
-  },
-});
+const ResultTable = () => { // Changed to an arrow function component
+ 
 
-function ResultTable() { // Renamed to start with an uppercase letter
   const classes = useStyles();
 
   return (
@@ -33,4 +28,4 @@ function ResultTable() { // Renamed to start with an uppercase letter
   );
 }
 
-export default ResultTable; // Renamed to start with an uppercase letter
+export default ResultTable;

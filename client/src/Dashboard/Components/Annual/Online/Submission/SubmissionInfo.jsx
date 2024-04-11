@@ -24,17 +24,17 @@ const SubmissionInfo = () => {
     const headerTitle = "Annual Physical Examination";
 
     return (
-        <div className="dashboard flex">
-           <div className="dashboardContainer flex">
+        <div className="dashboard my-flex">
+           <div className="dashboardContainer my-flex">
             <Sidebar/>
                 <div className='mainContent'>
                     <Top title={headerTitle}/> 
-                        <div className="titleUpload2 flex">
+                        <div className="titleUpload2 my-flex">
                             <h4><b>Preenlistment Period </b> <span class="lighter-font">(January 12-20, 2024)</span></h4>
                                 <h2> <div className="text2">You are now pre-enlisted. </div></h2>
                                 <h2> <div className="text3">Your documents will be reviewed and verified by the HSU soon.  </div></h2>
                         </div>
-                    <div className="button-sub flex">
+                    <div className="button-sub my-flex">
                             <button className='btn'  onClick={handleButtonClick}>View Status</button>
                             <button className='btn'  onClick={handleButtonClick}>Go Back to Dashboard</button>
                     </div>

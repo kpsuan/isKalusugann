@@ -9,10 +9,14 @@ import { CiMedicalCase } from "react-icons/ci";
 import { IoDocumentsOutline } from "react-icons/io5";
 import { BsQuestionCircle } from "react-icons/bs";
 import { CgProfile } from "react-icons/cg";
+import { useEffect, useRef, useState } from 'react';
 
-
+import { useSelector } from 'react-redux';
 
 const Sidebar = () => {
+
+    const { currentUser } = useSelector((state) => state.user);
+
   return (
     <div className='sideBar grid'>
         <div className="logoDiv flex">
@@ -52,15 +56,46 @@ const Sidebar = () => {
                 </li>
 
                 <li className="listItem">
-                    <a href='/annualPE' className = 'menuLink flex'> 
-                    <CiMedicalCase   className='icon'/>
-                    <span className="smallText">
-                        Annual Physical Examinations
-                    </span>
-                    </a>
+                    {currentUser.isAdmin && (
+                        <a href='/adminPE' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                                Manage Annual PE
+                            </span>
+                        </a>
+                    )}
+                    {!currentUser.isAdmin && (
+                        <a href='/annualPE' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                                Annual Physical Examinations
+                            </span>
+                        </a>
+                    )}
                 </li>
+
                 <li className="listItem">
-                    <a href='/myProfile' className = 'menuLink flex'> 
+                    {currentUser.isAdmin && (
+                        <a href='/announcement' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                                Manage Announcements 
+                            </span>
+                        </a>
+                    )}
+                    {!currentUser.isAdmin && (
+                        <a href='/announcement' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                                Announcements
+                            </span>
+                        </a>
+                    )}
+                </li>
+
+                
+                <li className="listItem">
+                    <a href='/my-Profile' className = 'menuLink flex'> 
                     <CgProfile   className='icon'/>
                     <span className="smallText">
                         My Profile
