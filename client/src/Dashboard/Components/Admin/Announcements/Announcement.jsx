@@ -14,7 +14,7 @@ const Announcement = () => {
           <div className="dashboardContainer my-flex">
             <Sidebar />
             <div className="mainContent">
-              <Top title={headerTitle} />
+              
               {
                 currentUser.isAdmin && (
                     
@@ -32,13 +32,14 @@ const Announcement = () => {
                     </Link>
                 )
               }
-
+            
+            
             <div className="cardSection flex pt-6">
                 <div> </div>
                 <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
                 
                     <div className="text-2xl font-light mb-4">Announcement</div>
-                    <p className="font-light my-9">Here are the Announcements.</p>
+                    <p className="font-light my-9">You can manage announcements here</p>
                     <div>
                         <p className="text-gray-700 my-10">
                             <DashPost />
