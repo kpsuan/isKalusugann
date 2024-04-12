@@ -25,6 +25,7 @@ import PrivateRoute from './components/PrivateRoute';
 import OnlyAdminPrivateRoute from './components/OnlyAdminPrivateRoute';
 import Announcement from './Dashboard/Components/Admin/Announcements/Announcement';
 import CreatePost from './Dashboard/Components/Admin/Announcements/CreatePost';
+import UpdatePost from './Dashboard/Components/Admin/Announcements/UpdatePost';
 
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
         <Route element={<OnlyAdminPrivateRoute />}>
           <Route path="/adminPE" element={<AdminPE />} />
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/update-post/:postId" element={<UpdatePost />} />
         </Route>
        
       </Routes>

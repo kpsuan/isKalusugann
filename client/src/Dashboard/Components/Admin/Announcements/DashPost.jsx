@@ -7,6 +7,7 @@ import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import {Link} from 'react-router-dom'
 import { useEffect, useState  } from "react"
 import { useSelector } from 'react-redux';
+import { set } from 'mongoose';
 
 const DashPost = () => {
   const {currentUser} = useSelector((state) => state.user);
@@ -70,7 +71,7 @@ const DashPost = () => {
         } else{
           setUserPosts((prev) => 
           prev.filter((post) => post._id !== postIdToDelete));
-        }
+        };
       } catch (error) {
         console.log(error.message);
       }
