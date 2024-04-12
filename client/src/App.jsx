@@ -19,6 +19,7 @@ import ResultInPerson from './Dashboard/Components/Annual/InPerson/Result/Result
 import Appointments from './Dashboard/Components/Annual/Appointment/Appointment';
 import ScheduleAppointment from './Dashboard/Components/Annual/Appointment/pages/scheduleAppointment';
 import AdminPE from './Dashboard/Components/Admin/AnnualPE/AnnualAdmin'
+import DashPost from './Dashboard/Components/Admin/Announcements/DashPost';
 
 import PrivateRoute from './components/PrivateRoute';
 import OnlyAdminPrivateRoute from './components/OnlyAdminPrivateRoute';
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/appointment" element={<Appointments />} />
           <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
           <Route path="/announcement" element={<Announcement />} />
+          <Route path="/dash-post" element={<DashPost />} />
         </Route>
 
         <Route element={<OnlyAdminPrivateRoute />}>
