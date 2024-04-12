@@ -69,3 +69,17 @@ export const getposts = async (req, res, next) => {
         next(error);
     }
 };
+
+export const deletepost = async (req, res, next) => {
+    if(!req.user.isAdmin || req.user.id !== req.params.id){
+    return next(errorHandler(403, 'Only admins can delete posts!'));
+    }
+
+    try{
+        await Announcement.findByIdAndDelete(req.params.postId);
+        res.status(200).json('Post has been deleted...');
+    }
+    catch(error){
+        next(error);
+    }
+}
