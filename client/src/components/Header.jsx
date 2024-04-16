@@ -25,7 +25,7 @@ export default function Header() {
           <img className='mx-auto h-5 w-auto' src={logo} alt="logo2" />
         </Link>
         <div>
-          <p><b>Current Time: {currentTime}</b></p>
+          <p className='font-light'>Current Time: {currentTime}</p>
         </div>
         <ul className='flex gap-4'>
           <Link to='/'>
@@ -33,6 +33,9 @@ export default function Header() {
           </Link>
           <Link to='/about'>
             <li>About</li>
+          </Link>
+          <Link to='/dashboard'>
+            <li>Dashboard</li>
           </Link>
           <Link to='/profile'>
             {currentUser ? (

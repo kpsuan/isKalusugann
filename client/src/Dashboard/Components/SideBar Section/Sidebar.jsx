@@ -47,7 +47,7 @@ const Sidebar = () => {
                 </li>
 
                 <li className="listItem">
-                    <a href='#' className = 'menuLink flex'> 
+                    <a href='/documents' className = 'menuLink flex'> 
                     <IoDocumentsOutline  className='icon'/>
                     <span className="smallText">
                         Documents

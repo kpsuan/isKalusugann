@@ -32,7 +32,7 @@ const AnnualAdmin = () => {
     
                 <div className="choicePE">
                     <div className="choice1">
-                        <a href="/manageOnline">
+                        <a href="/manage-online">
                         <span class="label-PE">Online Physical Examination
                             <div className="small-desc">View submitted documents</div>
                         </span>

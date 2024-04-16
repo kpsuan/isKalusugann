@@ -26,7 +26,13 @@ import OnlyAdminPrivateRoute from './components/OnlyAdminPrivateRoute';
 import Announcement from './Dashboard/Components/Admin/Announcements/Announcement';
 import CreatePost from './Dashboard/Components/Admin/Announcements/CreatePost';
 import UpdatePost from './Dashboard/Components/Admin/Announcements/UpdatePost';
-
+import UsersOnline from './Dashboard/Components/Admin/AnnualPE/UsersOnline';
+import Online from './Dashboard/Components/Admin/AnnualPE/Online';
+import UpdateStatus from './Dashboard/Components/Admin/AnnualPE/UpdateStatus';
+import Certificate from './Dashboard/Components/Admin/AnnualPE/Certificate';
+import UserInPerson from './Dashboard/Components/Admin/AnnualPE/UserInPerson';
+import InPersonRes from './Dashboard/Components/Admin/AnnualPE/InPerson';
+import Documents from './Dashboard/Components/Admin/Documents/Documents';
 
 export default function App() {
   return (
@@ -63,6 +69,14 @@ export default function App() {
           <Route path="/adminPE" element={<AdminPE />} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/update-post/:postId" element={<UpdatePost />} />
+          <Route path="/manage-online" element={<Online />} />
+          <Route path="/manageInPerson" element={<InPersonRes />} />
+          <Route path="/show-inPerson" element={<UserInPerson />} />
+          <Route path="/show-online" element={<UsersOnline />} />
+          <Route path="/user-status/:userId" element={<UpdateStatus />} />
+          <Route path="/certificate/:userId" element={<Certificate />} />
+          <Route path="/documents" element={<Documents />} />
+
         </Route>
        
       </Routes>

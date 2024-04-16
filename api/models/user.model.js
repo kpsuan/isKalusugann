@@ -90,6 +90,23 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      default: 'NO ACTION',
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    comment : {
+      type: String,
+      default: ' ',
+    },
+    medcert:{
+      type: String,
+      default: ' ',
+    }
   },
   { timestamps: true }
 );

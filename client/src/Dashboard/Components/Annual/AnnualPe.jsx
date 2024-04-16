@@ -20,7 +20,7 @@ import {Link, useNavigate} from 'react-router-dom'
 
 const MainPE = () => {
   const [mode, setMode] = useState(""); // State to track user's choice
-  const navigateTo = useNavigate()
+  const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const fileRef = useRef(null);
@@ -30,6 +30,12 @@ const MainPE = () => {
 
   const { currentUser, loading, error } = useSelector((state) => state.user);
 
+  useEffect(() => {
+    // Check if the user has already submitted their option
+    if (currentUser && currentUser.annualPE) {
+      navigate('/submissionInfo'); // Redirect to the status page if the option is already submitted
+    }
+  }, [currentUser]);
 
   const handleModeSelection = (selectedMode) => {
     setMode(selectedMode);
