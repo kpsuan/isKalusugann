@@ -199,6 +199,7 @@ const OnlineSubmission = () => {
                                                         ref={fileRef1}
                                                         hidden
                                                         accept='application/pdf'
+                                                        
                                                         onChange={(e) => {
                                                             const selectedFile = e.target.files[0];
                                                             setFileName1(selectedFile.name);
@@ -214,14 +215,16 @@ const OnlineSubmission = () => {
                                                                 className='h-11 w-full self-center cursor-pointer object-cover mt-2'
                                                                 onClick={() => fileRef1.current.click()}
                                                             />
-                                                            
+                                                        
                                                         </div>
+                                                       
                                                     </div>
                                                     
                                                 </div>
                                                 <div className="flex flex-col items-center">
+                                                  
                                                         <p>{fileName1 && `${fileName1} -`} </p>
-
+                                                        
                                                         <p className='text-sm self-center'>
                                                         {imageError1 ? (
                                                             <span className='text-red-700'>

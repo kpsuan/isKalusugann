@@ -147,22 +147,17 @@ const handleChange = (e) => {
   };
   return (
     <div className='p-3 max-w-lg mx-auto'>
-      <h1 className='text-3xl font-semibold text-center my-7'>Complete your Profile</h1>
+      <h1 className='text-3xl font-semibold text-center my-7'>User Profile</h1>
       <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
-{/*
+
         <input
           type='file'
           ref={fileRef}
           hidden
           accept='image/*'
-          onChange={(e) => setImge(e.target.files[0])}
+          onChange={(e) => setImage(e.target.files[0])}
         />
-        {/* 
-      firebase storage rules:  
-      allow read;
-      allow write: if
-      request.resource.size < 2 * 1024 * 1024 &&
-      request.resource.contentType.matches('image/.*') 
+        
         <img
           src={formData.profilePicture || currentUser.profilePicture}
           alt='profile'
@@ -182,26 +177,28 @@ const handleChange = (e) => {
             ''
           )}
         </p>
-    */}
+
     <h2 className='text-1xl font-semibold my-2 text-gray-500'>Personal Info</h2>
+          
         <input
           type='text'
           id='firstName'
-          placeholder='FirstName'
+          placeholder={currentUser.firstName ? currentUser.firstName : 'First Name'}
           className='bg-slate-100 rounded-lg p-3'
           onChange={handleChange}
         />
         <input
           type='text'
           id='middleName'
-          placeholder='Middle Name'
+          placeholder={currentUser.middleName ? currentUser.middleName : 'Middle Name'}
           className='bg-slate-100 rounded-lg p-3'
+          
           onChange={handleChange}
         />
         <input
           type='text'
           id='lastName'
-          placeholder='Last Name'
+          placeholder={currentUser.lastName? currentUser.lastName : 'Last Name'}
           className='bg-slate-100 rounded-lg p-3'
           onChange={handleChange}
         />
@@ -209,7 +206,7 @@ const handleChange = (e) => {
         <input
           type='date'
           id='dateOfBirth'
-          placeholder='Birthday'
+          placeholder={currentUser.dateOfBirth ? currentUser.dateOfBirth : 'Birthday'}
           className='bg-slate-100 rounded-lg p-3'
           onChange={handleChange}
         />
@@ -221,6 +218,7 @@ const handleChange = (e) => {
         <div className="flex items-center space-x-4 mb-4">
       
             <label className="inline-flex items-center">
+              
                 <input
                 type='radio'
                 id='male'
@@ -332,20 +330,20 @@ const handleChange = (e) => {
                 className="block h-10 w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="">Select Degree Program</option>
-                <option value="BS Biology">BS Biology</option>
-                <option value="BS Public Health">BS Public Health</option>
-                <option value="BA Communication and Media Studies">BA Communication and Media Studies</option>
-                <option value="BA Literature">BA Literature</option>
-                <option value="BA History"> BA History</option>
-                <option value="BA Community Development">BA Community Development</option>
-                <option value="BS Economics">BS Economics</option>
-                <option value="BA Political Science">BA Political Science</option>
-                <option value="BA Psychology">BA Psychology</option>
-                <option value="BA Sociology">BA Sociology</option>
-                <option value="BS Applied Mathematics">BS Applied Mathematics</option>
-                <option value="BS Chemistry">BS Chemistry</option>
-                <option value="BS Computer Science">BS Computer Science</option>
-                <option value="BS Statistics">BS Statistics</option>
+                <option value="Biology">BS Biology</option>
+                <option value="Public Health">BS Public Health</option>
+                <option value="Communication and Media Studies">BA Communication and Media Studies</option>
+                <option value="Literature">BA Literature</option>
+                <option value="History"> BA History</option>
+                <option value="Community Development">BA Community Development</option>
+                <option value="Economics">BS Economics</option>
+                <option value="Political Science">BA Political Science</option>
+                <option value="Psychology">BA Psychology</option>
+                <option value="Sociology">BA Sociology</option>
+                <option value="Applied Mathematics">BS Applied Mathematics</option>
+                <option value="Chemistry">BS Chemistry</option>
+                <option value="Computer Science">BS Computer Science</option>
+                <option value="Statistics">BS Statistics</option>
               </select>
             </div>
           )}
@@ -379,9 +377,27 @@ const handleChange = (e) => {
                 className="block h-10 w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="">Select Degree Program</option>
-                <option value="BS Accountancy">BS Accountancy</option>
-                <option value="BS Business Administration">BS Business Administration</option>
-                <option value="BS Management">BS Management</option>
+                <option value="Accountancy">BS Accountancy</option>
+                <option value="Business Administration">BS Business Administration</option>
+                <option value="Management">BS Management</option>
+              </select>
+            </div>
+          )}
+
+          {formData.college === 'SOTECH' && (
+            <div className="mt-1">
+              <label className="block text-sm font-medium text-gray-700 pb-2">
+                Degree Program
+              </label>
+              <select
+                id="degreeProgram"
+                onChange={handleChange}
+                value={formData.degreeProgram}
+                className="block h-10 w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select Degree Program</option>
+                <option value="Chemical Engineering">BS Chemical Engineering</option>
+                <option value="Food Technology">BS Food Technology</option>
               </select>
             </div>
           )}

@@ -47,12 +47,22 @@ const Sidebar = () => {
                 </li>
 
                 <li className="listItem">
-                    <a href='/documents' className = 'menuLink flex'> 
-                    <IoDocumentsOutline  className='icon'/>
-                    <span className="smallText">
-                        Documents
-                    </span>
-                    </a>
+                {currentUser.isAdmin && (
+                        <a href='/documents' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                                Manage Documents
+                            </span>
+                        </a>
+                    )}
+                    {!currentUser.isAdmin && (
+                        <a href='/docsuser' className='menuLink flex'>
+                            <CiMedicalCase className='icon' />
+                            <span className="smallText">
+                            Documents
+                            </span>
+                        </a>
+                    )}
                 </li>
 
                 <li className="listItem">

@@ -1,153 +1,116 @@
-// Import necessary modules and components
-import React, { useState, useEffect } from "react";
 import Sidebar from "../../SideBar Section/Sidebar";
-import { useSelector } from 'react-redux';
-import { Select, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
+import Top from "../../Profile/Components/Header";
 import "../../Annual/annual.css";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { useDispatch } from 'react-redux';
-import { useParams } from "react-router-dom";
-import {Link} from 'react-router-dom'
-import {app} from '../../../../firebase';
-import {CircularProgressbar} from "react-circular-progressbar";
-
-import "react-circular-progressbar/dist/styles.css";
-import { useNavigate } from 'react-router-dom';
-
 
 import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
+    getDownloadURL,
+    getStorage,
+    ref,
+    uploadBytesResumable,
 } from 'firebase/storage';
 
-const DocsUploader = () => {
-    const dispatch = useDispatch();
+import {app} from '../../../../firebase';
+import { useSelector } from 'react-redux';
+import { Select, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
+import { Link } from 'react-router-dom';
+import { useState } from "react";
+import {CircularProgressbar} from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+import { useNavigate } from "react-router-dom";
 
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({});
-    const [publishError, setPublishError] = useState(null);
-    const [updateSuccess, setUpdateSuccess] = useState(false);
+
+const UploadDocs = () => {
     const [file, setFile] = useState([null]);
     const [imageUploadProgress, setImageUploadProgress] = useState(null);
     const [imageUploadError, setImageUploadError] = useState(null);
+    const [formData, setFormData] = useState({});
+    const [publishError, setPublishError] = useState(null);
+    const navigate = useNavigate();
 
-
-  // Get the user ID from URL parameters
-    const { userId } = useParams();
-
-    // Define state variables to store user information
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-  // useEffect hook to fetch user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`/api/user/${userId}`);
-        const userData = await res.json();
-        if (res.ok) {
-          setUser(userData);
-        } else {
-          // Handle error if user not found or fetch fails
-          console.error("Error fetching user data:", userData.message);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error.message);
-      } finally {
-        // Set loading state to false after fetching user data
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, [userId]);
-
-  // Render loading state while fetching user data
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  
-  const handleUploadImage = async () => {
-    try {
-        if(!file){
-            setImageUploadError('Please select an image to upload');
-            return;
-        }
-        const storage = getStorage(app);
-        const fileName = new Date().getTime() + file.name;
-        const storageRef = ref(storage, fileName);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-                const progress = 
-                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setImageUploadProgress(progress.toFixed(0));
-            },
-            (error) => {
-                setImageUploadError('Image upload failed');
-                setImageUploadProgress(null);
-            },
-
-            () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    setImageUploadError(null);
-                    setImageUploadProgress(null);
-                    setFormData({ ...formData, medcert: downloadURL });
-                });
+    const handleUploadImage = async () => {
+        try {
+            if(!file){
+                setImageUploadError('Please select a file to upload');
+                return;
             }
-        );
+            const storage = getStorage(app);
+            const fileName = file.name;
+            const storageRef = ref(storage, fileName);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            
+            uploadTask.on(
+                'state_changed',
+                (snapshot) => {
+                    const progress = 
+                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setImageUploadProgress(progress.toFixed(0));
+                },
+                (error) => {
+                    setImageUploadError('File upload failed');
+                    setImageUploadProgress(null);
+                },
 
-    } catch (error) {
-        setImageUploadError('Image upload failed');
-        setImageUploadProgress(null);
-        console.log(error);
-}
-};
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        setImageUploadError(null);
+                        setImageUploadProgress(null);
+                        setFormData({ ...formData, title: fileName, content: downloadURL });
+                    });
+                }
+            );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`/api/user/update/${user._id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (data.success === false) {
-        // Handle failure case here
-        console.error('Failed to update user:', data.error);
-        return;
-      }
-      // Handle success case here
-      console.log('User updated successfully:', data);
-      setUpdateSuccess(true);
-      navigate('/manage-online');
-    } catch (error) {
-      // Handle error case here
-      console.error('Error updating user:', error.message);
+        } catch (error) {
+            setImageUploadError('File upload failed');
+            setImageUploadProgress(null);
+            console.log(error);
     }
-  };
-  
-  // Render user profile if user data is available
-  return (
-    <div className="dashboard my-flex">
-          <div className="dashboardContainer my-flex">
-            <Sidebar />
-            <div className="mainContent">
-            <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-    
+    };
 
-        <div className="flex flex-col gap-2">
-            <p className="text-start py-3">Attach Generated Medcert: </p> 
-            <div className="flex gap-4 items-center justify-between border-4
-                        border-teal-500 border-dotted p-3 w-3/4">
-                            <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/docs/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            if(!res.ok){
+                setPublishError(data.message);
+                return
+            }
+      
+            if(res.ok){
+                setPublishError(null);
+            }
+        }
+        catch (error) {
+            setPublishError('Something went wrong.');
+        }
+    };
+
+    return (
+            <div className="w-3/4 mb-10"> 
+                <h1 className="text-left text-1xl my-7 font-semibold"></h1>
+                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                    <div className="flex flex-col gap-4 sm:flex-row justify-between">
+                        
+                      Select category to this document: 
+                        <Select 
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}> 
+                            <option value="uncategorized">Select a category</option>
+                            <option value="general">General</option>
+                            <option value="general">Medical</option>
+                            <option value="general">Permits</option>
+                        </Select>
+                    </div>
+                    <div className="flex gap-4 items-center justify-between border-4
+                        border-teal-500 border-dotted p-3">
+                            <FileInput type='file' accept='/*' onChange={(e) => setFile(e.target.files[0])} />
                             <Button 
                                 type ='button' 
                                 size='sm' 
@@ -161,22 +124,23 @@ const DocsUploader = () => {
                                             <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} 
                                             />
                                         </div>
-                                    ) : ('Upload image'
+                                    ) : ('Upload File'
                                     )}
                                  </Button>
                     </div>
 
                     {imageUploadError && <Alert color="failure">{imageUploadError}</Alert>}
-                    {formData.medcert && (
-                        <img src={formData.medcert} alt="upload" className="w-full h-full object-fit"/>
+                    {formData.content && (
+                        <p className="w-full text-sm mb-1 border border-green-500  px-2 py-2 inline-block">{formData.title}</p>
+                        
                     )}
 
-        </div>
-    </div>
-    </div>
-    </div>
-    </div>
-  );
-};
-
-export default DocsUploader;
+                
+                    <Button type="submit" className="text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
+                    Submit </Button>
+                    {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}
+                </form>
+            </div>
+    );
+}
+export default UploadDocs

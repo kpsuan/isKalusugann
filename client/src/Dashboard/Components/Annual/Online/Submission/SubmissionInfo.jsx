@@ -10,16 +10,25 @@ import { Link } from 'react-router-dom';
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { IoIosStarOutline } from "react-icons/io";
 import { IoIosLink } from "react-icons/io";
+import { useNavigate } from 'react-router-dom';
 
 
 
 //import '../../onlinePE.scss'
 
 const SubmissionInfo = () => {
+    const navigate = useNavigate();
+
     const handleButtonClick = () => {
         // Add your desired functionality here
         // For example, you can navigate to a different page
-        window.location.href = "/result";
+        navigate('/result');
+    };
+
+    const handleButtonClick2 = () => {
+        // Add your desired functionality here
+        // For example, you can navigate to a different page
+        navigate('/onlineSub');
     };
     const headerTitle = "Annual Physical Examination";
 
@@ -36,7 +45,7 @@ const SubmissionInfo = () => {
                         </div>
                     <div className="button-sub my-flex">
                             <button className='btn'  onClick={handleButtonClick}>View Status</button>
-                            <button className='btn'  onClick={handleButtonClick}>Go Back to Dashboard</button>
+                            <button className='btn'  onClick={handleButtonClick2}>Modify Submission</button>
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { Alert, Button, Modal, ModalBody, TextInput } from 'flowbite-react';
 import { Link } from 'react-router-dom';
 import DashPost from "./DashPost";
+import DashAnnouncement from "../../AnnouncementUser/DashAnnouncement";
 
 const Announcement = () => {
     const { currentUser } = useSelector((state) => state.user);
@@ -38,11 +39,11 @@ const Announcement = () => {
                 <div> </div>
                 <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
                 
-                    <div className="text-2xl font-light mb-4">Announcement</div>
-                    <p className="font-light my-9">You can manage announcements here</p>
+                    <div className="text-2xl font-semibold mb-4">Announcement</div>
+                    <p className="font-light my-9">Lorem ipsum dolor sit amet, consectetur</p>
                     <div>
                         <p className="text-gray-700 my-10">
-                            <DashPost />
+                        {currentUser.isAdmin ? <DashPost /> : <DashAnnouncement />}
                         </p>
                     </div>
                 </div>

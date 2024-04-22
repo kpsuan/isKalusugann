@@ -11,10 +11,10 @@ export const Profile2 = ({ title }) => {
   const { currentUser } = useSelector((state) => state.user);
     return (
       <div className='topSection'>
-      <div className="headerSection flex">
-        <div className="title">
-          <h1><b>Hi {currentUser.firstName}!</b></h1>
-          <p>What would you like to do today?</p>
+      <div className="headerSection flex h-7">
+        <div className="title text-center p-3">
+          <h1>{title}</h1>
+          
         </div>
 
         <div className="searchBar flex">
@@ -22,10 +22,10 @@ export const Profile2 = ({ title }) => {
           <BiSearchAlt className='icon'/>
         </div>
 
-        <div className="adminDiv flex">
+        <div className="adminDiv flex ">
           
           <IoIosNotificationsOutline className='icon'/>
-          <div className="adminImage">
+          <div className="">
           <Link to='/profile'>
             {currentUser ? (
               <img src={currentUser.profilePicture} alt='profile' className='h-7 w-7 rounded-full object-cover' />

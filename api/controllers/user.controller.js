@@ -158,9 +158,14 @@ export const getInperson = async (req, res, next) => {
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
 
     const users = await User.find({ annualPE: 'InPerson' })
-      .sort({ yearLevel: sortDirection, college: sortDirection, degreeProgram: sortDirection, lastName: sortDirection })
-      .skip(startIndex)
-      .limit(limit);
+    .sort({
+    yearLevel: sortDirection,
+    college: 1, // Ascending alphabetical order
+    degreeProgram: 1, // Ascending alphabetical order
+    lastName: 1 // Ascending alphabetical order
+  })
+    .skip(startIndex)
+    .limit(limit);
 
       const usersWithoutPassword = users.map((user) => {
         const { password, ...rest } = user._doc;
@@ -192,3 +197,38 @@ export const getInperson = async (req, res, next) => {
   }
 }
 
+{/* 
+export const assignDatesExcludingWeekends = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.body; 
+
+    // Calculate the number of days between startDate and endDate
+    const oneDay = 24 * 60 * 60 * 1000; // hours * minutes * seconds * milliseconds
+    const days = Math.round(Math.abs((new Date(startDate) - new Date(endDate)) / oneDay));
+
+    let currentDate = new Date(startDate);
+    const assignedDates = [];
+
+    // Loop through each day in the time span
+    for (let i = 0; i <= days; i++) {
+      // Skip weekends (Saturday and Sunday)
+      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+        assignedDates.push(currentDate.toISOString()); // Add the current date to the array of assigned dates
+      }
+      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+    }
+
+    // Assign the calculated dates to the users
+    const userIds = req.body.userIds; // Assuming user IDs are provided in the request body
+    for (const userId of userIds) {
+      // Assign each date from assignedDates array to users
+      const assignedDate = assignedDates.shift(); // Take the first date from the array
+      await User.findByIdAndUpdate(userId, { schedule: new Date(assignedDate) });
+    }
+
+    res.status(200).json({ message: 'Assigned dates to users successfully' });
+  } catch (error) {
+    next(error);
+  }
+}
+*/}

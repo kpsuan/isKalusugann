@@ -138,8 +138,8 @@ const UpdatePost = () => {
                         value={formData.category}> 
                             <option value="uncategorized">Select a category</option>
                             <option value="general">General</option>
-                            <option value="general">Scheduling</option>
-                            <option value="general">Emergency</option>
+                            <option value="scheduling">Scheduling</option>
+                            <option value="emergency">Emergency</option>
                         </Select>
                     </div>
                     <div className="flex gap-4 items-center justify-between border-4

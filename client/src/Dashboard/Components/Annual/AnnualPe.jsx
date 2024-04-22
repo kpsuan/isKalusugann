@@ -32,8 +32,8 @@ const MainPE = () => {
 
   useEffect(() => {
     // Check if the user has already submitted their option
-    if (currentUser && currentUser.annualPE) {
-      navigate('/submissionInfo'); // Redirect to the status page if the option is already submitted
+    if (currentUser && (currentUser.peForm && currentUser.labResults && currentUser.requestPE) || currentUser.annualPE === 'InPerson') {
+      navigate('/submissionInfo'); // Redirect to the status page if all options are already submitted
     }
   }, [currentUser]);
 
@@ -63,9 +63,9 @@ const MainPE = () => {
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
       if (mode === "Online") {
-        navigateTo('/onlinePE');
+        navigate('/onlinePE');
       } else if (mode === "InPerson") {
-        navigateTo('/inPersonPE');
+        navigate('/inPersonPE');
       }
     } catch (error) {
       dispatch(updateUserFailure(error));

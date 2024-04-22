@@ -161,33 +161,68 @@ const UserProfile = () => {
                 </div>
             <div className="px-2 py-10">
             <div className="mb-4 b">
-                <p className="text-lg text-teal-500 ">Annual Physical Examination Form</p>
-                <div className="flex items-center py-2">
-                    <p className="w-1/2 text-sm mb-1 border border-green-500  px-2 py-2 inline-block">{user.lastName}_PE.pdf</p>
-                    <Link className="ml-2 px-3 py-1 bg-green-500 text-white " to={user.peForm} target="_blank" rel="noopener noreferrer" >
-                        View
+              <p className="text-lg text-teal-500">Annual Physical Examination Form</p>
+              <div className="flex items-center py-2">
+                  {user.peForm ? (
+                      <>
+                          <p className="w-1/2 text-sm mb-1 border border-green-500 px-2 py-2 inline-block">{user.lastName}_PE.pdf</p>
+                          <Link className="ml-2 px-3 py-1 bg-green-500 text-white" to={user.peForm} target="_blank" rel="noopener noreferrer">
+                              View
+                          </Link>
+                      </>
+                  ) : (
+                    <div className="w-3/4 ">
+                    <p className="w-1/2 text-sm mb-1 border border-red-500 px-2 py-2 inline-block text-red-500">Empty</p>
+                    <Link className="ml-2 px-3 py-2 bg-green-500 text-white" to={''} target="_blank" rel="noopener noreferrer">
+                        Add
                     </Link>
                 </div>
-            </div>
+                  )}
+              </div>
+          </div>
            
-            <div className="mb-4 ">
-                <p className="text-lg text-teal-500 ">Compiled Laboratory Results</p>
-                <div className="flex items-center py-2">
-                    <p className="w-1/2 text-sm mb-1 border border-green-500  px-2 py-2 inline-block">{user.lastName}_labResults.pdf</p>
-                    <Link className="ml-2 px-3 py-1 bg-green-500 text-white " to={user.labResults} target="_blank" rel="noopener noreferrer" >
-                        View
+          <div className="mb-4 b">
+              <p className="text-lg text-teal-500">Annual Physical Examination Form</p>
+              <div className="flex items-center py-2">
+                  {user.labResults ? (
+                      <>
+                          <p className="w-1/2 text-sm mb-1 border border-green-500 px-2 py-2 inline-block">{user.lastName}_labResults.pdf</p>
+                          <Link className="ml-2 px-3 py-1 bg-green-500 text-white" to={user.labResults} target="_blank" rel="noopener noreferrer">
+                              View
+                          </Link>
+                      </>
+                  ) : (
+                    <div className="w-3/4 ">
+                    <p className="w-1/2 text-sm mb-1 border border-red-500 px-2 py-2 inline-block text-red-500">Empty</p>
+                    <Link className="ml-2 px-3 py-2 bg-green-500 text-white" to={''} target="_blank" rel="noopener noreferrer">
+                        Add
                     </Link>
                 </div>
-            </div>
-            <div className="mb-4">
-                <p className="text-lg text-teal-500">Request for PE form</p>
-                <div className="flex items-center py-2">
-                    <p className="w-1/2 text-sm mb-1 border border-green-500  px-2 py-2 inline-block">{user.lastName}_requestforPE.pdf</p>
-                    <Link className="ml-2 px-3 py-1 bg-green-500 text-white" to={user.requestPE} target="_blank" rel="noopener noreferrer" >
-                        View
-                    </Link>
-                </div>
-            </div>
+                  )}
+              </div>
+          </div>
+
+          <div className="mb-4 b">
+              <p className="text-lg text-teal-500">Annual Physical Examination Form</p>
+              <div className="flex items-center py-2">
+                  {user.requestPE ? (
+                      <>
+                          <p className="w-1/2 text-sm mb-1 border border-green-500 px-2 py-2 inline-block">{user.lastName}_requestPE.pdf</p>
+                          <Link className="ml-2 px-3 py-1 bg-green-500 text-white" to={user.requestPE} target="_blank" rel="noopener noreferrer">
+                              View
+                          </Link>
+                      </>
+                  ) : (
+                      <div className="w-3/4 ">
+                          <p className="w-1/2 text-sm mb-1 border border-red-500 px-2 py-2 inline-block text-red-500">Empty</p>
+                          <Link className="ml-2 px-3 py-2 bg-green-500 text-white" to={''} target="_blank" rel="noopener noreferrer">
+                              Add
+                          </Link>
+                      </div>
+                  )}
+              </div>
+          </div>
+            
         </div>
 
          <form className="flex flex-col gap-2" onSubmit={handleSubmit}>  

@@ -65,31 +65,22 @@ const UsersOnline = () => {
         <>
           <Table hoverable className='shadow-md'>
             <Table.Head className="text-left px-3">
-              <Table.HeadCell>User image </Table.HeadCell>
               <Table.HeadCell>Name </Table.HeadCell>
               <Table.HeadCell>Sex </Table.HeadCell>
               <Table.HeadCell>Year Level </Table.HeadCell>
               <Table.HeadCell>Degree Program </Table.HeadCell>
               <Table.HeadCell>College </Table.HeadCell>
-              <Table.HeadCell>Annual PE Form </Table.HeadCell>
-              <Table.HeadCell>Lab Results </Table.HeadCell>
-              <Table.HeadCell>Request for PE </Table.HeadCell>
-              <Table.HeadCell>Medcert</Table.HeadCell>
+              <Table.HeadCell>Documents </Table.HeadCell>
+
               <Table.HeadCell>
                 <span>Status </span>
               </Table.HeadCell>
+              <Table.HeadCell>Remarks</Table.HeadCell>
             </Table.Head>
             {users.map((user) => (
               <Table.Body className="divide-y my-4">
                 <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 ">
-                  <Table.Cell className="text-center">
-                    <Link to ={`/user/${user.slug}`}>
-                      <img 
-                        src={user.profilePicture} 
-                        alt={user.username}
-                        className=" w-12 h-10 object-cover bg-gray-500"/>
-                    </Link>
-                    </Table.Cell>
+                  
                     <Table.Cell >
                       <Link className="text-right font-medium text-gray-900 hover:underline" to ={`/users/${user.slug}`}>
                       {`${user.firstName} ${user.middleName || ''} ${user.lastName}`}
@@ -99,25 +90,26 @@ const UsersOnline = () => {
                     <Table.Cell className="text-left">{user.yearLevel}</Table.Cell>
                     <Table.Cell className="text-left">{user.degreeProgram}</Table.Cell>
                     <Table.Cell className="text-left">{user.college}</Table.Cell>
-                    <Table.Cell className="text-left">
-                    {user.peForm ? (
-                            <Link className="text-teal-500 hover:underline" to={user.peForm}>
-                              {user.lastName}_peForm.pdf
-                            </Link>
-                          ) : (
-                            <span className="text-gray-400">Empty</span>
-                          )}
-                    </Table.Cell>
-                    <Table.Cell className="text-left">
-                      {user.labResults ? (
-                            <Link className="text-teal-500 hover:underline" to={user.labResults}>
-                              {user.lastName}_labResults.pdf
-                            </Link>
-                          ) : (
-                            <span className="text-gray-400">Empty</span>
-                          )}
-                    </Table.Cell>
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left flex-col">
+                    <div>
+                      {user.peForm ? (
+                              <Link className="text-teal-500 hover:underline" to={user.peForm}>
+                                {user.lastName}_peForm.pdf
+                              </Link>
+                            ) : (
+                              <span className="text-gray-400">Empty</span>
+                            )}
+                    </div>
+                    <div>
+                        {user.labResults ? (
+                              <Link className="text-teal-500 hover:underline" to={user.labResults}>
+                                {user.lastName}_labResults.pdf
+                              </Link>
+                            ) : (
+                              <span className="text-gray-400">Empty</span>
+                            )}
+                     </div>
+                     <div>
                       {user.requestPE ? (
                           <Link className="text-teal-500 hover:underline" to={user.requestPE}>
                             {user.lastName}_requestPE.pdf
@@ -125,8 +117,8 @@ const UsersOnline = () => {
                         ) : (
                           <span className="text-gray-400">Empty</span>
                         )}
-                    </Table.Cell>
-                    <Table.Cell className="text-left">
+                      </div>
+                      <div>
                       {user.medcert ? (
                         <Link className="text-teal-500 hover:underline" to={user.medcert}>
                           {user.lastName}_medcert.pdf
@@ -134,6 +126,7 @@ const UsersOnline = () => {
                       ) : (
                         <span className="text-gray-400">Empty</span>
                       )}
+                      </div>
                     </Table.Cell>
 
                     <Table.Cell className="text-center px-2">
@@ -142,7 +135,14 @@ const UsersOnline = () => {
                                 <span>{user.status}</span>
                             </Link>
                         </div>
-                    </Table.Cell>     
+                    </Table.Cell>    
+                    <Table.Cell className="text-left">
+                      {user.comment ? (
+                         <span>{user.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')}</span>
+                      ) : (
+                        <span className="text-gray-400">Empty</span>
+                      )}
+                    </Table.Cell> 
                 </Table.Row>
               </Table.Body>
             ))

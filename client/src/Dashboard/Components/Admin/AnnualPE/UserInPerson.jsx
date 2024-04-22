@@ -58,14 +58,13 @@ const UserInPerson = () => {
 
   return (
     <div>
-        <p className="font-bold my-4">Total Users: {totalUsers}</p>
+        <p className="font-bold my-4">Sorted Total Users: {totalUsers}</p>
     
     <div className='table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
       {currentUser.isAdmin && users.length > 0 ? (
         <>
           <Table hoverable className='shadow-md'>
-            <Table.Head className="text-left px-3">
-              <Table.HeadCell>User image </Table.HeadCell>
+            <Table.Head className="text-left px-3 ">
               <Table.HeadCell>Name </Table.HeadCell>
               <Table.HeadCell>Year Level </Table.HeadCell>
               <Table.HeadCell>College </Table.HeadCell>
@@ -82,16 +81,8 @@ const UserInPerson = () => {
             </Table.Head>
             
             {users.map((user) => (
-              <Table.Body className="divide-y my-4">
+              <Table.Body className="divide-y my-4 ">
                 <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 ">
-                  <Table.Cell className="text-center">
-                    <Link to ={`/user/${user.slug}`}>
-                      <img 
-                        src={user.profilePicture} 
-                        alt={user.username}
-                        className=" w-12 h-10 object-cover bg-gray-500"/>
-                    </Link>
-                    </Table.Cell>
                     <Table.Cell >
                       <Link className="text-right font-medium text-gray-900 hover:underline" to ={`/users/${user.slug}`}>
                       {`${user.lastName}, ${user.middleName || ''} ${user.firstName}`}

@@ -101,11 +101,11 @@ const userSchema = new mongoose.Schema(
     },
     comment : {
       type: String,
-      default: ' ',
+      default: '',
     },
     medcert:{
       type: String,
-      default: ' ',
+      default: '',
     }
   },
   { timestamps: true }

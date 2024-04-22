@@ -33,6 +33,9 @@ import Certificate from './Dashboard/Components/Admin/AnnualPE/Certificate';
 import UserInPerson from './Dashboard/Components/Admin/AnnualPE/UserInPerson';
 import InPersonRes from './Dashboard/Components/Admin/AnnualPE/InPerson';
 import Documents from './Dashboard/Components/Admin/Documents/Documents';
+import GetDocs from './Dashboard/Components/Admin/Documents/GetDocs';
+import DocsUserView from './Dashboard/Components/DocumentsUser/DocsUserView';
+import GetAllDocs from './Dashboard/Components/DocumentsUser/GetAllDocs';
 
 export default function App() {
   return (
@@ -63,6 +66,9 @@ export default function App() {
           <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
           <Route path="/announcement" element={<Announcement />} />
           <Route path="/dash-post" element={<DashPost />} />
+          <Route path="/get-documents" element={<GetDocs />} />
+          <Route path="/get-allDocuments" element={<GetAllDocs />} />
+          <Route path="/docsuser" element={<DocsUserView />} />
         </Route>
 
         <Route element={<OnlyAdminPrivateRoute />}>
