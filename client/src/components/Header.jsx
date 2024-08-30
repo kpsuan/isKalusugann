@@ -19,29 +19,29 @@ export default function Header() {
 
   return (
     <div className='bg-slate-200'>
-      <div className='flex justify-between items-center max-w-6xl mx-auto p-3'>
+      <div className='flex justify-between items-center max-w-6xl mx-auto p-3 h-15'>
         
         <Link to='/'>
-          <img className='mx-auto h-5 w-auto' src={logo} alt="logo2" />
+          <img className='mx-auto h-7 w-auto' src={logo} alt="logo2" />
         </Link>
         <div>
           <p className='font-light'>Current Time: {currentTime}</p>
         </div>
-        <ul className='flex gap-4'>
+        <ul className='flex gap-4 text-lg'>
           <Link to='/'>
-            <li>Home</li>
+            <li className='border-b-2 border-transparent hover:border-blue-500'>Home</li>
           </Link>
           <Link to='/about'>
-            <li>About</li>
+            <li className='border-b-2 border-transparent hover:border-blue-500'>About</li>
           </Link>
           <Link to='/dashboard'>
-            <li>Dashboard</li>
+            <li className='border-b-2 border-transparent hover:border-blue-500'>Dashboard</li>
           </Link>
           <Link to='/profile'>
             {currentUser ? (
               <img src={currentUser.profilePicture} alt='profile' className='h-7 w-7 rounded-full object-cover' />
             ) : (
-              <li>Sign In</li>
+              <li className='border-b-2 border-transparent hover:border-blue-500'>Sign In</li>
             )}
           </Link>
         </ul>

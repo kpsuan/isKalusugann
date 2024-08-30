@@ -70,6 +70,9 @@ export const getposts = async (req, res, next) => {
     }
 };
 
+
+
+
 export const deletepost = async (req, res, next) => {
     if(!req.user.isAdmin || req.user.id !== req.params.userId){
     return next(errorHandler(403, 'Only admins can delete posts!'));
@@ -106,3 +109,4 @@ export const updatepost = async (req, res, next) => {
       next(error);
     }
   };
+  

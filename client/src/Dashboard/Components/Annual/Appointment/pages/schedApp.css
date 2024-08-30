@@ -22,3 +22,8 @@
   .dashboard .dashboardContainer .btn-flex {
     margin-top: 20px;
   }/*# sourceMappingURL=appointment.css.map */
+
+  .custom-select {
+    font-size: 1.25rem; /* equivalent to text-xl */
+  }
+  

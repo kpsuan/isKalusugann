@@ -4,8 +4,7 @@ import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
 import GetAllDocs from "./GetAllDocs";
 import Top from '../Profile/Components/Header'
-
-
+import { Card } from 'flowbite-react';
 
 import "../Annual/annual.css";
 
@@ -21,11 +20,13 @@ const DocsUserView = () => {
           <div className="dashboardContainer my-flex">
             <Sidebar />
             <div className="mainContent">
-            <Top title={headerTitle}/> 
+            <Top  className="font-medium" title={headerTitle}/> 
+            
             <div className="bg-white rounded-lg border border-gray-200 mt-10 p-10 w-full">
-              <div className="text-2xl font-light mb-4">All Documents
-                <p className="font-light my-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-              </div>
+            <Card className="w-full h-150 p-10 bg-gradient-to-r from-cyan-600 to-green-500">
+                                    <div className="text-2xl font-light tracking-tight text-white dark:text-white">Downloadable docs</div>
+
+            </Card>
               <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
                   <GetAllDocs/>
               </div>         

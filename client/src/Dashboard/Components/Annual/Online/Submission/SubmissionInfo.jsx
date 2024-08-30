@@ -22,13 +22,13 @@ const SubmissionInfo = () => {
     const handleButtonClick = () => {
         // Add your desired functionality here
         // For example, you can navigate to a different page
-        navigate('/result');
+        navigate('/status');
     };
 
     const handleButtonClick2 = () => {
         // Add your desired functionality here
         // For example, you can navigate to a different page
-        navigate('/onlineSub');
+        navigate(-1);
     };
     const headerTitle = "Annual Physical Examination";
 
@@ -39,8 +39,7 @@ const SubmissionInfo = () => {
                 <div className='mainContent'>
                     <Top title={headerTitle}/> 
                         <div className="titleUpload2 my-flex">
-                            <h4><b>Preenlistment Period </b> <span class="lighter-font">(January 12-20, 2024)</span></h4>
-                                <h2> <div className="text2">You are now pre-enlisted. </div></h2>
+                                <h2> <div className="text2">Documents Submitted! </div></h2>
                                 <h2> <div className="text3">Your documents will be reviewed and verified by the HSU soon.  </div></h2>
                         </div>
                     <div className="button-sub my-flex">

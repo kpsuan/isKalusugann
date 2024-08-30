@@ -7,7 +7,7 @@ import {
 } from '../redux/user/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import OAuth from '../components/OAuth';
-import logo from '../assets/logo3.png';
+import logo from '../assets/logo1.png';
 
 
 
@@ -48,7 +48,9 @@ export default function SignIn() {
     <div className='aa bg-gradient-to-r from-green-200 to-blue-600 body-bg min-h-screen pt-12 md:pt-20 pb-6 px-2 md:px-0'>
    
       <div className='aa bg-white max-w-lg mx-auto p-8 md:p-12 my-10 rounded-lg shadow-2xl'>
-      <h1 className='text-3xl text-center font-semibold my-7'>Sign In</h1>
+      <img src={logo} alt='logo' className='w-full h-auto pl-5' />
+      <h1 className='text-2xl text-center font-light my-7'>A UPV HSU Portal</h1>
+      
       <form onSubmit={handleSubmit} className=' flex flex-col gap-4'>
         <input
           type='email'
@@ -66,16 +68,23 @@ export default function SignIn() {
         />
         <button
           disabled={loading}
-          className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'
+          className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:bg-slate-800 disabled:opacity-80'
         >
           {loading ? 'Loading...' : 'Sign In'}
         </button>
+
         <OAuth />
       </form>
-      <div className='aa flex gap-2 mt-5'>
-        <p>Dont Have an account?</p>
+      <div className='gap-2 mt-5'>
         <Link to='/sign-up'>
-          <span className='text-blue-500'>Sign up</span>
+          <span className='text-blue-500 hover:underline pl-35'>Forgot password</span>
+        </Link>
+      </div>
+      <div className='aa flex gap-2 mt-5 w-full pl-20'>
+        <Link to='/sign-up'>
+          <button className='bg-transparent border-2 text-blue-500 p-3 rounded-lg uppercase hover:text-blue-700 disabled:opacity-80 w-full px-5'>
+           Create an Account
+          </button>
         </Link>
       </div>
       <p className='text-red-700 mt-5'>

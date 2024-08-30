@@ -119,7 +119,6 @@
   z-index: 100;
 }
 .topSection .cardSection .rightCard .cont p {
-  padding: 1rem;
   color: var(--paleGreen);
   font-weight: 500;
 }
@@ -184,3 +183,9 @@
   transform: translateX(10px);
   transition: 0.3s ease;
 }/*# sourceMappingURL=top.css.map */
+
+.cont p {
+    background-color: transparent !important;
+    color: inherit; /* Ensures the text color is consistent with the rest of your theme */
+}
+

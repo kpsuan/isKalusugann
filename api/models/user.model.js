@@ -90,6 +90,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isSuperAdmin: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       default: 'NO ACTION',
@@ -106,7 +110,33 @@ const userSchema = new mongoose.Schema(
     medcert:{
       type: String,
       default: '',
-    }
+    },
+    schedule: {
+      type: [String], // Define as an array of strings
+      default: [],    // Set default to an empty array
+    },
+    rescheduledDate: {
+      type: [String], // Define as an array of strings
+      default: [],    // Set default to an empty array
+    },
+    reschedule:{
+      type: String,
+      default: '',
+    },
+    rescheduleStatus:{
+      type: String,
+      default: '',
+    },
+
+    reservedDates: [{
+      date: Date,
+      expiresAt: Date
+    }],
+    
+    rescheduleRemarks:{
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );

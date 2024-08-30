@@ -330,20 +330,20 @@ const handleChange = (e) => {
                 className="block h-10 w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="">Select Degree Program</option>
-                <option value="Biology">BS Biology</option>
-                <option value="Public Health">BS Public Health</option>
-                <option value="Communication and Media Studies">BA Communication and Media Studies</option>
-                <option value="Literature">BA Literature</option>
+                <option value="BIOLOGY">BS Biology</option>
+                <option value="PUBLIC HEALTH">BS Public Health</option>
+                <option value="COMMUNICATION AND MEDIA STUDIES">BA Communication and Media Studies</option>
+                <option value="LITERATURE">BA Literature</option>
                 <option value="History"> BA History</option>
-                <option value="Community Development">BA Community Development</option>
-                <option value="Economics">BS Economics</option>
-                <option value="Political Science">BA Political Science</option>
-                <option value="Psychology">BA Psychology</option>
-                <option value="Sociology">BA Sociology</option>
-                <option value="Applied Mathematics">BS Applied Mathematics</option>
-                <option value="Chemistry">BS Chemistry</option>
-                <option value="Computer Science">BS Computer Science</option>
-                <option value="Statistics">BS Statistics</option>
+                <option value="COMMUNITY DEVELOPMENT">BA Community Development</option>
+                <option value="ECONOMICS">BS Economics</option>
+                <option value="POLITICAL SCIENCE">BA Political Science</option>
+                <option value="PSYCHOLOGY">BA Psychology</option>
+                <option value="SOCIOLOGY">BA Sociology</option>
+                <option value="APPLIED MATHEMATICS">BS Applied Mathematics</option>
+                <option value="CHEMISTRY">BS Chemistry</option>
+                <option value="COMPUTER SCIENCE">BS Computer Science</option>
+                <option value="STATISTICS">BS Statistics</option>
               </select>
             </div>
           )}

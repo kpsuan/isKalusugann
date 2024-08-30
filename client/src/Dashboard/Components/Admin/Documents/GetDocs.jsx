@@ -1,42 +1,42 @@
 import Sidebar from "../../SideBar Section/Sidebar";
 import Top from "../../Profile/Components/Header";
 import "../../Annual/annual.css";
-import {Alert, Button, Modal, ModalBody, TextInput, Table, TableCell} from 'flowbite-react'
-
+import { Alert, Button, Modal } from 'flowbite-react';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
-import {Link} from 'react-router-dom'
-import { useEffect, useState  } from "react"
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from "react";
 import { useSelector } from 'react-redux';
-import { set } from 'mongoose';
 
 const DashDocs = () => {
-  const {currentUser} = useSelector((state) => state.user);
-  const [userDocs, setUserDocs] = useState([])
+  const { currentUser } = useSelector((state) => state.user);
+  const [userDocs, setUserDocs] = useState([]);
   const [showMore, setShowMore] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [docsIdToDelete, setDocsIdToDelete] = useState(null);
 
-  useEffect(() => {
-    
-    const fetchDocs = async () => {
-      try {
-        const res = await fetch(`/api/docs/getdocuments?userId=${currentUser._id}`);
-        const data = await res.json();
-        if(res.ok){
-          setUserDocs(data.docs);
-          if (data.docs.length < 9) {
-            setShowMore(false);
-          }
-        }      
-      } catch (error) {
-        console.log(error.message)
+  // Fetch documents
+  const fetchDocs = async () => {
+    try {
+      const res = await fetch(`/api/docs/getdocuments?userId=${currentUser._id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setUserDocs(data.docs);
+        if (data.docs.length < 9) {
+          setShowMore(false);
+        }
       }
-    }; 
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  useEffect(() => {
     if (currentUser.isAdmin) {
-        fetchDocs();
+      fetchDocs();
     }
   }, [currentUser._id]);
 
+  // Handle "Load More" button click
   const handleShowMore = async () => {
     const startIndex = userDocs.length;
     try {
@@ -55,71 +55,70 @@ const DashDocs = () => {
     }
   };
 
-  const handleDeleteDocs = async (docsId) => {
+  // Handle document deletion
+  const handleDeleteDocs = async () => {
     setShowModal(false);
-    try 
-      {
-        const res = await fetch(
-          `/api/docs/deletedocuments/${docsIdToDelete}/${currentUser._id}`, 
-          {
-            method: 'DELETE',
-          }
-        );
-        const data = await res.json();
-        if (!res.ok) {
-          console.log(data.message);
-        } else{
-          setUserDocs((prev) => 
-          prev.filter((docs) => docs._id !== docsIdToDelete));
-        };
-      } catch (error) {
-        console.log(error.message);
+    try {
+      const res = await fetch(
+        `/api/docs/deletedocuments/${docsIdToDelete}/${currentUser._id}`, 
+        {
+          method: 'DELETE',
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
+        // Refresh documents after deletion
+        fetchDocs();
       }
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   return (
     <div className='table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
       {currentUser.isAdmin && userDocs.length > 0 ? (
         <>
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {userDocs.map((docs) => (
-                <div key={docs._id} className="bg-white dark:border-gray-700 dark:bg-gray-800 p-4 rounded-md">
+              <div key={docs._id} className="bg-white dark:border-gray-700 dark:bg-gray-800 p-4 rounded-md">
                 <Link to={docs.content}>
-                    <img 
+                  <img 
                     src={docs.image} 
                     alt={docs.title}
-                    className="w-full h-full object-fit mb-2 "
-                    />
+                    className="w-full h-full object-cover mb-2"
+                  />
                 </Link>
                 <h3 className="text-sm font-semibold mb-2">{docs.title}</h3>
                 <Link to={docs.content} target="_blank" rel="noopener noreferrer" className="block w-full mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm text-center">
-            View
-          </Link>
+                  View
+                </Link>
                 <button 
-                    onClick={() => {
+                  onClick={() => {
                     setShowModal(true);
                     setDocsIdToDelete(docs._id);
-                    }}
-                    className="block w-full mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                  }}
+                  className="block w-full mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
                 >
-                    Delete
+                  Delete
                 </button>
-                </div>
+              </div>
             ))}
-            </div>
+          </div>
           {showMore && (
             <button onClick={handleShowMore} className="w-full text-teal-500 self-center text-sm py-7">Load more</button>
           )}
         </>
-      ):(
-        <p>You have no docs yet! </p>
+      ) : (
+        <p>You have no docs yet!</p>
       )}
       <Modal
         show={showModal}
         onClose={() => setShowModal(false)}
         popup
         size='md'
-        
       >
         <Modal.Header />
         <Modal.Body>
@@ -139,13 +138,8 @@ const DashDocs = () => {
           </div>
         </Modal.Body>
       </Modal>
-      
-
-
     </div>
-    
   );
-}
+};
 
-
-export default DashDocs
+export default DashDocs;

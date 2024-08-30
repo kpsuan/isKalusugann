@@ -33,26 +33,37 @@ const UpdatePost = () => {
     const {currentUser} = useSelector((state) => state.user);
 
     useEffect(() => {
-        try {
-            const fetchPost = async () => {
+        const fetchPost = async () => {
+            try {
                 const res = await fetch(`/api/post/getposts?postId=${postId}`);
                 const data = await res.json();
+    
+                // Log the API response to check if _id is present
+                console.log('API Response:', data);
+    
                 if (!res.ok) {
-                    console.log(data.message);
+                    console.log('Error from server:', data.message);
                     setPublishError(data.message);
                     return;
                 }
-                if(res.ok) {
+    
+                if (res.ok && data.posts && data.posts.length > 0) {
+                    console.log('Fetched post data:', data.posts[0]); // Log the fetched post data
+                    setFormData(data.posts[0]); // Set the form data including _id
                     setPublishError(null);
-                    setFormData(data.posts[0]);
+                } else {
+                    setPublishError('Post not found');
                 }
-            };
-
-                fetchPost();
-        } catch (error) {
-            console.log(error.message);
-        }
-    }, [postId])
+            } catch (error) {
+                console.log('Fetch error:', error.message);
+                setPublishError('Error fetching post');
+            }
+        };
+    
+        fetchPost();
+    }, [postId]);
+    
+    
 
 
     const handleUploadImage = async () => {
@@ -95,28 +106,35 @@ const UpdatePost = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-          const res = await fetch(`/api/post/updatepost/${formData._id}/${currentUser._id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setPublishError(data.message);
+        console.log('Form data on submit:', formData); // Debugging output
+        if (!formData._id) {
+            setPublishError('Post ID is missing');
             return;
-          }
-    
-          if (res.ok) {
-            setPublishError(null);
-            navigate(`/post/${data.slug}`);
-          }
-        } catch (error) {
-          setPublishError('Something went wrong');
         }
-      };
+        try {
+            const res = await fetch(`/api/post/updatepost/${formData._id}/${currentUser._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setPublishError(data.message);
+                return;
+            }
+    
+            if (res.ok) {
+                setPublishError(null);
+                navigate(`/post/${data.slug}`);
+            }
+        } catch (error) {
+            console.log('Error during update:', error.message);
+            setPublishError('Something went wrong');
+        }
+    };
+    
 
     return (
         <div className="dashboard my-flex">

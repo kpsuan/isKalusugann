@@ -75,7 +75,7 @@ const Sidebar = () => {
                         </a>
                     )}
                     {!currentUser.isAdmin && (
-                        <a href='/annualPE' className='menuLink flex'>
+                        <a href='/annualhome' className='menuLink flex'>
                             <CiMedicalCase className='icon' />
                             <span className="smallText">
                                 Annual Physical Examinations
