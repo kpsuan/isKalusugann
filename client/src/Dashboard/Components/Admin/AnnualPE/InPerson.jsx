@@ -13,6 +13,7 @@ import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Breadcrumb from '../../../Breadcrumb.jsx';
 
 import "../../Annual/annual.css";
 
@@ -22,6 +23,7 @@ import axios from 'axios';
 import {Link, useNavigate} from 'react-router-dom'
 import UserInPerson from "./UserInPerson";
 import ScheduledForDate from "./ScheduledOn";
+import ScheduledForToday from "./ScheduledToday";
 const InPerson = () => {
   
   const { currentUser } = useSelector((state) => state.user);
@@ -48,15 +50,22 @@ const InPerson = () => {
   const [endDate, setEndDate] = useState(new Date());
   
   useEffect(() => {
-    // Load saved dates from localStorage
-    const savedStart = localStorage.getItem('startDate');
-    const savedEnd = localStorage.getItem('endDate');
-    
-    if (savedStart && savedEnd) {
-      setSavedStartDate(new Date(savedStart));
-      setSavedEndDate(new Date(savedEnd));
+  const fetchSavedDates = async () => {
+    try {
+      const response = await axios.get('/api/settings/getDates');
+      if (response.status === 200) {
+        setSavedStartDate(new Date(response.data.startDate));
+        setSavedEndDate(new Date(response.data.endDate));
+      }
+    } catch (error) {
+      console.error("Error fetching saved dates:", error);
+      toast.error("Failed to fetch saved dates.");
     }
-  }, []);
+  };
+
+  fetchSavedDates();
+}, []);
+
 
   useEffect(() => {
     // Initialize startDate and endDate with saved dates if available
@@ -64,16 +73,29 @@ const InPerson = () => {
     if (savedEndDate) setEndDate(savedEndDate);
   }, [savedStartDate, savedEndDate]);
 
-  const handleSaveDates = () => {
-    // Save the selected dates to localStorage
-    localStorage.setItem('startDate', startDate.toISOString());
-    localStorage.setItem('endDate', endDate.toISOString());
-
-    // Update state and show success message
-    setSavedStartDate(startDate);
-    setSavedEndDate(endDate);
-    toast.success('Dates saved successfully!');
+  const handleSaveDates = async () => {
+    if (!startDate || !endDate) {
+      toast.error("Start and End dates are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post('/api/settings/saveDates', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      });
+  
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        setSavedStartDate(startDate);
+        setSavedEndDate(endDate);
+      }
+    } catch (error) {
+      console.error("Error saving dates:", error);
+      toast.error("Failed to save dates. Please try again.");
+    }
   };
+  
 
 
 
@@ -208,41 +230,45 @@ const InPerson = () => {
       <ToastContainer className={"z-50"} />
       <div className="dashboardContainer my-flex">
         <Sidebar />
-        <div className="mainContent">
-          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-            <div className="text-3xl font-bold mb-4 pl-2">InPerson Physical Examinations</div>
+        
+        <div className="mainContent p-0 m-0">
+          <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+          <Breadcrumb/>
+            <div className="text-3xl font-semibold text-white mb-2 mt-6 pl-2">InPerson Physical Examinations</div>
+            
             <div className="flex flex-1 ">
-              <p className="font-light my-4 px-2">
-              Start date for annual PE: <span className="font-bold ">{savedStartDate ? savedStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
-              </p>
-              <p className="font-light my-4 px-2">
+            <p className="font-light my-4 px-2 text-white">
+  Start date for annual PE: <span className="font-bold">{savedStartDate ? savedStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
+            </p>
+            <p className="font-light my-4 px-2 text-white">
               End date for annual PE: <span className="font-bold">{savedEndDate ? savedEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
-              </p>
+            </p>
+
             </div>
             <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-cyan-400 text-white px-6 py-3 rounded-md"
+                  className="my-2 mx-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-cyan-400 text-white px-6 py-3 rounded-md"
                   onClick={handleRescheduleClick}
                 >
-                  Reschedules
+                  Handle Reschedules
                 </button>
             {currentUser.isSuperAdmin && (
               <div className="relative flex m-2 space-x-2">
                 <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-green-500 to-blue-400 text-white px-6 py-3 rounded-md"
+                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-blue-400 text-white px-6 py-3 rounded-md"
                   onClick={handleSetSched}
                   disabled={loading}
                 >
                   {loading ? 'Setting...' : 'Set Schedule'}
                 </button>
                 <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-green-500 to-blue-400 text-white px-6 py-3 rounded-md"
+                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-blue-400 text-white px-6 py-3 rounded-md"
                   onClick={handleGenerateSchedule}
                   disabled={loading}
                 >
                   {loading ? 'Generating...' : 'Generate Schedule'}
                 </button>
                 <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-red-500 to-red-400 text-white px-6 py-3 rounded-md"
+                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-red-700 to-red-600 text-white px-6 py-3 rounded-md"
                   onClick={handleClearSchedules}
                   disabled={loading}
                 >
@@ -255,10 +281,11 @@ const InPerson = () => {
             )}
 
           </div>
+          <div className="p-8">
           <Tabs aria-label="Default tabs" style="default" className="my-4 ">
             
             <Tabs.Item active title="SCHEDULED FOR TODAY" icon={HiUserCircle}>
-              <ScheduledForDate />
+              <ScheduledForToday />
             </Tabs.Item>
             <Tabs.Item title="SCHEDULED ON DATE " icon={HiUserCircle}>
               <ScheduledForDate />
@@ -323,6 +350,7 @@ const InPerson = () => {
 
 
           </Tabs>
+          </div>
         </div>
         {showPopup && (
           <Modal className="p-20" show={showPopup} onClose={() => setShowPopup(false)}>

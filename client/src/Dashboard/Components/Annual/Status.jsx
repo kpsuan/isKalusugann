@@ -26,6 +26,7 @@ import { getAuth } from 'firebase/auth';
 
 import { Link, useNavigate } from 'react-router-dom';
 import GetDocsUser from "../DocumentsUser/GetDocsUser";
+import RescheduleStatus from "../Admin/AnnualPE/RescheduleStatus";
 
 const Status = () => {
     const navigate = useNavigate();
@@ -40,6 +41,8 @@ const Status = () => {
     const preEnlistEnd = new Date('2024-08-11T23:59:59+08:00');
     const [availableDates, setAvailableDates] = useState([]);
     const [requestSubmitted, setRequestSubmitted] = useState(false);
+    const [showCancelRescheduleModal, setShowCancelRescheduleModal] = useState(false); // New state for reschedule modal
+
 
     const formattedStartDate = preEnlistStart.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -116,33 +119,36 @@ const Status = () => {
       }, [currentUser._id]);
       
 
+ 
     const handleDateSelection = (selectedDate) => {
-        const formattedDate = new Date(selectedDate).toISOString();
-        setFormData({ ...formData, schedule: selectedDate });
-        console.log("Selected date:", selectedDate);
-    };
+      const formattedDate = new Date(selectedDate).toISOString();
+      setFormData({ ...formData, schedule: selectedDate });
+      console.log("Selected date:", selectedDate);
+  };
       
 
     const updateSchedule = async (selectedDate) => {
-        try {
-          const res = await fetch(`/api/user/update/${currentUser._id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ schedule: selectedDate }), // Only sending the schedule field
-          });
-          const data = await res.json();
-          if (data.success === false) {
-            dispatch(updateUserFailure(data));
-            return;
-          }
-          dispatch(updateUserSuccess(data));
-          setUpdateSuccess(true);
-        } catch (error) {
-          dispatch(updateUserFailure(error));
+      try {
+        const res = await fetch(`/api/user/updateReschedule/${currentUser._id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ schedule: selectedDate}), // Only sending the schedule field
+        });
+        const data = await res.json();
+        if (data.success === false) {
+          dispatch(updateUserFailure(data));
+          return;
         }
-      };
+        dispatch(updateUserSuccess(data));
+        setUpdateSuccess(true);
+        set
+      } catch (error) {
+        dispatch(updateUserFailure(error));
+      }
+    };
+  
       
     
     
@@ -155,9 +161,9 @@ const Status = () => {
             return "Your documents were denied. Please submit again.";
         } else {
             if (!isPreEnlistEnabled) {
-                if (userChoice === "Online") {
+                if (currentUser.annualPE === "Online") {
                     return "You may now start submitting the forms needed for Annual PE";
-                } else if (userChoice === "InPerson") {
+                } else if (currentUser.annualPE === "InPerson") {
                     return "You can now view your schedule in the Schedule Tab below";
                 }
             } else {
@@ -179,10 +185,13 @@ const Status = () => {
         setShowRescheduleModal(false);
         if (choice === 'YES') {
             try {
-                setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    reschedule: choice
-                }));
+                await fetch(`/api/user/update/${currentUser._id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ reschedule: "YES" }), // Only sending the schedule field
+                  });
                 await handleSubmit();
                 setRequestSubmitted(true); // Update state to indicate request has been submitted
             } catch (error) {
@@ -191,6 +200,25 @@ const Status = () => {
         }
     };
     
+
+    const handleCancelRescheduleRequest = async (choice) => {
+        setShowCancelRescheduleModal(false);
+        if (choice === 'YES') {
+            try {
+                    await fetch(`/api/user/update/${currentUser._id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ reschedule: "" }), // Only sending the schedule field
+                  });
+                await handleSubmit();
+                setRequestSubmitted(false); // Update state to indicate request has been submitted
+            } catch (error) {
+                // Handle error if needed
+            }
+        }
+    };
     
     
     const handleSubmit = async () => {
@@ -243,115 +271,200 @@ const Status = () => {
             </div>
             </Banner>
             <div className="relative">
-                    <Card href="#" className="w-full h-150 p-10 bg-gradient-to-r from-green-600 to-green-500">
-                        <div className="flex justify-between">
-                            <div className="flex-1">
-                                <h5 className="text-4xl font-light tracking-tight text-white dark:text-white">
-                                    Annual PE Status
-                                </h5>
-                                <p className="font-normal text-white dark:text-gray-400 pt-4">
-                                    Here you can track the status of your Annual PE
-                                </p>
-                                {isPreEnlistEnabled && (
-                                    <div className="flex space-x-2">
-                                        <p className="font-normal text-white dark:text-gray-400">
-                                            You are <span className="font-semibold">{userHasChoice ? 'pre-enlisted' : 'not pre-enlisted'}</span>
-                                        </p>
+    <Card href="#" className="w-full h-150 p-10 bg-gradient-to-r from-green-600 to-green-500">
+        <div className="flex justify-between">
+            <div className="flex-1">
+                {/* Content for Annual PE Status */}
+                <h5 className="text-4xl font-light tracking-tight text-white dark:text-white">Annual PE Status</h5>
+                <p className="font-normal text-white dark:text-gray-400 pt-4">
+                    Here you can track the status of your Annual PE
+                </p>
+                {/* Other content */}
+                
+                <div className="relative flex space-x-2 mt-4">
+                    <p className="my-auto text-lg bg-gradient-to-r from-green-500 to-green-400 text-white px-3 py-3 rounded-md">
+                        PE Mode: <span className="font-semibold">{userHasChoice}</span>
+                    </p>
+                    <Button
+                        className={`my-auto font-semibold text-white p-2 rounded-md transition duration-300 ease-in-out transform hover:scale-105 ${
+                            userHasChoice === "Online"
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-600'
+                                : isPreEnlistEnabled
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-600'
+                                : 'bg-gray-400 cursor-not-allowed'
+                        }`}
+                        onClick={() => {
+                            if (userHasChoice === "Online") {
+                                navigate('/fileSubmissions'); // Navigate to /fileSubmissions
+                            } else if (isPreEnlistEnabled) {
+                                handlePreEnlistClick(); // Otherwise, handle pre-enlistment
+                            }
+                        }}
+                    >
+                        {userHasChoice === "Online" ? 'Submit Documents' : (userHasChoice ? 'Modify Choice' : 'Pre-enlist')}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Card for in-person PE, checking if user is not online and has not arrived */}
+            {currentUser.annualPE !== "Online" && currentUser.isPresent !== "ABSENT" && currentUser.status !== "approved" && (
+                <Card className="flex-1 bg-gray-50 p-5 ml-4">
+                    <div className="flex flex-col items-start">
+                        <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
+                            {currentUser.firstName}, here's your schedule: 
+                        </h5>
+                        <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
+                            {currentUser.schedule
+                                ? new Date(currentUser.schedule).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })
+                                : "TBA"
+                            }
+                        </p>
+
+                        {currentUser.rescheduleLimit >= 3 ? (
+                            <p className="text-sm text-red-700 dark:text-gray-400 mt-2">Can no longer reschedule. Limit has been reached</p>
+                        ) : (
+                            <p className="text-sm text-red-700 dark:text-gray-400 mt-2">
+                                Current reschedule request: {currentUser.rescheduleLimit}
+                            </p>
+                        )}
+
+                        {currentUser.isPresent === "ARRIVED" ? (
+                            <Button className="bg-blue-500 text-white font-medium rounded-lg text-sm px-5 py-2.5 mt-4 cursor-not-allowed">
+                                ARRIVED AT ANNUAL PE SCHEDULE
+                            </Button>
+                        ) : (
+                            !currentUser.rescheduledDate?.length ? (
+                                <Button
+                                    className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted
+                                        ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-600'
+                                        : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
+                                    onClick={() => {
+                                        if (requestSubmitted) {
+                                            setShowCancelRescheduleModal(true);  // If request is submitted, handle cancel
+                                        } else {
+                                            setShowRescheduleModal(true);  // Otherwise, show reschedule modal
+                                        }
+                                    }}
+                                    disabled={currentUser.rescheduleLimit >= 3} // Disable if reschedule limit is reached
+                                >
+                                    {requestSubmitted ? 'Cancel Request' : 'Request to be Rescheduled'}
+                                </Button>
+                            ) : (
+                                <div className="flex flex-col pt-2 w-full">
+                                    <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
+                                    <div className="flex flex-row mt-2">
+                                        <select
+                                            className="my-2 border rounded-lg w-3/4"
+                                            onChange={(e) => handleDateSelection(e.target.value)}
+                                        >
+                                            <option value="" className="p-2 text-lg">Select a date</option>
+                                            {currentUser.rescheduledDate.length ? (
+                                                currentUser.rescheduledDate.map((date, index) => (
+                                                    <option key={index} value={date} className="p-2 text-lg">
+                                                        {dateFormatter.format(new Date(date))}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option disabled>No available dates</option>
+                                            )}
+                                        </select>
+                                        <Button
+                                            className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
+                                            onClick={() => updateSchedule(formData.schedule)}
+                                        >
+                                            Save
+                                        </Button>
                                     </div>
-                                )}
-                                <div className="relative flex space-x-2 mt-4">
-                                    <p className="my-auto text-lg bg-gradient-to-r from-green-500 to-green-400 text-white px-3 py-3 rounded-md">
-                                        PE Mode: <span className="font-semibold">{userHasChoice}</span>
-                                    </p>
-                                    <Button
-                                        className={`my-auto font-semibold text-white p-2 rounded-md transition duration-300 ease-in-out transform hover:scale-105 ${
-                                            userHasChoice === "Online"
-                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-600'
-                                                : isPreEnlistEnabled
-                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-600'
-                                                : 'bg-gray-400 cursor-not-allowed'
-                                        }`}
-                                        onClick={() => {
-                                            if (userHasChoice === "Online") {
-                                                navigate('/fileSubmissions'); // Navigate to /docsSubmission
-                                            } else if (isPreEnlistEnabled) {
-                                                handlePreEnlistClick(); // Otherwise, handle pre-enlistment
-                                            }
-                                        }}
+                                </div>
+                            )
+                        )}
+                    </div>
+                </Card>
+            )}
+
+            {currentUser.isPresent === "ABSENT" && (
+                <Card className="flex-1 bg-gray-50 p-5 ml-4">
+                    <div className="flex flex-col items-start">
+                        <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
+                            {currentUser.firstName}, you did not arrive at your assigned date. Would you like to reschedule?
+                        </h5>
+                        <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
+                            {currentUser.schedule
+                                ? new Date(currentUser.schedule).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })
+                                : "TBA"
+                            }
+                        </p>
+
+                        {currentUser.rescheduleLimit >= 3 ? (
+                            <p className="text-sm text-red-700 dark:text-gray-400 mt-2">Can no longer reschedule. Limit has been reached</p>
+                        ) : (
+                            <p className="text-sm text-red-700 dark:text-gray-400 mt-2">
+                                Current reschedule request: {currentUser.rescheduleLimit}
+                            </p>
+                        )}
+
+                        {!currentUser.rescheduledDate?.length ? (
+                            <Button
+                                className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted
+                                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-600'
+                                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
+                                onClick={() => {
+                                    if (requestSubmitted) {
+                                        setShowCancelRescheduleModal(true);  // If request is submitted, handle cancel
+                                    } else {
+                                        setShowRescheduleModal(true);  // Otherwise, show reschedule modal
+                                    }
+                                }}
+                                disabled={currentUser.rescheduleLimit >= 3} // Disable if reschedule limit is reached or in progress
+                            >
+                                {requestSubmitted ? 'Cancel Request' : 'Request to be Rescheduled'}
+                            </Button>
+                        ) : (
+                            <div className="flex flex-col pt-2 w-full">
+                                <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
+                                <div className="flex flex-row mt-2">
+                                    <select
+                                        className="my-2 border rounded-lg w-3/4"
+                                        onChange={(e) => handleDateSelection(e.target.value)}
                                     >
-                                        {userHasChoice === "Online" ? 'Submit Documents' : (userHasChoice ? 'Modify Choice' : 'Pre-enlist')}
+                                        <option value="" className="p-2 text-lg">Select a date</option>
+                                        {currentUser.rescheduledDate.length ? (
+                                            currentUser.rescheduledDate.map((date, index) => (
+                                                <option key={index} value={date} className="p-2 text-lg">
+                                                    {dateFormatter.format(new Date(date))}
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <option disabled>No available dates</option>
+                                        )}
+                                    </select>
+                                    <Button
+                                        className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
+                                        onClick={() => updateSchedule(formData.schedule)}
+                                    >
+                                        Save
                                     </Button>
                                 </div>
                             </div>
-                            {currentUser.annualPE !== "Online" && (
-                                <Card className="flex-1 bg-gray-50 p-5 ml-4 ">
-                                    <div className="flex flex-col items-start ">
-                                        <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
-                                            {currentUser.firstName} here's your schedule: 
-                                        </h5>
-                                        <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
-                                            {currentUser.schedule
-                                                ? new Date(currentUser.schedule).toLocaleDateString('en-US', {
-                                                    weekday: 'short', // "Wed"
-                                                    year: 'numeric',  // "2024"
-                                                    month: 'short',   // "Jun"
-                                                    day: 'numeric'    // "19"
-                                                })
-                                                : "TBA"
-                                            }
-                                        </p>
-                                        {!currentUser.rescheduledDate?.length ? (
-                                        <Button
-                                            className={`hover:shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            onClick={() => {
-                                                if (!requestSubmitted) {
-                                                    setShowRescheduleModal(true);
-                                                }
-                                            }}
-                                            disabled={requestSubmitted}
-                                        >
-                                            {requestSubmitted ? 'Request Submitted' : 'Request to be Rescheduled'}
-                                        </Button>
-
-                                        ) : (
-                                            <div className="flex flex-col pt-2 w-full">
-                                                <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
-                                                <div className="flex flex-row mt-2">
-                                                <select
-                                                    className="my-2  border rounded-lg w-3/4"
-                                                    onChange={(e) => handleDateSelection(e.target.value)}
-                                                >
-                                                    <option value="" className="p-2 text-lg">Select a date</option>
-                                                    {currentUser.rescheduledDate.length ? (
-                                                        currentUser.rescheduledDate.map((date, index) => (
-                                                            <option key={index} value={date} className="p-2 text-lg">
-                                                                {dateFormatter.format(new Date(date))}
-                                                            </option>
-                                                        ))
-                                                    ) : (
-                                                        <option disabled>No available dates</option>
-                                                    )}
-                                                </select>
-                                                <Button
-                                                className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
-                                                onClick={() => updateSchedule(formData.schedule)}
-                                                >
-                                                Save
-                                                </Button>
-                                                </div>
-                                            </div>
-                                        )}
+                        )}
+                    </div>
+                </Card>
+            )}
+        </div>
+    </Card>
+</div>
 
 
-
-
-                                    </div>
-                                </Card>
-                            )}
-
-                        </div>
-                    </Card>
-            </div>
             {/* Reschedule Modal */}
             <Modal
                         show={showRescheduleModal}
@@ -384,6 +497,37 @@ const Status = () => {
                         </Modal.Body>
             </Modal>
 
+            <Modal
+                        show={showCancelRescheduleModal}
+                        size="md"
+                        popup
+                        onClose={() => setShowCancelRescheduleModal(false)}
+                    >
+                        <Modal.Header />
+                        <Modal.Body>
+                            <div className="text-center">
+                                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                                    Do you want to cancel reschedule?
+                                </h3>
+                                <div className="flex justify-center gap-4 m-5 p-1
+                                ">
+                                    <Button className="bg-green-500 hover:bg-green-600"
+                                        color="failure"
+                                        onClick={() => handleCancelRescheduleRequest('YES')}
+                                    >
+                                        Yes
+                                    </Button>
+                                    <Button
+                                        color="gray"
+                                        onClick={() => handleCancelRescheduleRequest('NO')}
+                                    >
+                                        No
+                                    </Button>
+                                </div>
+                            </div>
+                        </Modal.Body>
+            </Modal>
+
             <div className="bg-white pr-3 w-full"> 
                 <div className="flex flex-col justify-center pt-3">
                 <Tabs aria-label="Tabs with underline" variant="underline" >
@@ -394,52 +538,69 @@ const Status = () => {
                     <h1 className="pt-2 pb-4 text-2xl font-medium"> General </h1>
                     <div className="flex pb-10">
                         <div className="flex flex-col w-1/2">
-                            <Card className="flex-1 bg-gray-50 mb-4 p-5" horizontal>
-                                <div className="flex items-center w-full">
-                                    <h5 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
-                                        STATUS
-                                    </h5>
-                                    <p className="font-normal pl-10 text-gray-700 dark:text-gray-400">
-                                        {currentUser.status}
-                                    </p>
-                                </div>
-                            </Card>
-                            <Card className="flex-1 p-5" horizontal>
-                                <div className="flex items-center w-full">
-                                    <h5 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
-                                        REMARKS
-                                    </h5>
-                                    <p className="font-normal pl-5 text-gray-700 dark:text-gray-400">
-                                        {currentUser.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')|| "No remarks"}
-                                    </p>
-                                </div>
-                            </Card>
+                        <Card className={`flex-1 mb-4 p-5 ${currentUser.status === 'approved' ? 'bg-green-500' : 
+                                        currentUser.status === 'denied' ? 'bg-red-600' : 
+                                        currentUser.status === 'NO ACTION' ? 'bg-transparent text-gray-500' : 'bg-white'}`} horizontal>
+                          <div className="flex items-center w-full">
+                              <h5 className="text-2xl font-light tracking-tight dark:text-white">
+                                  STATUS
+                              </h5>
+                              <p className={`font-bold text-lg pl-10 ${currentUser.status === 'NO ACTION' ? 'text-gray-500' : 'text-white'}`}>
+                                  {currentUser.status === 'approved' ? 'Approved' : 
+                                  currentUser.status === 'denied' ? 'Denied' : 
+                                  currentUser.status === 'NO ACTION' ? 'PENDING' : 'PENDING'}
+                              </p>
+                          </div>
+                      </Card>
+
+
+
+
+
+                      <Card className="flex-1 p-5" horizontal>
+                        <div className="flex items-center w-full">
+                            <h5 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
+                                REMARKS
+                            </h5>
+                            <p className="font-bold pl-5 text-gray-700 dark:text-gray-400">
+                                {currentUser.comment 
+                                    ? currentUser.comment.replace(/<p>/g, '').replace(/<\/p>/g, '') 
+                                    : "No remarks"}
+                            </p>
+                        </div>
+                    </Card>
+
                         </div>
                         <Card className="w-1/2 ml-5 p-5">
-                            <h5 className="text-2xl font-medium tracking-tight text-gray-900 dark:text-white">
-                                Medical Certificate
-                            </h5>
-                            {currentUser.medcert ? (
-                                            <Link target="_blank" rel="noopener noreferrer" className="w-full h-full object-fit mb-2" to={currentUser.medcert}>
-                                                <p className="text-3xl flex justify-center items-center">
-                                                    <BsFiletypePng style={{ fontSize: '10rem' }}/>
-                                                </p>
-                                            </Link>
-                                        ) : (
-                                            <p className="text-1xl pt-5 flex font-light ">
-                                                [Nothing to display]
-                                            </p>
-                                        )}
-                                        {currentUser.medcert && (
-                                            <div>
-                                                <h3 className="text-sm font-semibold mb-2">{currentUser.lastName}_medcert.png</h3>
-                                                <Link target="_blank" rel="noopener noreferrer" to={currentUser.medcert} className="block w-full mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm text-center">
-                                                    View
-                                                </Link>
-                                            </div>
-                                        )}
-                            
-                        </Card>
+                        <h5 className="text-2xl font-medium tracking-tight text-gray-900 dark:text-white">
+                            Medical Certificate
+                        </h5>
+                        {currentUser.medcert ? (
+                            <div className="flex flex-col items-center mb-2">
+                                <Link target="_blank" rel="noopener noreferrer" to={currentUser.medcert}>
+                                    <img
+                                        src={currentUser.medcert}
+                                        alt="Medical Certificate"
+                                        className="object-contain w-full h-auto max-h-64" // Adjust max height as needed
+                                    />
+                                </Link>
+                                <h3 className="text-sm font-semibold mb-2">{currentUser.lastName}_medcert.png</h3>
+                                <Link 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    to={currentUser.medcert} 
+                                    className="block w-full mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm text-center"
+                                >
+                                    View
+                                </Link>
+                            </div>
+                        ) : (
+                            <p className="text-1xl pt-5 flex font-light">
+                                [Nothing to display]
+                            </p>
+                        )}
+                    </Card>
+
                     </div>
                 
                 <div className="flex justify-between w-full">

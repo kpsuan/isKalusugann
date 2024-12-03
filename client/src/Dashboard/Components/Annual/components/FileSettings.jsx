@@ -4,22 +4,28 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-const options = [
-  'Copy Link',
-  'Download',
-  'Delete',
-];
+// Options for the menu
+const options = ['Copy Link', 'Download', 'Delete'];
 
 const ITEM_HEIGHT = 48;
 
-export default function LongMenu() {
+export default function LongMenu({ fileType, handleFileRemove }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+
+  // Handle menu open
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+
+  // Handle menu close
+  const handleClose = (option) => {
     setAnchorEl(null);
+
+    // If "Delete" is selected, call handleFileRemove
+    if (option === 'Delete') {
+      handleFileRemove(fileType);  // Call the delete logic with the fileType
+    }
   };
 
   return (
@@ -41,7 +47,7 @@ export default function LongMenu() {
         }}
         anchorEl={anchorEl}
         open={open}
-        onClose={handleClose}
+        onClose={() => handleClose(null)}
         PaperProps={{
           style: {
             maxHeight: ITEM_HEIGHT * 4.5,
@@ -50,7 +56,7 @@ export default function LongMenu() {
         }}
       >
         {options.map((option) => (
-          <MenuItem key={option} selected={option === 'Pyxis'} onClick={handleClose}>
+          <MenuItem key={option} onClick={() => handleClose(option)}>
             {option}
           </MenuItem>
         ))}

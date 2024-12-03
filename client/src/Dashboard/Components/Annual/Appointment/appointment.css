@@ -27,7 +27,7 @@
 }
 .dashboard .dashboardContainer {
   height: 95vh;
-  width: 95%;
+  width: 100%;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgb(164, 164, 164);

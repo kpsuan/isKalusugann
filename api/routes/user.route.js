@@ -10,7 +10,7 @@ import {
   assignSchedule,
   deleteSchedule,
   viewUsersScheduled,
-  scheduledToday,
+  viewUsersScheduledToday,
   getUsersByCourse, 
   getUsersByCollege,
   getusersub,
@@ -18,6 +18,17 @@ import {
   getUsersByCollegeInPerson,
   getreschedUsers,
   rescheduleUser,
+  updateUserWithReschedule,
+  getUsersWithCompleteDocs,
+  getUsersNoDocs,
+  getUsersIncDocs,
+  getUsersOverallPresent,
+  getUsersPresentYesterday,
+  getUsersOverallAbsent,
+  getStats,
+  updateUserRescheduleDate,
+  updateNotifications,
+  markNotificationAsRead
 
 
 } from '../controllers/user.controller.js';
@@ -28,22 +39,37 @@ const router = express.Router();
 router.get('/', test);
 router.post('/update/:id', verifyToken, updateUser);
 router.delete('/delete/:id', verifyToken, deleteUser);
+router.post('/updateReschedule/:id', verifyToken,  updateUserRescheduleDate);
+router.get('/:userId/notifications', verifyToken, updateNotifications);
+router.put('/:userId/notifications/:notificationId', markNotificationAsRead);
+
 router.get('/getusers', verifyToken, getUsers);
+router.get('/getstats', getStats);
+
 router.get('/getinperson', verifyToken, getInperson);
 router.get('/reschedUsers', verifyToken, getreschedUsers);
+router.get('/no-docs', verifyToken, getUsersNoDocs);
+router.get('/complete-docs', verifyToken, getUsersWithCompleteDocs);
+router.get('/inc-docs', verifyToken, getUsersIncDocs);
+router.get('/overallpresent', verifyToken, getUsersOverallPresent);
+router.get('/overallabsent', verifyToken, getUsersOverallAbsent);
+router.get('/yesterdaypresent', verifyToken, getUsersPresentYesterday);
+
 
 router.put('/updateStatus/:id', verifyToken, updateStatus);
 router.post('/assignschedule', verifyToken, assignSchedule);
+router.get('/scheduled-for-date/:date', verifyToken, viewUsersScheduled);
+router.get('/sched-for-today', verifyToken, viewUsersScheduledToday);
 router.get('/:id', verifyToken, getUserById);
 router.delete('/deleteschedule', verifyToken, deleteSchedule);
-router.get('/scheduled-for-date/:date', verifyToken, viewUsersScheduled);
-router.get('/scheduled-for-today', verifyToken, scheduledToday);
+
 router.get('/getUsersByCourse/:courseName', verifyToken, getUsersByCourse);
 router.get('/getUsersByCourseInPerson/:courseName', verifyToken, getUsersByCourseInPerson);
 router.get('/getUsersByCollege/:collegeName', verifyToken, getUsersByCollege);
 router.get('/getUsersByCollegeInPerson/:collegeName', verifyToken, getUsersByCollegeInPerson);
 router.post('/reschedule/:userId', verifyToken, rescheduleUser);
 router.get('/getsubmmitedUsers', verifyToken, getusersub);
+router.post('/updateUserReschedule/:userId', verifyToken, updateUserWithReschedule);
 
 
 

@@ -19,14 +19,29 @@ const RescheduleRequest = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(9); // Keep this constant
 
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false); // Loading state
 
-
   const location = useLocation();
-  const { startDate, endDate } = location.state || {};
-  console.log('Received Start Date:', startDate);
-  console.log('Received End Date:', endDate);
+  const savedDates = location.state || {};
 
+  useEffect(() => {
+    const fetchSettingsDates = async () => {
+      try {
+        const response = await axios.get(`/api/settings/schedule`);
+        const { startDate: dbStartDate, endDate: dbEndDate } = response.data;
+        setStartDate(dbStartDate || savedDates.startDate || localStorage.getItem("startDate"));
+        setEndDate(dbEndDate || savedDates.endDate || localStorage.getItem("endDate"));
+      } catch (error) {
+        console.error("Error fetching schedule settings:", error);
+        setStartDate(localStorage.getItem("startDate"));
+        setEndDate(localStorage.getItem("endDate"));
+      }
+    };
+
+    fetchSettingsDates();
+  }, [savedDates.startDate, savedDates.endDate]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -166,9 +181,9 @@ const RescheduleRequest = () => {
             <Table hoverable className='shadow-md mt-5 bg-transparent relative overflow-scroll'>
               <Table.Head className="text-left-blue text-md px-3 p-15 bg-gray-200 rounded-b shadow-md">
                 <Table.HeadCell>Name</Table.HeadCell>
-                <Table.HeadCell>Documents</Table.HeadCell>
                 <Table.HeadCell>Original Schedule</Table.HeadCell>
-                <Table.HeadCell>New Schedules</Table.HeadCell>
+                <Table.HeadCell>Available Schedules</Table.HeadCell>
+                <Table.HeadCell>Attempt</Table.HeadCell>
                 <Table.HeadCell>Status</Table.HeadCell>
                 <Table.HeadCell>Remarks</Table.HeadCell>
               </Table.Head>
@@ -183,44 +198,7 @@ const RescheduleRequest = () => {
                       <span className="text-sm font-light">{`${user.yearLevel} | ${user.college} | ${user.degreeProgram}`}</span>
                     </Table.Cell>
 
-                    <Table.Cell className="text-left flex-col">
-                      <div>
-                        {user.peForm ? (
-                          <Link className="text-teal-500 hover:underline" to={user.peForm}>
-                            {user.lastName}_peForm.pdf
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">Empty</span>
-                        )}
-                      </div>
-                      <div>
-                        {user.labResults ? (
-                          <Link className="text-teal-500 hover:underline" to={user.labResults}>
-                            {user.lastName}_labResults.pdf
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">Empty</span>
-                        )}
-                      </div>
-                      <div>
-                        {user.requestPE ? (
-                          <Link className="text-teal-500 hover:underline" to={user.requestPE}>
-                            {user.lastName}_requestPE.pdf
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">Empty</span>
-                        )}
-                      </div>
-                      <div>
-                        {user.medcert ? (
-                          <Link className="text-teal-500 hover:underline" to={user.medcert}>
-                            {user.lastName}_medcert.pdf
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">Empty</span>
-                        )}
-                      </div>
-                    </Table.Cell>
+                   
 
                     <Table.Cell>
                       {user.schedule.length > 0 ? (
@@ -241,7 +219,9 @@ const RescheduleRequest = () => {
                         <span className="text-gray-400">No Reschedule</span>
                       )}
                     </Table.Cell>
-
+                    <Table.Cell className="w-3">
+                      <span>{user.rescheduleLimit || '0'}</span>
+                    </Table.Cell>
                     <Table.Cell>
                       <span className={`font-bold bg-${user.rescheduleStatus === 'approved' ? 'green' : user.rescheduleStatus === 'denied' ? 'red' : 'gray'}-500 rounded-full px-3 py-1 ${user.rescheduleStatus === 'approved' ? 'text-green-600' : user.rescheduleStatus === 'denied' ? 'text-red-600' : 'text-gray-400'}`}>
                         <Link

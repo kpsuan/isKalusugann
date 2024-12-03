@@ -72,24 +72,25 @@ const CollegeStudents = () => {
   const totalPages = Math.ceil(totalUsers / limit);
   const degreeProgramOptions = [
     { value: "", label: "All" },
-    { value: "COMMUNITY DEVELOPMENT", label: "Community Development" },
-    { value: "History", label: "History" },
+    { value: "APPLIED MATHEMATICS", label: "Applied Mathematics" },
+    { value: "BIOLOGY", label: "Biology" },
+    { value: "CHEMICAL ENGINEERING", label: "Chemical Engineering" },
+    { value: "CHEMISTRY", label: "Chemistry" },
     { value: "COMMUNICATION AND MEDIA STUDIES", label: "Communication and Media Studies" },
+    { value: "COMMUNITY DEVELOPMENT", label: "Community Development" },
+    { value: "COMPUTER SCIENCE", label: "Computer Science" },
+    { value: "ECONOMICS", label: "Economics" },
+    { value: "FISHERIES", label: "Fisheries" },
+    { value: "FOOD TECHNOLOGY", label: "Food Technology" },
+    { value: "History", label: "History" },
     { value: "LITERATURE", label: "Literature" },
     { value: "POLITICAL SCIENCE", label: "Political Science" },
     { value: "PSYCHOLOGY", label: "Psychology" },
-    { value: "SOCIOLOGY", label: "Sociology" },
-    { value: "APPLIED MATHEMATICS", label: "Applied Mathematics" },
-    { value: "BIOLOGY", label: "Biology" },
-    { value: "CHEMISTRY", label: "Chemistry" },
-    { value: "COMPUTER SCIENCE", label: "Computer Science" },
-    { value: "ECONOMICS", label: "Economics" },
     { value: "PUBLIC HEALTH", label: "Public Health" },
+    { value: "SOCIOLOGY", label: "Sociology" },
     { value: "STATISTICS", label: "Statistics" },
-    { value: "FISHERIES", label: "Fisheries" },
-    { value: "CHEMICAL ENGINEERING", label: "Chemical Engineering" },
-    { value: "FOOD TECHNOLOGY", label: "Food Technology" },
   ];
+  
 
   const statusOptions = [
     { value: "", label: "All" },

@@ -53,20 +53,40 @@ import Reschedule from './Dashboard/Components/Admin/AnnualPE/Reschedule';
 import RescheduleStatus from './Dashboard/Components/Admin/AnnualPE/RescheduleStatus';
 import SuperAdminInPerson from './Dashboard/Components/Admin/AnnualPE/SuperAdminInPerson';
 import Post from './Dashboard/Components/AnnouncementUser/Post';
+import AnnualHomeAdmin from './Dashboard/Components/Admin/AnnualPE/AnnualHomeAdmin';
+import UserProfile from './pages/userProfile';
+import CompleteDocuments from './Dashboard/Components/Admin/AnnualPE/CompleteDocuments';
+import NoDocsSubmitted from './Dashboard/Components/Admin/AnnualPE/NoDocsSubmitted';
+import IncDocuments from './Dashboard/Components/Admin/AnnualPE/IncDocuments';
+import Event from './Dashboard/Components/Admin/Events/Event';
+import Attendance from './pages/Attendance';
+import Attendance2 from './pages/Attendance2';
+import CreateEvent from './Dashboard/Components/Admin/Events/CreateEvent';
+import OverallArrived from './Dashboard/Components/Admin/AnnualPE/OverallArrived';
+import YesterdayPresent from './Dashboard/Components/Admin/AnnualPE/YesterdayPresent';
+import OverallAbsent from './Dashboard/Components/Admin/AnnualPE/OverallAbsent';
+import ScheduledForToday2 from './Dashboard/Components/Admin/AnnualPE/ScheduledToday2';
+import TopHeader from './components/TopHeader';
+import Facilities from './pages/Facilities';
+import News from './pages/News';
+
 
 export default function App() {
   return (
     <BrowserRouter>
-      
-      <Header />
-      
+      <Header/>
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/about' element={<About />} />
+        <Route path='/facilities' element={<Facilities />} />
         <Route path='/sign-in' element={<SignIn />} />
         <Route path='/sign-up' element={<SignUp />} />
+        <Route path='/attendance' element={<Attendance />} />
+        <Route path="/events" element={<Event />} />
+
        
         <Route element={<PrivateRoute />}>
+          <Route path='/attendance2' element={<Attendance2 />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/my-Profile' element={<MoreInfo />} />
           <Route path='/moreInfo' element={<MoreInfo />} />
@@ -83,6 +103,7 @@ export default function App() {
           <Route path="/appointment" element={<Appointments />} />
           <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
           <Route path="/announcement" element={<Announcement />} />
+          <Route path="/news" element={<News />} />
           <Route path="/dash-post" element={<DashPost />} />
           <Route path="/get-documents" element={<GetDocs />} />
           <Route path="/get-allDocuments" element={<GetAllDocs />} />
@@ -92,31 +113,46 @@ export default function App() {
           <Route path="/online2" element={<Online2 />} />
           <Route path="/fileSubmissions" element={<FileSubmission />} />
           <Route path="/post/:postSlug" element={<Post />} />
+          <Route path="/completeDocs" element={<CompleteDocuments />} />
+          <Route path="/noDocs" element={<NoDocsSubmitted />} />
+          <Route path="/incDocs" element={<IncDocuments />} />
+
+
+
         </Route>
 
         <Route element={<OnlyAdminPrivateRoute />}>
           <Route path="/adminPE" element={<AdminPE />} />
+          <Route path="/adminHome" element={<AnnualHomeAdmin />} />
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/create-event" element={<CreateEvent />} />
           <Route path="/update-post/:postId" element={<UpdatePost />} />
           <Route path="/manage-online" element={<Online />} />
           <Route path="/manageInPerson" element={<InPersonRes />} />
           <Route path="/show-inPerson" element={<UserInPerson />} />
           <Route path="/show-online" element={<UsersOnline />} />
           <Route path="/user-status/:userId" element={<UpdateStatus />} />
+          <Route path="/user-profile/:userId" element={<UserProfile />} />
+
+
           <Route path="/resched-status/:userId" element={<RescheduleStatus />} />
 
           <Route path="/certificate/:userId" element={<Certificate />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/scheduledToday" element={<ScheduledToday />} />
+          <Route path="/scheduledToday2" element={<ScheduledForToday2 />} />
           <Route path="/scheduledOnSpecificDate" element={<ScheduledOn />} />
           <Route path="/viewIn" element={<ViewIn />} />
           <Route path="/users/course/:courseName" element={<GetCourse />} />
+
           <Route path="/users/college/:collegeName" element={<GetCollege />} />
           <Route path="/viewsubmissions" element={<ViewSubmissions />} />
           <Route path="/course/:courseName" element={<CourseStudents />} />
           <Route path="/college/:collegeName" element={<CollegeStudents />} />
           <Route path="/reschedule" element={<Reschedule />} />
-
+          <Route path="/overallpresent" element={<OverallArrived />} />
+          <Route path="/overallabsent" element={<OverallAbsent />} />
+          <Route path="/yesterdaypresent" element={<YesterdayPresent />} />
         </Route>
 
         <Route element = {<OnlySuperAdminRoute />}>

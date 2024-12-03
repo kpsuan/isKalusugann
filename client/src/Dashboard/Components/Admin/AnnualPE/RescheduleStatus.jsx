@@ -81,7 +81,7 @@ const RescheduleStatus = () => {
         const scheduleData = await res.json();
         if (res.ok) {
           setAvailableDates(scheduleData.rescheduledDates || []);
-          console.log("Available dates:", scheduleData.rescheduledDates);
+          console.log("Available datess:", scheduleData.rescheduledDates);
         } else {
           console.error("Error fetching available dates:", scheduleData.message);
         }
@@ -95,20 +95,21 @@ const RescheduleStatus = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Format the dates in the desired format
     const formattedDates = availableDates.map(date => {
         const d = new Date(date);
         return d.toISOString(); // Converts the date to the desired format
     });
-  
+
     // Conditional check to only include rescheduledDate if status is not denied
     const dataToSubmit = {
         ...formData,
         ...(formData.rescheduleStatus !== 'denied' && { rescheduledDate: formattedDates })
     };
-  
+
     try {
+        // First, update the user normally
         const res = await fetch(`/api/user/update/${userId}`, {
             method: 'POST',
             headers: {
@@ -117,25 +118,50 @@ const RescheduleStatus = () => {
             body: JSON.stringify(dataToSubmit),
         });
         const data = await res.json();
-  
+
         if (!res.ok) {
             console.error('Failed to update user:', data.message);
             setPublishError('Failed to update user.');
             return;
         }
-  
+
+        // If the reschedule status is not denied, send the additional reschedule request
+        if (formData.rescheduleStatus !== 'denied') {
+            const rescheduleRes = await fetch(`/api/user/updateUserReschedule/${userId}`, {  // Correct route
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ rescheduledDate: formattedDates }),  // Pass rescheduled dates only
+            });
+            const rescheduleData = await rescheduleRes.json();
+            
+            if (!rescheduleRes.ok) {
+                console.error('Failed to update reschedule:', rescheduleData.message);
+                setPublishError('Failed to update reschedule.');
+                return;
+            }
+        }
+
         toast.success('Rescheduled Dates saved successfully!');
         setScrollTop(true);
         setTimeout(() => {
             setUpdateSuccess(false);
             navigate(-1);
         }, 3000);
-  
+
     } catch (error) {
         console.error('Error updating user:', error.message);
         setPublishError('An error occurred while updating.');
     }
 };
+
+
+
+  
+  
+  
+  
 
   
 
@@ -177,6 +203,24 @@ const RescheduleStatus = () => {
               <div>User not found.</div>
             )}
             <form className="py-10 flex flex-col gap-2" onSubmit={handleSubmit}>
+            
+            <Card className="max-w-10 p-3 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600">
+            <div className="flex flex-1">
+              <h1 className="text-2xl font-light text-white">Current Schedule: </h1>
+              <p className="font-medium text-2xl text-white ml-2">
+              {(() => {
+                              const date = new Date(user.schedule);
+                              const weekday = date.toLocaleString('en-US', { weekday: 'short' });
+                              const month = date.toLocaleString('en-US', { month: 'short' });
+                              const day = date.getDate().toString().padStart(2, '0');
+                              const year = date.getFullYear();
+                              return `${weekday} ${month} ${day} ${year}`;
+                            })()}
+                </p> 
+              </div>
+            </Card>
+            
+            <Card className="bg-white rounded-lg border border-gray-200 p-10 w-full">  
               <p className="font-medium text-2xl text-teal-500">Approve or Deny the Reschedule Request</p>
               <div className="flex flex-col gap-4 mb-4">
                 <div className="flex flex-row gap-2">
@@ -224,7 +268,9 @@ const RescheduleStatus = () => {
               <Button type="submit" onClick={handleSubmit} className="w-full text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
                 SAVE 
               </Button>
+            </Card>
             </form>
+            
           </div>
         </div>
       </div>

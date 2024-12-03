@@ -37,14 +37,6 @@ const Sidebar = () => {
                     </a>
                 </li>
 
-                <li className="listItem">
-                    <a href='/appointment' className = 'menuLink flex'> 
-                    <IoCalendarOutline  className='icon'/>
-                    <span className="smallText">
-                        Appointments
-                    </span>
-                    </a>
-                </li>
 
                 <li className="listItem">
                 {currentUser.isAdmin && (
@@ -67,7 +59,7 @@ const Sidebar = () => {
 
                 <li className="listItem">
                     {currentUser.isAdmin && (
-                        <a href='/adminPE' className='menuLink flex'>
+                        <a href='/adminHome' className='menuLink flex'>
                             <CiMedicalCase className='icon' />
                             <span className="smallText">
                                 Manage Annual PE

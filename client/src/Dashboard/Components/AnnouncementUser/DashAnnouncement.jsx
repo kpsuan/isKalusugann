@@ -10,7 +10,7 @@ const DashAnnouncement = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [userPosts, setUserPosts] = useState([]);
   const [showMore, setShowMore] = useState(true);
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'list'
+  const [viewMode, setViewMode] = useState('list'); // Default to 'list' view
 
   useEffect(() => {
     const fetchPosts = async () => {

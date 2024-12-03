@@ -21,16 +21,15 @@ const DocsUserView = () => {
             <Sidebar />
             <div className="mainContent">
             <Top  className="font-medium" title={headerTitle}/> 
-            
-            <div className="bg-white rounded-lg border border-gray-200 mt-10 p-10 w-full">
-            <Card className="w-full h-150 p-10 bg-gradient-to-r from-cyan-600 to-green-500">
-                                    <div className="text-2xl font-light tracking-tight text-white dark:text-white">Downloadable docs</div>
+            <Card className="w-full mt-10 mb-5 h-150 p-10 bg-gradient-to-r from-cyan-600 to-green-500">
+                                    <div className="text-2xl font-light tracking-tight text-white dark:text-white">Downloadable Forms</div>
 
             </Card>
+           
               <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
+              
                   <GetAllDocs/>
               </div>         
-            </div>    
           </div>
         </div>
         </div>

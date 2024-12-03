@@ -13,14 +13,11 @@ export const Profile2 = ({ title }) => {
       <div className='topSection'>
       <div className="headerSection flex h-7">
         <div className="title text-center p-3">
-          <h1>{title}</h1>
+          <h1 className='font-bold'>{title}</h1>
           
         </div>
 
-        <div className="searchBar flex">
-          <input type="text" placeholder='Search' />
-          <BiSearchAlt className='icon'/>
-        </div>
+        
 
         <div className="adminDiv flex ">
           

@@ -8,12 +8,22 @@ import { useSelector } from 'react-redux';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import * as XLSX from 'xlsx'; // Import the XLSX library
 import Select from 'react-select';
+import { PiUsersFourLight } from "react-icons/pi";
+import { FaCheck } from "react-icons/fa";
+import { FaCircleXmark } from "react-icons/fa6";
+import { LuPin } from "react-icons/lu";
+
 
 
 const UserInPerson = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
+ 
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  
   const [selectedDegreeProgram, setSelectedDegreeProgram] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [filter, setFilter] = useState("");
@@ -34,21 +44,32 @@ const UserInPerson = () => {
         if (statusFilter) {
           url += `&status=${statusFilter}`;
         }
+  
         const res = await fetch(url);
         const data = await res.json();
+        console.log("API Response:", data); // Log the API response for debugging
+  
         if (res.ok) {
           setUsers(data.users);
           setTotalUsers(data.totalUsers);
+          setTotalApproved(data.totalApproved);
+          setTotalDenied(data.totalDenied);
+          setTotalPending(data.totalPending);
+          
+          console.log("Total Approved:", data.totalApproved);
+          console.log("Total Denied:", data.totalDenied);
+          console.log("Total Pending:", data.totalPending);
         }
       } catch (error) {
-        console.log(error.message);
+        console.log("Error fetching users:", error.message);
       }
     };
-
+  
     if (currentUser.isAdmin) {
       fetchUsers();
     }
   }, [currentUser._id, filter, selectedDegreeProgram, statusFilter, currentPage, limit]);
+  
 
   const handleShowMore = async () => {
     setCurrentPage(prev => prev + 1);
@@ -108,24 +129,25 @@ const UserInPerson = () => {
   
   const degreeProgramOptions = [
     { value: "", label: "All" },
-    { value: "COMMUNITY DEVELOPMENT", label: "Community Development" },
-    { value: "History", label: "History" },
+    { value: "APPLIED MATHEMATICS", label: "Applied Mathematics" },
+    { value: "BIOLOGY", label: "Biology" },
+    { value: "CHEMICAL ENGINEERING", label: "Chemical Engineering" },
+    { value: "CHEMISTRY", label: "Chemistry" },
     { value: "COMMUNICATION AND MEDIA STUDIES", label: "Communication and Media Studies" },
+    { value: "COMMUNITY DEVELOPMENT", label: "Community Development" },
+    { value: "COMPUTER SCIENCE", label: "Computer Science" },
+    { value: "ECONOMICS", label: "Economics" },
+    { value: "FISHERIES", label: "Fisheries" },
+    { value: "FOOD TECHNOLOGY", label: "Food Technology" },
+    { value: "History", label: "History" },
     { value: "LITERATURE", label: "Literature" },
     { value: "POLITICAL SCIENCE", label: "Political Science" },
     { value: "PSYCHOLOGY", label: "Psychology" },
-    { value: "SOCIOLOGY", label: "Sociology" },
-    { value: "APPLIED MATHEMATICS", label: "Applied Mathematics" },
-    { value: "BIOLOGY", label: "Biology" },
-    { value: "CHEMISTRY", label: "Chemistry" },
-    { value: "COMPUTER SCIENCE", label: "Computer Science" },
-    { value: "ECONOMICS", label: "Economics" },
     { value: "PUBLIC HEALTH", label: "Public Health" },
+    { value: "SOCIOLOGY", label: "Sociology" },
     { value: "STATISTICS", label: "Statistics" },
-    { value: "FISHERIES", label: "Fisheries" },
-    { value: "CHEMICAL ENGINEERING", label: "Chemical Engineering" },
-    { value: "FOOD TECHNOLOGY", label: "Food Technology" },
   ];
+  
 
   const statusOptions = [
     { value: "", label: "All" },
@@ -140,7 +162,50 @@ const UserInPerson = () => {
   return (
     <div>
       <p className="text-3xl font-light mb-4">Showing All Users</p>
-      <p className="font-bold my-4">Total Users: {totalUsers}</p>
+      <div className="flex space-x-8 my-4"> 
+        <div className="my-4">
+          <span className="font-bold block">Total Users</span> 
+          <div className="flex items-center mt-1"> 
+            <PiUsersFourLight className="mr-1 text-2xl" /> 
+            <span>{totalUsers}  </span>
+          </div> 
+        </div>
+        
+        <div className="h-12 my-4 w-px bg-gray-300"></div>
+
+        <div className="my-4">
+          <span className="font-bold block">Approved</span> 
+          <div className="flex items-center mt-1"> 
+            <FaCheck className="mr-1 text-2xl text-green-500" /> 
+            <span>{totalApproved} </span> 
+          </div> 
+        </div>
+
+        <div className="h-12 my-4 w-px bg-gray-300"></div>
+
+
+        <div className="my-4">
+          <span className="font-bold block">Denied</span> 
+          <div className="flex items-center mt-1 text-red-500"> 
+            <FaCircleXmark className="mr-1 text-2xl" /> 
+            <span>{totalDenied} </span> 
+          </div> 
+        </div>
+
+        <div className="h-12 my-4 w-px bg-gray-300"></div>
+
+
+        <div className="my-4">
+          <span className="font-bold block">Pending</span> 
+          <div className="flex items-center mt-1"> 
+            <LuPin className="mr-1 text-2xl text-yellow-500" /> 
+            <span>{totalPending} </span> 
+          </div> 
+        </div>
+
+      </div>
+
+
       
       <div className="flex justify-start mb-4">
               <div className="flex items-center ">
@@ -265,8 +330,8 @@ const UserInPerson = () => {
                       </div>
                     </Table.Cell>
                     <Table.Cell className="text-left text-lg">
-                      {user.schedule ? (
-                        <Link className="text-teal-500  font-light ">
+                      {user.schedule && !isNaN(new Date(user.schedule)) ? (
+                        <Link className="text-teal-500 font-light">
                           {(() => {
                             const date = new Date(user.schedule);
                             const weekday = date.toLocaleString('en-US', { weekday: 'short' });
@@ -277,9 +342,10 @@ const UserInPerson = () => {
                           })()}
                         </Link>
                       ) : (
-                        <span className="text-gray-400">NAN</span>
+                        <span className="text-gray-400">No Schedule Yet</span>
                       )}
                     </Table.Cell>
+
 
 
                     <Table.Cell className="text-center px-2">
@@ -291,13 +357,18 @@ const UserInPerson = () => {
                     </Table.Cell>
 
                     <Table.Cell className="text-left">
-                            {user.comment ? (
-                              <span>{user.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')}</span>
-                            ) : (
-                              <span className="text-gray-400">Empty</span>
-                            )}
-                          </Table.Cell>
-
+                                {user.comment ? (
+                                    <span>
+                                        {user.comment
+                                            .replace(/<p>/g, '')
+                                            .replace(/<\/p>/g, '')
+                                            .replace(/<strong>/g, '')
+                                            .replace(/<\/strong>/g, '')}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400">Empty</span>
+                                )}
+                     </Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

@@ -143,17 +143,17 @@ const CollegeStudents = () => {
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
         <Sidebar />
-        <div className="mainContent">
-          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-            <div className="text-2xl font-bold mb-4">{collegeName}</div>
-            <p className="font-light my-4">
+        <div className="mainContent m-0 p-0">
+          <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+            <div className="text-5xl font-bold  text-white mb-4">{collegeName}</div>
+            <p className="font-light my-4 text-white">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
             </p>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
               View Scheduled Today
             </button>
           </div>
-          <div>
+          <div className="bg-white border border-gray-200 p-5">
             <p className="font-bold my-4">Total Users: {totalUsers}</p>
             <div className="flex justify-start">
               <div className="flex items-center ">
@@ -275,8 +275,8 @@ const CollegeStudents = () => {
                       </div>
                     </Table.Cell>
                     <Table.Cell className="text-left text-lg">
-                      {user.schedule ? (
-                        <Link className="text-teal-500  font-light ">
+                      {user.schedule && !isNaN(new Date(user.schedule)) ? (
+                        <Link className="text-teal-500 font-light">
                           {(() => {
                             const date = new Date(user.schedule);
                             const weekday = date.toLocaleString('en-US', { weekday: 'short' });
@@ -287,7 +287,7 @@ const CollegeStudents = () => {
                           })()}
                         </Link>
                       ) : (
-                        <span className="text-gray-400">NAN</span>
+                        <span className="text-gray-400">No Schedule Yet</span>
                       )}
                     </Table.Cell>
 
@@ -301,12 +301,18 @@ const CollegeStudents = () => {
                     </Table.Cell>
 
                     <Table.Cell className="text-left">
-                            {user.comment ? (
-                              <span>{user.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')}</span>
-                            ) : (
-                              <span className="text-gray-400">Empty</span>
-                            )}
-                          </Table.Cell>
+                                {user.comment ? (
+                                    <span>
+                                        {user.comment
+                                            .replace(/<p>/g, '')
+                                            .replace(/<\/p>/g, '')
+                                            .replace(/<strong>/g, '')
+                                            .replace(/<\/strong>/g, '')}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400">Empty</span>
+                                )}
+                            </Table.Cell>
 
                   </Table.Row>
                 ))}

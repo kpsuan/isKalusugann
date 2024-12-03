@@ -196,8 +196,8 @@ const CourseStudents = () => {
                       </div>
                     </Table.Cell>
                     <Table.Cell className="text-left text-lg">
-                      {user.schedule ? (
-                        <Link className="text-teal-500  font-light ">
+                      {user.schedule && !isNaN(new Date(user.schedule)) ? (
+                        <Link className="text-teal-500 font-light">
                           {(() => {
                             const date = new Date(user.schedule);
                             const weekday = date.toLocaleString('en-US', { weekday: 'short' });
@@ -208,7 +208,7 @@ const CourseStudents = () => {
                           })()}
                         </Link>
                       ) : (
-                        <span className="text-gray-400">NAN</span>
+                        <span className="text-gray-400">No Schedule Yet</span>
                       )}
                     </Table.Cell>
 
@@ -222,12 +222,18 @@ const CourseStudents = () => {
                     </Table.Cell>
 
                     <Table.Cell className="text-left">
-                            {user.comment ? (
-                              <span>{user.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')}</span>
-                            ) : (
-                              <span className="text-gray-400">Empty</span>
-                            )}
-                          </Table.Cell>
+                                {user.comment ? (
+                                    <span>
+                                        {user.comment
+                                            .replace(/<p>/g, '')
+                                            .replace(/<\/p>/g, '')
+                                            .replace(/<strong>/g, '')
+                                            .replace(/<\/strong>/g, '')}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400">Empty</span>
+                                )}
+                            </Table.Cell>
 
                   </Table.Row>
                 ))}

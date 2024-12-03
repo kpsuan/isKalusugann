@@ -244,12 +244,18 @@ const UsersWhoSubmittedOnline = () => {
                     </Table.Cell>
   
                     <Table.Cell className="text-left">
-                      {user.comment ? (
-                         <span>{user.comment.replace(/<p>/g, '').replace(/<\/p>/g, '')}</span>
-                      ) : (
-                        <span className="text-gray-400">Empty</span>
-                      )}
-                    </Table.Cell> 
+                                {user.comment ? (
+                                    <span>
+                                        {user.comment
+                                            .replace(/<p>/g, '')
+                                            .replace(/<\/p>/g, '')
+                                            .replace(/<strong>/g, '')
+                                            .replace(/<\/strong>/g, '')}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400">Empty</span>
+                                )}
+                     </Table.Cell>
                 </Table.Row>
               </Table.Body>
             ))

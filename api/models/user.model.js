@@ -1,5 +1,29 @@
 import mongoose from 'mongoose';
 
+const notificationSchema = new mongoose.Schema(
+  {
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+    message: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['success', 'error', 'info', 'warning'], // Restrict to specific types
+      default: 'info',
+    },
+    isRead: {
+      type: Boolean,
+      default: false, // Notifications are unread by default
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now, // Automatically set the time of creation
+    },
+  },
+ 
+);
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -19,72 +43,58 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       default: '',
-      //required: true,
     },
     middleName: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     lastName: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     dateOfBirth: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     gender: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     degreeLevel: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     yearLevel: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     college: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     degreeProgram: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     profilePicture: {
       type: String,
-      default:
-        'https://grallc.github.io/img/avatar.jpg',
+      default: 'https://grallc.github.io/img/avatar.jpg',
     },
     annualPE: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     peForm: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     labResults: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     requestPE: {
       type: String,
-      default: ''
-      //required: true,
+      default: '',
     },
     isAdmin: {
       type: Boolean,
@@ -103,39 +113,67 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    comment : {
+    comment: {
       type: String,
       default: '',
     },
-    medcert:{
+    medcert: {
       type: String,
       default: '',
     },
     schedule: {
-      type: [String], // Define as an array of strings
-      default: [],    // Set default to an empty array
+      type: [String],
+      default: [''],
     },
     rescheduledDate: {
-      type: [String], // Define as an array of strings
-      default: [],    // Set default to an empty array
+      type: [String],
+      default: [],
     },
-    reschedule:{
+    reschedule: {
       type: String,
       default: '',
     },
-    rescheduleStatus:{
+    rescheduleStatus: {
       type: String,
       default: '',
     },
-
-    reservedDates: [{
-      date: Date,
-      expiresAt: Date
-    }],
+    rescheduleRemarks: {
+      type: String,
+      default: '',
+    },
+    isRescheduled: {
+      type: Boolean,
+      default: false,
+    },
+    rescheduleLimit: {
+      type: Number,
+      default: 0,
+    },
+    isPresent: {
+      type: String,
+      default: 'PENDING',
+    },
+    lastLoggedIn: {
+      type: Date,
+      default: null,
+    },
+    queueNumber: {
+      type: Number,
+      default: null,
+    },
+    queueNumberDate: {
+      type: String,
+      default: null,
+    },
     
-    rescheduleRemarks:{
-      type: String,
-      default: '',
+    lastUpdated: { 
+      type: Date, 
+      default: Date.now 
+    },
+    
+    notifications: {
+      type: [notificationSchema],
+      default: [], // Initialize as an empty array
     },
   },
   { timestamps: true }

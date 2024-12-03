@@ -5,6 +5,10 @@ import { signInSuccess } from '../redux/user/userSlice';
 import { useNavigate } from 'react-router-dom';
 
 export default function OAuth() {
+  const slugify = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+  };
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const handleGoogleClick = async () => {
@@ -19,10 +23,11 @@ export default function OAuth() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: result.user.displayName,
-          email: result.user.email,
-          photo: result.user.photoURL,
-        }),
+        name: result.user.displayName,
+        email: result.user.email,
+        photo: result.user.photoURL,
+        slug: result.user.email.split(' ').join('').toLowerCase().replace(/up|edu|ph/g, '').replace(/[^a-zA-Z0-9-]/g, '-')
+      }),
       });
       const data = await res.json();
       console.log(data);

@@ -23,27 +23,29 @@ const Announcement = () => {
                                         View all announcements here
                                     </p>
                                 </Card>
-                   
+                    
                     <Tabs aria-label="Default tabs" style="default" className="my-4">
+                    {currentUser.isAdmin && (
                         <Tabs.Item title="Make an announcement" icon={HiUserCircle}>
-                            {currentUser.isAdmin && (
                             <Link to="/create-post">
-                                <div className="bg-white rounded-lg border border-gray-200 p-10 w-3/4">
-                                    <div className="text-2xl font-light mb-4">Create an announcement</div>
-                                    <p className="font-light my-4">
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        className="w-80 text-lg bg-gradient-to-r from-green-500 to-blue-400 text-white px-20 py-4 rounded-md"
-                                    >
-                                        Create a post
-                                    </Button>
-                                </div>
+                            <div className="bg-white rounded-lg border border-gray-200 p-10 w-3/4">
+                                <div className="text-2xl font-light mb-4">Create an announcement</div>
+                                <p className="font-light my-4">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
+                                </p>
+                                <Button
+                                type="button"
+                                className="w-80 text-lg bg-gradient-to-r from-green-500 to-blue-400 text-white px-20 py-4 rounded-md"
+                                >
+                                Create a post
+                                </Button>
+                            </div>
                             </Link>
-                        )}
                         </Tabs.Item>
+                    )}
+                    {currentUser.isAdmin && (
                         <Tabs.Item active title="Posted by you" icon={HiUserCircle}>
+                        {currentUser.isAdmin && (
                             <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
                                 
                                 <div>
@@ -52,7 +54,9 @@ const Announcement = () => {
                                     </p>
                                 </div>
                             </div>
+                        )}
                         </Tabs.Item>
+                    )}
                         <Tabs.Item title="All Announcements" icon={HiUserCircle}>
                             <DashAnnouncement />
                         </Tabs.Item>

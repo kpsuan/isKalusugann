@@ -17,7 +17,7 @@ const Features = () => {
         <h1 className='text-2xl font-bold mb-4'>Features</h1>
       </div>
 
-      <div className="flex flex-1 w-full my-4">
+      <div className="flex flex-1 w-full h-32 my-2">
         <Card
           href={currentUser.isAdmin ? '/adminPE' : '/annualhome'}
           className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
@@ -26,10 +26,10 @@ const Features = () => {
           <div className="flex">
             <div className="flex items-center w-full">
               <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <GrSchedule />
+                <GrSchedule className='text-3xl' />
               </h5>
               <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
+                <p className="font-semibold text-lg w-3/4 text-gray-500 dark:text-gray-400">
                   {currentUser.isAdmin
                     ? 'Schedule and Reschedule Annual PE Examinations of Students'
                     : 'View Your Annual PE Examination Schedule'}
@@ -45,12 +45,12 @@ const Features = () => {
           horizontal
         >
           <div className="flex">
-            <div className="flex items-center w-full">
+            <div className="flex items-center  w-full">
               <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <LiaFileMedicalAltSolid />
+                <LiaFileMedicalAltSolid className='text-3xl' />
               </h5>
               <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
+                <p className="font-semibold text-lg w-7/8 text-gray-500 dark:text-gray-400">
                   {currentUser.isAdmin
                     ? 'View Submitted Medical Forms and Documents of Students'
                     : 'Submit and View Your Medical Forms'}
@@ -61,19 +61,19 @@ const Features = () => {
         </Card>
       </div>
 
-      <div className="flex flex-1 w-full my-2">
+      <div className="flex flex-1 w-full h-32 my-2">
         <Card
           href={currentUser.isAdmin ? '/announcement' : '/announcement'}
           className="flex-1 cursor-pointer mr-2 p-5 bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
           horizontal
         >
           <div className="flex">
-            <div className="flex items-center w-full">
+            <div className="flex items-center  w-full">
               <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <TfiAnnouncement />
+                <TfiAnnouncement className='text-3xl' />
               </h5>
               <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
+                <p className="font-semibold text-lg w-full text-gray-500 dark:text-gray-400">
                   {currentUser.isAdmin
                     ? 'Create, Edit, View and Post Announcements Online'
                     : 'View Announcements'}
@@ -91,10 +91,10 @@ const Features = () => {
           <div className="flex">
             <div className="flex items-center w-full">
               <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <IoDocumentsOutline />
+                <IoDocumentsOutline className='text-3xl'/>
               </h5>
               <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
+                <p className="font-semibold text-lg text-gray-500 dark:text-gray-400">
                   {currentUser.isAdmin
                     ? 'Upload and View Downloadable Documents and Forms'
                     : 'Download Available Documents and Forms'}

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import Sidebar from '../../../SideBar Section/Sidebar';
 import axios from 'axios'; // Make sure to install axios if you haven't already
 
-import { Card, FileInput, Label, Button } from 'flowbite-react';
+import { Card, FileInput, Label, Button, Modal } from 'flowbite-react';
 import { IoCloudUpload } from "react-icons/io5";
 import { MdClose } from "react-icons/md";
 import { app } from '../../../../../firebase';
@@ -27,6 +27,8 @@ const FileSubmission = () => {
     const [uploadPercent3, setUploadPercent3] = useState(0);
     const [uploadError, setUploadError] = useState(false);
     const [formData, setFormData] = useState({});
+    const [showSubmitModal, setShowSubmitModal] = useState(false); // New state for reschedule modal
+
     const { currentUser } = useSelector((state) => state.user);
     const userHasChoice = currentUser?.annualPE;
 
@@ -97,10 +99,19 @@ const FileSubmission = () => {
     );
 };
 
-    
+    const handleSubmitModal = async (choice) => {
+        setShowSubmitModal(false);
+        if (choice === 'YES') {
+            await handleSubmit();
+            } 
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        // Only prevent default if an event is passed
+        if (e) {
+            e.preventDefault();
+        }
+        
         try {
             dispatch(updateUserStart());
             const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -121,6 +132,9 @@ const FileSubmission = () => {
             dispatch(updateUserFailure(error));
         }
     };
+    
+
+
 
     const handleFileRemove = async (fileType) => {
         const storage = getStorage(app);
@@ -434,11 +448,42 @@ const FileSubmission = () => {
                     <div className="flex mt-3">
                         <button
                             className="w-1/2 p-5 mb-10 bg-cyan-500 text-white  rounded-lg hover:bg-cyan-600 transition duration-300"
-                            onClick={handleSubmit}
+                            onClick={() => setShowSubmitModal(true) }
                         >
                             Submit Documents
                         </button>
                     </div>
+
+                    <Modal
+                        show={showSubmitModal}
+                        size="md"
+                        popup
+                        onClose={() => setShowSubmitModal(false)}
+                    >
+                        <Modal.Header />
+                        <Modal.Body>
+                            <div className="text-center">
+                                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                                    Do you want to submit?
+                                </h3>
+                                <div className="flex justify-center gap-4 m-5 p-1
+                                ">
+                                    <Button className="bg-green-500 hover:bg-green-600"
+                                        color="failure"
+                                        onClick={() => handleSubmitModal('YES')}
+                                    >
+                                        Yes
+                                    </Button>
+                                    <Button
+                                        color="gray"
+                                        onClick={() => handleSubmitModal('NO')}
+                                    >
+                                        No
+                                    </Button>
+                                </div>
+                            </div>
+                        </Modal.Body>
+                    </Modal>
                 </div>
             </div>
         </div>

@@ -10,6 +10,7 @@ import { Banner } from "flowbite-react";
 import { HiX } from "react-icons/hi";
 import { MdAnnouncement } from "react-icons/md";
 import Activity from "../Body Section/Activity Section/Activity"
+import { useLocation } from 'react-router-dom';
 
 
 import { MdDashboard } from "react-icons/md"
@@ -25,17 +26,24 @@ const AnnualHome = () => {
     const navigate = useNavigate();
     const [isPreEnlistEnabled, setIsPreEnlistEnabled] = useState(true);
     const [showModal, setShowModal] = useState(false);
+
+    const preEnlistStart = new Date(localStorage.getItem('preEnlistStart'));
+    const preEnlistEnd = new Date(localStorage.getItem('preEnlistEnd'));
+    
   
+    useEffect(() => {
+      console.log("Received preEnlistStart:", preEnlistStart);
+      console.log("Received preEnlistEnd:", preEnlistEnd);
+    }, [preEnlistStart, preEnlistEnd]);
     // Define the pre-enlistment period
-    const preEnlistStart = new Date('2024-08-01T00:00:00+08:00');
-    const preEnlistEnd = new Date('2024-09-11T23:59:59+08:00');
-    const formattedStartDate = preEnlistStart.toLocaleDateString('en-US', {
+
+    const formattedpreEnlistStart = preEnlistStart.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
     
-      const formattedEndDate = preEnlistEnd.toLocaleDateString('en-US', {
+      const formattedpreEnlistEnd = preEnlistEnd.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -45,9 +53,9 @@ const AnnualHome = () => {
     useEffect(() => {
       const now = new Date();
   
-      console.log('Current date and time:', now.toISOString()); // For debugging
-      console.log('Pre-enlist start:', preEnlistStart.toISOString()); // For debugging
-      console.log('Pre-enlist end:', preEnlistEnd.toISOString()); // For debugging
+      console.log('Current date and time:', now.toString()); // For debugging
+      console.log('Pre-enlist start:', preEnlistStart.toString()); // For debugging
+      console.log('Pre-enlist end:', preEnlistEnd.toString()); // For debugging
   
       if (now < preEnlistStart || now > preEnlistEnd) {
         setIsPreEnlistEnabled(false);
@@ -78,7 +86,7 @@ const AnnualHome = () => {
                     <p className="flex items-center text-sm font-normal text-gray-500 dark:text-gray-400">
                         <MdAnnouncement className="mr-4 h-4 w-4" />
                         <span className="[&_p]:inline">
-                            Pre-enlistment period starts on <span className="font-medium text-blue-500">{formattedStartDate} and ends on {formattedEndDate}</span>&nbsp;
+                            Pre-enlistment period starts on <span className="font-medium text-blue-500">{formattedpreEnlistStart} and ends on {formattedpreEnlistEnd}</span>&nbsp;
                         </span>
                     </p>
                     </div>
