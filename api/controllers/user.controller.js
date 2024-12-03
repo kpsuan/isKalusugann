@@ -1772,7 +1772,13 @@ export const deleteSchedule = async (req, res, next) => {
       rescheduleRemarks: "",
       rescheduledDate: [], 
       rescheduleLimit: 0,
-      isRescheduled: false
+      isRescheduled: false,
+      isPresent: "PENDING",
+      lastLoggedIn: null, // Set lastLoggedIn to null
+      queueNumberDate: null,
+      queueNumber: null,
+      notifications: []
+
     } });
 
     res.status(200).json({ message: 'Schedules and statuses cleared successfully' });
