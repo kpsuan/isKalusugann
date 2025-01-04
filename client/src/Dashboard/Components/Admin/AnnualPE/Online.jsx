@@ -1,25 +1,83 @@
-
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { Card, Tabs } from 'flowbite-react';
+import {Link, useNavigate} from 'react-router-dom'
 import Sidebar from "../../SideBar Section/Sidebar";
 import Top from "../../Profile/Components/Header";
-import { useSelector } from 'react-redux';
-import { useRef, useState, useEffect } from 'react';
-import { Select, Card, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
 import Breadcrumb from "../../../Breadcrumb.jsx";
-
-import { Tabs } from "flowbite-react";
-import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
-import { MdDashboard } from "react-icons/md";
-
-import "../../Annual/annual.css";
-
-import axios from 'axios';
-
-
-import {Link, useNavigate} from 'react-router-dom'
 import UsersOnline from "./UsersOnline";
-const Online = () => {
-  
+import { 
+  HiOutlineDocumentText, 
+  HiOutlineAcademicCap,
+  HiOutlineUserGroup,
+  HiOutlineClock,
+  HiOutlineCheckCircle,
+  HiOutlineXCircle,
+  HiOutlineViewGrid,
+  HiUsers
+} from 'react-icons/hi';
 
+const StatCard = ({ title, value, icon: Icon, colorClass, bgClass, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
+    <div className="flex items-center">
+      <div className={`p-4 ${bgClass} rounded-lg`}>
+        <Icon className={`w-6 h-6 ${colorClass}`} />
+      </div>
+      <div className="ml-4">
+        <p className="text-gray-500 text-sm">{title}</p>
+        <h3 className="text-2xl font-bold">{value}</h3>
+      </div>
+    </div>
+  </Card>
+);
+
+const CollegeCard = ({ college, total, validated, checked, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-xl font-semibold">{college}</h3>
+      <HiOutlineAcademicCap className="w-6 h-6 text-blue-600" />
+    </div>
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Total Students</span>
+        <span className="font-semibold">{total}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Validated</span>
+        <span className="font-semibold text-green-600">{validated}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">To Check</span>
+        <span className="font-semibold text-orange-500">{checked}</span>
+      </div>
+    </div>
+  </Card>
+);
+
+const DegreeCard = ({ course, stats, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={() => onClick(course)}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold">{course}</h3>
+      <HiOutlineAcademicCap className="w-5 h-5 text-blue-600" />
+    </div>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Total Students</span>
+        <span className="font-semibold">{stats?.total || 0}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Validated</span>
+        <span className="font-semibold text-green-600">{stats?.validated || 0}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">To Check</span>
+        <span className="font-semibold text-orange-500">{stats?.checked || 0}</span>
+      </div>
+    </div>
+  </Card>
+);
+
+const Online = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -122,198 +180,153 @@ const Online = () => {
   
   const [loading, setLoading] = useState(false);
 
-  
 
-  const headerTitle = "Annual Physical Examination";
   return (
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
         <Sidebar />
-         <div className="mainContent p-0 m-0">
-                <Card href="#" className="w-full h-1/4  p-10 bg-gradient-to-r from-green-700 to-green-500">
-                    <div className="text-3xl mt-5 font-semibold tracking-tight text-white dark:text-white">Online Submissions of Physical Examinations</div>     
-                    <p className="font-light my-4 text-white ">View and manage documents submitted for physical examination</p>
-                    <Breadcrumb/>
-                </Card>
+        <div className="mainContent">
+          {/* Header Card */}
+          <Card
+            className="w-full bg-gradient-to-r from-green-700 to-green-500 text-white border-none"
+          >
+            <div className="p-8">
+              <h1 className="text-3xl font-semibold mb-2">
+                Online Submissions of Physical Examinations
+              </h1>
+              <p className="text-green-50 mb-4">
+                View and manage documents submitted for physical examination
+              </p>
+              <Breadcrumb />
+            </div>
+          </Card>
 
           <div className="p-8">
-          <Tabs aria-label="Default tabs" style="default" className="my-2 ">
-                      <Tabs.Item  title="Main" icon={HiUserCircle}>
+            <Tabs>
+              <Tabs.Item active title="Overview" icon={HiOutlineViewGrid}>
+                {/* Status Section */}
+                <div className="mb-8">
+                  <Card>
+                    <h2 className="text-xl font-semibold mb-4">Annual PE Status</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <StatCard
+                        title="Approved"
+                        value={totalApproved}
+                        icon={HiOutlineCheckCircle}
+                        colorClass="text-green-600"
+                        bgClass="bg-green-100"
+                      />
+                      <StatCard
+                        title="Pending"
+                        value={totalPending}
+                        icon={HiOutlineClock}
+                        colorClass="text-yellow-600"
+                        bgClass="bg-yellow-100"
+                      />
+                      <StatCard
+                        title="Denied"
+                        value={totalDenied}
+                        icon={HiOutlineXCircle}
+                        colorClass="text-red-600"
+                        bgClass="bg-red-100"
+                      />
+                    </div>
+                  </Card>
+                </div>
 
-                      <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                          <p className="text-2xl font-light mb-4">Annual PE Status</p>
-                          <div className="flex space-x-4">
-                            {/* Card for Complete Submissions */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 p-2 bg-gradient-to-r from-green-400 to-green-300 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                              
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Approved
-                                </div>
-                                <div className="flex items-center p-5 justify-center w-12 h-12 bg-green-500 rounded-full text-white font-semibold ml-4" >
-                                  {totalApproved}
-                                </div>
+                {/* Documents Status */}
+                <div className="mb-8">
+                  <Card>
+                    <h2 className="text-xl font-semibold mb-4">Document Status</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <StatCard
+                        title="Complete Submissions"
+                        value={totalComplete}
+                        icon={HiOutlineDocumentText}
+                        colorClass="text-green-600"
+                        bgClass="bg-green-100"
+                        onClick={() => window.open('/completeDocs', '_blank')}
+                      />
+                      <StatCard
+                        title="Incomplete Submissions"
+                        value={totalIncomplete}
+                        icon={HiOutlineDocumentText}
+                        colorClass="text-yellow-600"
+                        bgClass="bg-yellow-100"
+                        onClick={() => window.open('/incDocs', '_blank')}
+                      />
+                      <StatCard
+                        title="No Submissions"
+                        value={totalNoSubmissions}
+                        icon={HiOutlineXCircle}
+                        colorClass="text-red-600"
+                        bgClass="bg-red-100"
+                        onClick={() => window.open('/noDocs', '_blank')}
+                      />
+                    </div>
+                  </Card>
+                </div>
 
-                              </div>
-                            </div>
-                            
-                            {/* Card for Incomplete Submissions */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 bg-gradient-to-r from-yellow-400 to-yellow-300 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                              
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Pending
-                                </div>
-                                <div className="flex items-center p-5 justify-center w-12 h-12 bg-yellow-500 rounded-full text-white font-semibold ml-4">
-                                  {totalPending}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Card for No Documents Submitted */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 bg-gradient-to-r from-red-400 to-red-500 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                             
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Denied
-                                </div>
-                                <div className="flex items-center justify-center w-12 h-12 bg-red-800 rounded-full text-white font-semibold ml-4 p-2">
-                                  {totalDenied}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                      </div>
+                {/* Colleges */}
+                <Card>
+                  <h2 className="text-xl font-semibold mb-4">Colleges</h2>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <CollegeCard
+                      college="CAS"
+                      total={totalCAS}
+                      validated={totalCASValidated}
+                      checked={totalCASChecked}
+                      onClick={() => handleCollegeClick('CAS')}
+                    />
+                    <CollegeCard
+                      college="CFOS"
+                      total={totalCFOS}
+                      validated={totalCFOSValidated}
+                      checked={totalCFOSChecked}
+                      onClick={() => handleCollegeClick('CFOS')}
+                    />
+                    <CollegeCard
+                      college="SOTECH"
+                      total={totalSOTECH}
+                      validated={totalSOTECHValidated}
+                      checked={totalSOTECHChecked}
+                      onClick={() => handleCollegeClick('SOTECH')}
+                    />
+                  </div>
+                </Card>
+              </Tabs.Item>
 
-                      <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                          <p className="text-2xl font-light mb-4">Document Status</p>
-                          <div className="flex space-x-4">
-                            {/* Card for Complete Submissions */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 p-2 bg-gradient-to-r from-green-400 to-green-300 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                              onClick={() => window.open('/completeDocs', '_blank')}
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Students with Complete Submissions
-                                </div>
-                                <div className="flex items-center p-5 justify-center w-12 h-12 bg-green-500 rounded-full text-white font-semibold ml-4" >
-                                  {totalComplete}
-                                </div>
+              <Tabs.Item title="View All" icon={HiUsers}>
+                {loading ? (
+                  <div className="flex justify-center items-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : (
+                  <UsersOnline users={users} />
+                )}
+              </Tabs.Item>
 
-                              </div>
-                            </div>
-                            
-                            {/* Card for Incomplete Submissions */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 bg-gradient-to-r from-yellow-400 to-yellow-300 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                              onClick={() => window.open('/incDocs', '_blank')}
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Students with Inc Submissions
-                                </div>
-                                <div className="flex items-center p-5 justify-center w-12 h-12 bg-yellow-500 rounded-full text-white font-semibold ml-4">
-                                  {totalIncomplete}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Card for No Documents Submitted */}
-                            <div
-                              className="bg-white rounded-lg border border-gray-200 p-5 w-1/3 my-4 bg-gradient-to-r from-red-400 to-red-500 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer h-32 flex items-center"
-                              onClick={() => window.open('/noDocs', '_blank')}
-                            >
-                              <div className="flex justify-between w-full">
-                                <div className="text-2xl font-semibold">
-                                  Students with No Documents Submitted
-                                </div>
-                                <div className="flex items-center justify-center w-12 h-12 bg-red-800 rounded-full text-white font-semibold ml-4 p-2">
-                                  {totalNoSubmissions}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                      </div>
-                          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                                          <p className="text-2xl font-light mb-4">COLLEGES</p>
-                                          <div className="flex space-x-4">
-                                  <div
-                                    className="bg-white rounded-lg border border-gray-200 p-5 w-full my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                                    onClick={() => handleCollegeClick('CAS')}
-                                  >
-                                    <div className="text-2xl justify-center font-semibold  mb-4">CAS</div>
-                                    <p className="text-sm font-light mb-4">Total Students: {totalCAS}</p>
-                                    <p className="text-sm font-light mb-4">Total Validated: {totalCASValidated}</p>
-                                    <p className="text-sm font-light mb-4">To be Checked: {totalCASChecked}</p>
-                                  </div>
-                                  <div
-                                    className="bg-white rounded-lg border border-gray-200 p-5 w-full my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                                    onClick={() => handleCollegeClick('CFOS')}
-                                  >
-                                    <div className="text-2xl justify-center font-semibold mb-4">CFOS</div>
-                                    <p className="text-sm font-light mb-4">Total Students: {totalCFOS}</p>
-                                    <p className="text-sm font-light mb-4">Total Validated: {totalCFOSValidated}</p>
-                                    <p className="text-sm font-light mb-4">To be Checked: {totalCFOSChecked}</p>
-                                  </div>
-                                  <div
-                                    className="bg-white rounded-lg border border-gray-200 p-5 w-full my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                                    onClick={() => handleCollegeClick('SOTECH')}
-                                  >
-                                    <div className="text-2xl justify-center font-semibold mb-4">SOTECH</div>
-                                    <p className="text-sm font-light mb-4">Total Students: {totalSOTECH}</p>
-                                    <p className="text-sm font-light mb-4">Total Validated: {totalSOTECHValidated}</p>
-                                    <p className="text-sm font-light mb-4">To be Checked: {totalSOTECHChecked}</p>
-                                  </div>
-                                </div>
-
-                          </div>
-
-                          
-
-                        </Tabs.Item>
-                      <Tabs.Item active title="View All" icon={HiUserCircle}>
-                          {loading ? (
-                            <div className="text-center my-4">
-                              <p className="text-xl">Loading...</p>
-                            </div>
-                          ) : (
-                            <UsersOnline users={users} />
-                          )}
-                        </Tabs.Item>
-                        
-                        <Tabs.Item title="Degree Program" icon={HiUserCircle}>
-                          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                            <p className="text-2xl font-light mb-4">Degree Courses</p>
-                            <div className="flex flex-wrap gap-3">
-                              {degreeCourses.map((course, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-white rounded-lg border border-gray-200 p-5 w-1/4 my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                                  onClick={() => handleDegreeCourseClick(course)}
-                                >
-                                  <div className="text-lg font-semibold mb-2">{course}</div>
-                                  <p className="text-sm font-light mb-2">Total Students: {degreeCourseCounts[course]?.total}</p>
-                                  <p className="text-sm font-light mb-2">Total Validated: {degreeCourseCounts[course]?.validated}</p>
-                                  <p className="text-sm font-light mb-2">To be Checked: {degreeCourseCounts[course]?.checked}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </Tabs.Item>
-                        
-         
-          </Tabs>
+              <Tabs.Item title="Degree Programs" icon={HiOutlineAcademicCap}>
+                <Card>
+                  <h2 className="text-xl font-semibold mb-4">Degree Programs</h2>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {degreeCourses.map((course) => (
+                      <DegreeCard
+                        key={course}
+                        course={course}
+                        stats={degreeCourseCounts[course]}
+                        onClick={handleDegreeCourseClick}
+                      />
+                    ))}
+                  </div>
+                </Card>
+              </Tabs.Item>
+            </Tabs>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Online;
