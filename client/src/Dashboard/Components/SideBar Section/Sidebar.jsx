@@ -1,150 +1,147 @@
-import React from 'react'
-import './sidebar.css'
-import { Link } from 'react-router-dom'; 
-
-import logo from '../../../assets/logo1.png'
-import { IoMdSpeedometer } from "react-icons/io";
-import { IoCalendarOutline } from "react-icons/io5";
-import { CiMedicalCase } from "react-icons/ci";
-import { IoDocumentsOutline } from "react-icons/io5";
-import { BsQuestionCircle } from "react-icons/bs";
-import { CgProfile } from "react-icons/cg";
-import { useEffect, useRef, useState } from 'react';
-
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, Home, FileText, Calendar, Bell, User, Settings, HelpCircle, ChevronDown } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import logo from '../../../assets/logo1.png'
+
 
 const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAnnualPEOpen, setIsAnnualPEOpen] = useState(false);
+  const { currentUser } = useSelector((state) => state.user);
 
-    const { currentUser } = useSelector((state) => state.user);
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   return (
-    <div className='sideBar grid'>
-        <div className="logoDiv flex">
-            <h1><img src={logo} alt='Image Name'/></h1>
+    <div className={`transition-all duration-300 bg-white shadow-md h-screen 
+      ${isCollapsed ? 'w-20' : 'w-72'} relative`}>
+      
+      {/* Collapse Button */}
+      <button 
+        onClick={toggleCollapse}
+        className="absolute -right-3 top-8 bg-white rounded-full p-1.5 shadow-md"
+      >
+        {isCollapsed ? 
+          <ChevronRight className="w-4 h-4 text-gray-600" /> : 
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        }
+      </button>
+
+      {/* Logo */}
+      <div className="p-6 mt-2">
+        <img 
+          src={logo}
+          alt="Logo"
+          className={`transition-all duration-300 ${isCollapsed ? 'w-8' : 'w-28'}`}
+        />
+      </div>
+
+      {/* Navigation */}
+      <div className="px-4">
+        <div className="text-sm font-semibold text-gray-600 mb-4">
+          {!isCollapsed && 'QUICK MENU'}
         </div>
 
-        <div className="menuDiv">
-            <h3 className='divTitle'>
-                QUICK MENU
-            </h3>
-            <ul className="menuLists grid">
-                <li className="listItem">
-                    <a href='/dashboard' className = 'menuLink flex'> 
-                    <IoMdSpeedometer className='icon'/>
-                    <span className="smallText">
-                        Home
-                    </span>
-                    </a>
-                </li>
+        <nav className="space-y-2">
+          {/* Home */}
+          <a href="/dashboard" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <Home className="w-5 h-5" />
+            {!isCollapsed && <span className="ml-3">Home</span>}
+          </a>
 
+          {/* Documents */}
+          <a href={currentUser.isAdmin ? '/documents' : '/docsuser'} 
+            className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <FileText className="w-5 h-5" />
+            {!isCollapsed && (
+              <span className="ml-3">
+                {currentUser.isAdmin ? 'Documents' : 'Documents'}
+              </span>
+            )}
+          </a>
 
-                <li className="listItem">
-                {currentUser.isAdmin && (
-                        <a href='/documents' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                                Manage Documents
-                            </span>
-                        </a>
-                    )}
-                    {!currentUser.isAdmin && (
-                        <a href='/docsuser' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                            Documents
-                            </span>
-                        </a>
-                    )}
-                </li>
+          {/* Annual PE Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsAnnualPEOpen(!isAnnualPEOpen)}
+              className="w-full flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <Calendar className="w-5 h-5" />
+              {!isCollapsed && (
+                <>
+                  <span className="ml-3">Annual PE</span>
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isAnnualPEOpen ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+            
+            {!isCollapsed && isAnnualPEOpen && (
+              <div className="pl-11 mt-1 space-y-2">
+                <a href={currentUser.isAdmin ? '/adminHome' : '/annualhome'} 
+                  className="block py-2 text-sm text-gray-600 hover:text-blue-600">
+                  {currentUser.isAdmin ? 'Manage PE' : 'View PE'}
+                </a>
+                <a href="/manageInPerson" className="block py-2 text-sm text-gray-600 hover:text-blue-600">
+                  View Schedule
+                </a>
+                <a href="/manage-online" className="block py-2 text-sm text-gray-600 hover:text-blue-600">
+                  View Submissions
+                </a>
+              </div>
+            )}
+          </div>
 
-                <li className="listItem">
-                    {currentUser.isAdmin && (
-                        <a href='/adminHome' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                                Manage Annual PE
-                            </span>
-                        </a>
-                    )}
-                    {!currentUser.isAdmin && (
-                        <a href='/annualhome' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                                Annual Physical Examinations
-                            </span>
-                        </a>
-                    )}
-                </li>
+          {/* Announcements */}
+          <a href="/announcement" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <Bell className="w-5 h-5" />
+            {!isCollapsed && (
+              <span className="ml-3">
+                {currentUser.isAdmin ? 'Announcements' : 'Announcements'}
+              </span>
+            )}
+          </a>
 
-                <li className="listItem">
-                    {currentUser.isAdmin && (
-                        <a href='/announcement' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                                Manage Announcements 
-                            </span>
-                        </a>
-                    )}
-                    {!currentUser.isAdmin && (
-                        <a href='/announcement' className='menuLink flex'>
-                            <CiMedicalCase className='icon' />
-                            <span className="smallText">
-                                Announcements
-                            </span>
-                        </a>
-                    )}
-                </li>
+          {/* Profile */}
+          <a href="/my-Profile" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <User className="w-5 h-5" />
+            {!isCollapsed && <span className="ml-3">My Profile</span>}
+          </a>
+        </nav>
 
-                
-                <li className="listItem">
-                    <a href='/my-Profile' className = 'menuLink flex'> 
-                    <CgProfile   className='icon'/>
-                    <span className="smallText">
-                        My Profile
-                    </span>
-                    </a>
-                </li>
-            </ul>
+        {/* Settings Section */}
+        <div className="mt-8">
+          <div className="text-sm font-semibold text-gray-600 mb-4">
+            {!isCollapsed && 'SETTINGS'}
+          </div>
+          <nav className="space-y-2">
+            <a href="#" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+              <Settings className="w-5 h-5" />
+              {!isCollapsed && <span className="ml-3">Account</span>}
+            </a>
+          </nav>
         </div>
 
-        <div className="settingsDiv">
-            <h3 className='divTitle'>
-                SETTINGS
-            </h3>
-            <ul className="menuLists grid">
-                <li className="listItem">
-                    <a href='#' className = 'menuLink flex'> 
-                    <IoMdSpeedometer className='icon'/>
-                    <span className="smallText">
-                       Account
-                    </span>
-                    </a>
-                </li>
-
-                <li className="listItem">
-                    <a href='#' className = 'menuLink flex'> 
-                    <IoMdSpeedometer className='icon'/>
-                    <span className="smallText">
-                        Privacy
-                    </span>
-                    </a>
-                </li>
-                
-            </ul>
-        </div>
-
-        <div className="sideBarCard">
-            <BsQuestionCircle className='icon'/>
-            <div className="cardContent">
-                <div className="circle1"></div>
-
-                <h3>Help Center</h3>
-                <p>Having trouble accessing the UPV-HSU Portal, please contact us for more questions</p>
-                <button className='btn'>Go to help center</button>
+        {/* Help Card */}
+        {!isCollapsed && (
+          <div className="mt-8 bg-blue-50 rounded-lg p-4 relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <HelpCircle className="w-8 h-8 text-blue-500 bg-white rounded-full p-1" />
             </div>
-        </div>
+            <div className="pt-4">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">Help Center</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Having trouble? Contact us for assistance with the UPV-HSU Portal.
+              </p>
+              <button className="w-full bg-blue-500 text-white text-sm rounded-lg py-2 hover:bg-blue-600 transition-colors">
+                Go to help center
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

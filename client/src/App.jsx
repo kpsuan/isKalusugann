@@ -69,6 +69,7 @@ import ScheduledForToday2 from './Dashboard/Components/Admin/AnnualPE/ScheduledT
 import TopHeader from './components/TopHeader';
 import Facilities from './pages/Facilities';
 import News from './pages/News';
+import Notifications from './Dashboard/Components/Body Section/Top Section/Notifications';
 
 
 export default function App() {
@@ -116,6 +117,8 @@ export default function App() {
           <Route path="/completeDocs" element={<CompleteDocuments />} />
           <Route path="/noDocs" element={<NoDocsSubmitted />} />
           <Route path="/incDocs" element={<IncDocuments />} />
+          <Route path="/notifications" element={<Notifications />} />
+
 
 
 

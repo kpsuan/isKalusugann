@@ -21,7 +21,7 @@ export default function Header() {
 
   return (
     <div className='bg-white'>
-      <div className='flex justify-between items-center max-w-6xl mx-auto p-3 h-15'>
+      <div className='flex justify-between items-center max-w-6xl mx-auto mt-2  h-8'>
         
         <Link to='/'>
           <img className='mx-auto h-10 w-auto' src={hsulogo} alt="logo2" />
