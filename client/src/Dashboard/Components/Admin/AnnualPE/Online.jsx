@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Card, Tabs } from 'flowbite-react';
 import {Link, useNavigate} from 'react-router-dom'
+import { FileText, Users } from 'lucide-react';
+
 import Sidebar from "../../SideBar Section/Sidebar";
 import Top from "../../Profile/Components/Header";
 import Breadcrumb from "../../../Breadcrumb.jsx";
@@ -96,6 +98,8 @@ const Online = () => {
 
   const [totalComplete, setTotalComplete] = useState(0);
   const [totalIncomplete, setTotalIncomplete] = useState(0);
+  const [totalAllSubmissions, setTotalAllSubmissions] = useState(0);
+
   const [totalNoSubmissions, setTotalNoSubmissions] = useState(0);
   const [totalApproved, setTotalApproved] = useState(0);
   const [totalDenied, setTotalDenied] = useState(0);
@@ -123,7 +127,8 @@ const Online = () => {
 
   const navigate = useNavigate(); 
 
-  
+  const capitalizeWords = (string) => 
+    string.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
   const handleDegreeCourseClick = (course) => {
     window.open(`/users/course/${course}`, '_blank');
@@ -180,6 +185,9 @@ const Online = () => {
   
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setTotalAllSubmissions(totalComplete + totalIncomplete);
+  }, [totalComplete, totalIncomplete]);
 
   return (
     <div className="dashboard my-flex">
@@ -187,17 +195,48 @@ const Online = () => {
         <Sidebar />
         <div className="mainContent">
           {/* Header Card */}
-          <Card
-            className="w-full bg-gradient-to-r from-green-700 to-green-500 text-white border-none"
-          >
-            <div className="p-8">
-              <h1 className="text-3xl font-semibold mb-2">
-                Online Submissions of Physical Examinations
-              </h1>
-              <p className="text-green-50 mb-4">
-                View and manage documents submitted for physical examination
-              </p>
-              <Breadcrumb />
+          <Card className="w-full bg-gradient-to-br from-emerald-600 via-green-600 to-green-500 border-none shadow-lg">
+            <div className="relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/20" />
+                <div className="absolute -left-16 -bottom-16 h-80 w-80 rounded-full bg-white/20" />
+              </div>
+
+              <div className="relative p-8 space-y-6">
+                {/* Header Content */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-6 w-6 text-emerald-100" />
+                      <h1 className="text-3xl font-bold text-white">
+                        Online Submissions of Physical Examinations
+                      </h1>
+                    </div>
+                    <p className="text-emerald-50 text-lg max-w-2xl">
+                      View and manage documents submitted for physical examination
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mt-4">
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-5 w-5 text-emerald-100" />
+                      <span className="text-emerald-50">Total Submissions</span>
+                    </div>
+                    <p className="text-2xl font-bold text-white mt-2">{totalAllSubmissions}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-5 w-5 text-emerald-100" />
+                      <span className="text-emerald-50">Pending Review</span>
+                    </div>
+                    <p className="text-2xl font-bold text-white mt-2">{totalIncomplete}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
 

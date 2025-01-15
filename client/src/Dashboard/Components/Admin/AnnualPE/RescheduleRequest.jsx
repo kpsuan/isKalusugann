@@ -8,6 +8,8 @@ import { useSelector } from 'react-redux';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import { useLocation } from 'react-router-dom';
 import Select from 'react-select';
+import axios from "axios";
+import { toast } from 'react-toastify';
 
 const RescheduleRequest = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -22,26 +24,42 @@ const RescheduleRequest = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false); // Loading state
-
+  const [savedStartDate, setSavedStartDate] = useState(null);
+  const [savedEndDate, setSavedEndDate] = useState(null);
+  
   const location = useLocation();
   const savedDates = location.state || {};
 
   useEffect(() => {
-    const fetchSettingsDates = async () => {
+    const fetchSavedDates = async () => {
       try {
-        const response = await axios.get(`/api/settings/schedule`);
-        const { startDate: dbStartDate, endDate: dbEndDate } = response.data;
-        setStartDate(dbStartDate || savedDates.startDate || localStorage.getItem("startDate"));
-        setEndDate(dbEndDate || savedDates.endDate || localStorage.getItem("endDate"));
+        const response = await axios.get('/api/settings/getDates');
+        if (response.status === 200) {
+          const startDate = new Date(response.data.startDate);
+          const endDate = new Date(response.data.endDate);
+          
+          // Check if the fetched dates are valid before updating state
+          if (startDate.getTime() && endDate.getTime()) {
+            setSavedStartDate(startDate);
+            setSavedEndDate(endDate);
+            // Log the startDate and endDate
+            console.log("Start Date:", startDate);
+            console.log("End Date:", endDate);
+
+          } else {
+            console.error("Invalid date fetched:", response.data);
+            toast.error("Failed to fetch valid start and end dates.");
+          }
+        }
       } catch (error) {
-        console.error("Error fetching schedule settings:", error);
-        setStartDate(localStorage.getItem("startDate"));
-        setEndDate(localStorage.getItem("endDate"));
+        console.error("Error fetching saved dates:", error);
+        toast.error("Failed to fetch saved dates.");
       }
     };
-
-    fetchSettingsDates();
-  }, [savedDates.startDate, savedDates.endDate]);
+  
+    fetchSavedDates();
+  }, []);
+  
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -228,13 +246,15 @@ const RescheduleRequest = () => {
                           className="text-white hover:underline"
                           to={{
                             pathname: `/resched-status/${user._id}`,
-                            state: { startDate, endDate } // Pass dates here
+                           
                           }}
+                         
                         >
                           <span>{user.rescheduleStatus || "NO ACTION"}</span>
                         </Link>
                       </span>
                     </Table.Cell>
+
 
 
                     <Table.Cell>

@@ -34,3 +34,16 @@ export const getDates = async (req, res, next) => {
   }
 };
 
+export const clearDates = async (req, res, next) => {
+  try {
+    await Settings.updateOne(
+      { key: "annualPE" },
+      { $set: { startDate: "", endDate: "" } } // Retain fields with null values
+    );
+
+    res.status(200).json({ message: "Dates cleared successfully!" });
+  } catch (error) {
+    console.error("Error clearing dates:", error);
+    res.status(500).json({ error: "Failed to clear dates" });
+  }
+};

@@ -1,80 +1,21 @@
 import Appointments from "../models/appointments.model.js";
 import { errorHandler } from "../utils/error.js";
 import dayjs from 'dayjs';
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 
-// Endpoint to create a new appointment
-export const create = async (req, res, next) => {
-    const slug = req.user.id.toLowerCase(); // Use userId as the slug
-    const { date, timeSlot } = req.body;
-
-    try {
-        // Check if the user has already booked this time slot on the same date
-        const existingAppointment = await Appointments.findOne({
-            userId: req.user.id,
-            date: date,
-            timeSlot: timeSlot,
-        });
-
-        if (existingAppointment) {
-            return res.status(400).json({ message: 'You have already booked this time slot.' });
-        }
-
-        // Create a new appointment
-        const newAppointment = new Appointments({
-            ...req.body,
-            slug,
-            userId: req.user.id,
-        });
-
-        const savedAppointment = await newAppointment.save();
-        res.status(200).json(savedAppointment);
-    } catch (error) {
-        if (error.code === 11000) {
-            // Duplicate key error (could occur from the unique compound index)
-            res.status(400).json({ message: 'You have already booked this time slot.' });
-        } else {
-            next(errorHandler(error, req, res));
-        }
-    }
-};
-
-// Endpoint to fetch availability status for a month
-export const fetchMonthlyAvailability = async (req, res, next) => {
-    const { year, month } = req.params;
-
-    try {
-        // Define the start and end of the month
-        const startOfMonth = dayjs(`${year}-${month}-01`).startOf('month').toDate();
-        const endOfMonth = dayjs(startOfMonth).endOf('month').toDate();
-
-        // Fetch appointments for the entire month
-        const appointments = await Appointments.find({
-            date: { $gte: startOfMonth, $lte: endOfMonth }
-        }).exec();
-
-        // Aggregate availability status for each date
-        const availabilityStatus = {};
-        for (let date = startOfMonth; date <= endOfMonth; date = dayjs(date).add(1, 'day').toDate()) {
-            const formattedDate = dayjs(date).format('YYYY-MM-DD');
-            const count = appointments.filter(app => dayjs(app.date).format('YYYY-MM-DD') === formattedDate).length;
-            availabilityStatus[formattedDate] = count >= 20 ? 'full' : 'available';
-        }
-
-        res.status(200).json(availabilityStatus);
-    } catch (error) {
-        next(errorHandler(error, req, res));
-    }
-};
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const fetchAvailableTimeSlots = async (req, res, next) => {
-    const { date } = req.params;
+    const { date } = req.params; // Expected format: YYYY-MM-DD
+    const timezone = "Asia/Manila";
 
     try {
-        // Parse the date string to a Date object or use dayjs for consistent handling
-        const formattedDate = dayjs(date, 'YYYY-MM-DD').startOf('day').toDate();
-        
-        console.log('Received date:', date);
-        console.log('Formatted date:', formattedDate);
+        // Convert the requested date to UTC midnight
+        const requestedDate = dayjs.tz(date, timezone).startOf('day');
+        const startOfDay = requestedDate.utc().toDate();
+        const endOfDay = requestedDate.add(1, 'day').utc().toDate();
 
         // Define all possible time slots
         const allTimeSlots = [
@@ -85,23 +26,129 @@ export const fetchAvailableTimeSlots = async (req, res, next) => {
             "03:00 PM - 04:00 PM",
         ];
 
-        // Fetch all appointments for the given date
+        // Fetch all appointments for the selected date
         const bookedAppointments = await Appointments.find({
-            date: formattedDate
-        }).exec(); 
+            date: {
+                $gte: startOfDay,
+                $lt: endOfDay
+            }
+        }).select('timeSlot').lean();
 
-        console.log('Booked appointments:', bookedAppointments);
+        // Create a Set of booked time slots for efficient lookup
+        const bookedTimeSlots = new Set(bookedAppointments.map(app => app.timeSlot));
 
-        // Extract booked time slots from the fetched appointments
-        const bookedTimeSlots = bookedAppointments.map(appointment => appointment.timeSlot);
-        console.log('Booked time slots:', bookedTimeSlots);
+        // Filter out booked time slots
+        const availableTimeSlots = allTimeSlots.filter(slot => !bookedTimeSlots.has(slot));
 
-        // Filter out the booked time slots from all possible time slots
-        const availableTimeSlots = allTimeSlots.filter(slot => !bookedTimeSlots.includes(slot));
-        console.log('Available time slots:', availableTimeSlots);
+        // Log for debugging
+        console.log('Date Range:', {
+            date,
+            startOfDay,
+            endOfDay,
+            bookedTimeSlots: Array.from(bookedTimeSlots),
+            availableTimeSlots
+        });
 
-        // Return the available time slots
         res.status(200).json({ availableTimeSlots });
+    } catch (error) {
+        next(errorHandler(error, req, res));
+    }
+};
+
+export const create = async (req, res, next) => {
+    const slug = req.user.id.toLowerCase();
+    const { date, firstName, lastName, phoneNumber, timeSlot, service, category } = req.body;
+
+    try {
+        // Convert the appointment date to UTC while preserving the date in Manila time
+        const appointmentDate = dayjs.tz(date, 'Asia/Manila').startOf('day').utc().toDate();
+
+        // Check if the user already has an appointment on this date
+        const userAppointmentOnDate = await Appointments.findOne({
+            userId: req.user.id,
+            date: {
+                $gte: appointmentDate,
+                $lt: dayjs(appointmentDate).add(1, 'day').toDate()
+            }
+        });
+
+        if (userAppointmentOnDate) {
+            return res.status(400).json({
+                message: 'You already have an appointment on this date.'
+            });
+        }
+
+        // Check if this time slot is already booked on this date
+        const existingAppointment = await Appointments.findOne({
+            date: {
+                $gte: appointmentDate,
+                $lt: dayjs(appointmentDate).add(1, 'day').toDate()
+            },
+            timeSlot: timeSlot
+        });
+
+        if (existingAppointment) {
+            return res.status(400).json({
+                message: 'This time slot is already booked for the selected date.'
+            });
+        }
+
+        const newAppointment = new Appointments({
+            userId: req.user.id,
+            firstName,
+            lastName,
+            date: appointmentDate,
+            timeSlot,
+            service,
+            phoneNumber,
+            category,
+            slug,
+        });
+
+        const savedAppointment = await newAppointment.save();
+        res.status(200).json(savedAppointment);
+    } catch (error) {
+        next(errorHandler(error, req, res));
+    }
+};
+
+
+// Update monthly availability check as well
+export const fetchMonthlyAvailability = async (req, res, next) => {
+    const { yearMonth } = req.params;
+    const [year, month] = yearMonth.split('-');
+    const timezone = "Asia/Manila";
+
+    try {
+        const startOfMonth = dayjs.tz(`${year}-${month}-01`, timezone).startOf('month');
+        const startUTC = startOfMonth.utc().toDate();
+        const endUTC = startOfMonth.endOf('month').utc().toDate();
+
+        const appointments = await Appointments.find({
+            date: { 
+                $gte: startUTC,
+                $lte: endUTC
+            }
+        }).lean();
+
+        const availabilityStatus = {};
+        const daysInMonth = startOfMonth.daysInMonth();
+
+        for (let i = 0; i < daysInMonth; i++) {
+            const currentDate = startOfMonth.add(i, 'day');
+            const formattedDate = currentDate.format('YYYY-MM-DD');
+            
+            // Count appointments for this specific day
+            const dateAppointments = appointments.filter(app => 
+                dayjs(app.date).tz(timezone).format('YYYY-MM-DD') === formattedDate
+            );
+
+            // Consider a day full if all time slots are taken
+            const maxSlotsPerDay = 5; // Since we have 5 possible time slots
+            availabilityStatus[formattedDate] = dateAppointments.length >= maxSlotsPerDay ? 'full' : 'available';
+        }
+
+        res.status(200).json(availabilityStatus);
     } catch (error) {
         next(errorHandler(error, req, res));
     }

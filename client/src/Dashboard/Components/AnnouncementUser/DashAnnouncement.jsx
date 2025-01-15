@@ -78,11 +78,12 @@ const DashAnnouncement = () => {
                       <Table.Cell className="">{new Date(post.updatedAt).toLocaleDateString()}</Table.Cell>
                       <Table.Cell className="text-right font-medium text-gray-900 hover:underline ">
                         <Link to={`/post/${post.slug}`} >
-                          <img
-                            src={post.image}
-                            alt={post.title}
-                            className=" w-20 h-10 object-cover bg-gray-500"
-                          />
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="w-20 h-20 object-cover"
+                        />
+
                         </Link>
                       </Table.Cell>
                       <Table.Cell>

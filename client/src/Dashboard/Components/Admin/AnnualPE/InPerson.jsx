@@ -3,9 +3,10 @@ import Sidebar from "../../SideBar Section/Sidebar";
 import Top from "../../Profile/Components/Header";
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
-import { Select, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
+import { Card, Select, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Calendar, Clock, RefreshCw, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 
 
 import { Tabs } from "flowbite-react";
@@ -24,6 +25,188 @@ import {Link, useNavigate} from 'react-router-dom'
 import UserInPerson from "./UserInPerson";
 import ScheduledForDate from "./ScheduledOn";
 import ScheduledForToday from "./ScheduledToday";
+
+
+import { 
+  HiOutlineDocumentText, 
+  HiOutlineAcademicCap,
+  HiOutlineUserGroup,
+  HiOutlineClock,
+  HiOutlineCheckCircle,
+  HiOutlineXCircle,
+  HiOutlineViewGrid,
+  HiUsers
+} from 'react-icons/hi';
+
+const StatCard = ({ title, value, icon: Icon, colorClass, bgClass, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
+    <div className="flex items-center">
+      <div className={`p-4 ${bgClass} rounded-lg`}>
+        <Icon className={`w-6 h-6 ${colorClass}`} />
+      </div>
+      <div className="ml-4">
+        <p className="text-gray-500 text-sm">{title}</p>
+        <h3 className="text-2xl font-bold">{value}</h3>
+      </div>
+    </div>
+  </Card>
+);
+
+const CollegeCard = ({ college, total, validated, checked, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-xl font-semibold">{college}</h3>
+      <HiOutlineAcademicCap className="w-6 h-6 text-blue-600" />
+    </div>
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Total Students</span>
+        <span className="font-semibold">{total}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Validated</span>
+        <span className="font-semibold text-green-600">{validated}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">To Check</span>
+        <span className="font-semibold text-orange-500">{checked}</span>
+      </div>
+    </div>
+  </Card>
+);
+
+const DegreeCard = ({ course, stats, onClick }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={() => onClick(course)}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold">{course}</h3>
+      <HiOutlineAcademicCap className="w-5 h-5 text-blue-600" />
+    </div>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Total Students</span>
+        <span className="font-semibold">{stats?.total || 0}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">Validated</span>
+        <span className="font-semibold text-green-600">{stats?.validated || 0}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-gray-500">To Check</span>
+        <span className="font-semibold text-orange-500">{stats?.checked || 0}</span>
+      </div>
+    </div>
+  </Card>
+);
+
+const ScheduleHeader = ({ 
+  savedStartDate, 
+  savedEndDate, 
+  loading, 
+  currentUser,
+  onSetSchedule,
+  onGenerateSchedule,
+  onClearSchedules,
+  onReschedule 
+}) => {
+  return (
+    <Card className="w-full bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 border-none shadow-lg">
+      <div className="relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/20" />
+          <div className="absolute -left-16 -bottom-16 h-80 w-80 rounded-full bg-white/20" />
+        </div>
+
+        <div className="relative p-8 space-y-6">
+          <h1 className="text-4xl font-bold text-white flex items-center gap-3">
+            <Calendar className="h-8 w-8" />
+            In-Person Physical Examinations
+          </h1>
+
+          {/* Date Information Card */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 max-w-md">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-cyan-100 text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Start Date
+                </div>
+                <p className="text-white font-semibold">
+                  {savedStartDate && savedStartDate instanceof Date && !isNaN(savedStartDate.getTime()) 
+                    ? savedStartDate.toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })
+                    : 'Not Set'}
+                </p>
+
+              </div>
+              <div className="space-y-1">
+                <div className="text-cyan-100 text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  End Date
+                </div>
+                <p className="text-white font-semibold">
+                {savedEndDate && savedEndDate instanceof Date && !isNaN(savedEndDate.getTime()) 
+                  ? savedEndDate.toLocaleDateString('en-US', { 
+                      month: 'long', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })
+                  : 'Not Set'}
+              </p>
+
+              </div>
+            </div>
+          </div>
+
+          {currentUser.isSuperAdmin && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={onSetSchedule}
+                  className="bg-blue-500 hover:bg-blue-600 text-white border-none"
+                  disabled={loading}
+                >
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {loading ? 'Setting...' : 'Set Schedule'}
+                </Button>
+                <Button
+                  onClick={onGenerateSchedule}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white border-none"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {loading ? 'Generating...' : 'Generate Schedule'}
+                </Button>
+                <Button
+                  onClick={onClearSchedules}
+                  className="bg-red-500 hover:bg-red-600 text-white border-none"
+                  disabled={loading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {loading ? 'Clearing...' : 'Clear Schedules'}
+                </Button>
+              </div>
+              
+              
+            </div>
+          )}
+          <Button
+                onClick={onReschedule}
+                className="bg-cyan-700 hover:bg-cyan-800 text-white border-none"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Handle Reschedules
+              </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+
 const InPerson = () => {
   
   const { currentUser } = useSelector((state) => state.user);
@@ -50,22 +233,31 @@ const InPerson = () => {
   const [endDate, setEndDate] = useState(new Date());
   
   useEffect(() => {
-  const fetchSavedDates = async () => {
-    try {
-      const response = await axios.get('/api/settings/getDates');
-      if (response.status === 200) {
-        setSavedStartDate(new Date(response.data.startDate));
-        setSavedEndDate(new Date(response.data.endDate));
+    const fetchSavedDates = async () => {
+      try {
+        const response = await axios.get('/api/settings/getDates');
+        if (response.status === 200) {
+          const startDate = new Date(response.data.startDate);
+          const endDate = new Date(response.data.endDate);
+          
+          // Check if the fetched dates are valid before updating state
+          if (startDate.getTime() && endDate.getTime()) {
+            setSavedStartDate(startDate);
+            setSavedEndDate(endDate);
+          } else {
+            console.error("Invalid date fetched:", response.data);
+            toast.error("Failed to fetch valid start and end dates.");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching saved dates:", error);
+        toast.error("Failed to fetch saved dates.");
       }
-    } catch (error) {
-      console.error("Error fetching saved dates:", error);
-      toast.error("Failed to fetch saved dates.");
-    }
-  };
-
-  fetchSavedDates();
-}, []);
-
+    };
+  
+    fetchSavedDates();
+  }, []);
+  
 
   useEffect(() => {
     // Initialize startDate and endDate with saved dates if available
@@ -100,8 +292,10 @@ const InPerson = () => {
 
 
   const handleSetSched = () => {
-    setShowPopup(!showPopup); // Toggle popup visibility
+    setShowPopup(!showPopup);
+    console.log("Popup visibility toggled:", !showPopup);
   };
+  
   
   const degreeCourses = [
     "COMMUNITY DEVELOPMENT",
@@ -135,6 +329,8 @@ const InPerson = () => {
     window.open(`/college/${college}`, '_blank');
   };
   
+  const capitalizeWords = (string) => 
+    string.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -202,148 +398,98 @@ const InPerson = () => {
   const handleClearSchedules = async () => {
     setLoading(true);
     try {
+      // Clear schedules on the backend
+      await axios.delete(`/api/settings/clearDates`);
       await axios.delete(`/api/user/deleteschedule`);
-      
       // Clear savedStartDate and savedEndDate from state
       setSavedStartDate(null);
       setSavedEndDate(null);
-  
-      // Clear savedStartDate and savedEndDate from localStorage
-      localStorage.removeItem('startDate');
-      localStorage.removeItem('endDate');
-  
-      toast.success('Schedules cleared successfully!', {
-        onClose: () => navigate(0) // Navigate after toast closes
+      
+    
+      
+      // Notify user of success
+      toast.success("Schedules cleared successfully!", {
+        onClose: () => navigate(0), // Reload page after toast closes
       });
     } catch (error) {
-      console.error('Error clearing schedules:', error);
-      toast.error('Error clearing schedules. Please try again.');
+      console.error("Error clearing schedules:", error);
+      toast.error("Error clearing schedules. Please try again.");
     } finally {
       setLoading(false);
     }
   };
   
+  
 
   const headerTitle = "Annual Physical Examination";
   return (
-    <><div className="dashboard my-flex">
-      <ToastContainer className={"z-50"} />
-      <div className="dashboardContainer my-flex">
-        <Sidebar />
-        
-        <div className="mainContent p-0 m-0">
-          <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
-          <Breadcrumb/>
-            <div className="text-3xl font-semibold text-white mb-2 mt-6 pl-2">InPerson Physical Examinations</div>
-            
-            <div className="flex flex-1 ">
-            <p className="font-light my-4 px-2 text-white">
-  Start date for annual PE: <span className="font-bold">{savedStartDate ? savedStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
-            </p>
-            <p className="font-light my-4 px-2 text-white">
-              End date for annual PE: <span className="font-bold">{savedEndDate ? savedEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
-            </p>
-
-            </div>
-            <button
-                  className="my-2 mx-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-cyan-400 text-white px-6 py-3 rounded-md"
-                  onClick={handleRescheduleClick}
-                >
-                  Handle Reschedules
-                </button>
-            {currentUser.isSuperAdmin && (
-              <div className="relative flex m-2 space-x-2">
-                <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-blue-400 text-white px-6 py-3 rounded-md"
-                  onClick={handleSetSched}
-                  disabled={loading}
-                >
-                  {loading ? 'Setting...' : 'Set Schedule'}
-                </button>
-                <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-cyan-500 to-blue-400 text-white px-6 py-3 rounded-md"
-                  onClick={handleGenerateSchedule}
-                  disabled={loading}
-                >
-                  {loading ? 'Generating...' : 'Generate Schedule'}
-                </button>
-                <button
-                  className="my-2 transition duration-300 ease-in-out transform hover:scale-105 text-lg bg-gradient-to-r from-red-700 to-red-600 text-white px-6 py-3 rounded-md"
-                  onClick={handleClearSchedules}
-                  disabled={loading}
-                >
-                  {loading ? 'Clearing...' : 'Clear Schedules'}
-                </button>
-                
-
-                
-              </div>
-            )}
-
-          </div>
+    <>
+    <div className="dashboard flex flex-col lg:flex-row">
+  <ToastContainer className="z-50" />
+  <Sidebar />
+  <div className="mainContent flex-1 p-0 m-0">
+   <ScheduleHeader 
+          savedStartDate={savedStartDate}
+          savedEndDate={savedEndDate}
+          loading={loading}
+          currentUser={currentUser}
+          onSetSchedule={handleSetSched}
+          onGenerateSchedule={handleGenerateSchedule}
+          onClearSchedules={handleClearSchedules}
+          onReschedule={handleRescheduleClick}
+    />
           <div className="p-8">
-          <Tabs aria-label="Default tabs" style="default" className="my-4 ">
-            
-            <Tabs.Item active title="SCHEDULED FOR TODAY" icon={HiUserCircle}>
+          <Tabs aria-label="Tabs for schedules" style="default" className="my-4">
+            <Tabs.Item active title="Scheduled for Today" icon={HiUserCircle}>
               <ScheduledForToday />
             </Tabs.Item>
-            <Tabs.Item title="SCHEDULED ON DATE " icon={HiUserCircle}>
+            <Tabs.Item title="Scheduled on Date" icon={HiClipboardList}>
               <ScheduledForDate />
             </Tabs.Item>
-            <Tabs.Item title="COLLEGES" icon={HiUserCircle}>
-              <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                <p className="text-3xl font-light mb-4">Colleges</p>
-                <div className="flex space-x-4">
-                  <div
-                    className="bg-white rounded-lg border border-gray-200 p-5 w-1/4 my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                    onClick={() => handleCollegeClick('CAS')}
-                  >
-                    <div className="text-2xl justify-center font-semibold  mb-4">CAS</div>
-                    <p className="text-sm font-light mb-4">Total Students: {totalCAS}</p>
-                    <p className="text-sm font-light mb-4">Total Validated: {totalCASValidated}</p>
-                    <p className="text-sm font-light mb-4">To be Checked: {totalCASChecked}</p>
-                  </div>
-                  <div
-                    className="bg-white rounded-lg border border-gray-200 p-5 w-1/4 my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                    onClick={() => handleCollegeClick('CFOS')}
-                  >
-                    <div className="text-2xl justify-center font-semibold mb-4">CFOS</div>
-                    <p className="text-sm font-light mb-4">Total Students: {totalCFOS}</p>
-                    <p className="text-sm font-light mb-4">Total Validated: {totalCFOSValidated}</p>
-                    <p className="text-sm font-light mb-4">To be Checked: {totalCFOSChecked}</p>
-                  </div>
-                  <div
-                    className="bg-white rounded-lg border border-gray-200 p-5 w-1/4 my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                    onClick={() => handleCollegeClick('SOTECH')}
-                  >
-                    <div className="text-2xl justify-center font-semibold mb-4">SOTECH</div>
-                    <p className="text-sm font-light mb-4">Total Students: {totalSOTECH}</p>
-                    <p className="text-sm font-light mb-4">Total Validated: {totalSOTECHValidated}</p>
-                    <p className="text-sm font-light mb-4">To be Checked: {totalSOTECHChecked}</p>
-                  </div>
-                </div>
-
-              </div>
-            </Tabs.Item>
-            <Tabs.Item active title="Degree Program" icon={HiUserCircle}>
-              <div className="bg-white rounded-lg border border-gray-200 p-10 w-full my-4">
-                <p className="text-3xl font-light mb-4">Degree Courses</p>
-                <div className="flex flex-wrap gap-3">
-                  {degreeCourses.map((course, index) => (
-                    <div
-                      key={index}
-                      className="bg-white rounded-lg border border-gray-200 p-5 w-1/4 my-4 bg-gradient-to-r from-green-400 to-blue-400 text-white text-left transition duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                      onClick={() => handleDegreeCourseClick(course)}
-                    >
-                      <div className="text-lg font-semibold mb-2">{course}</div>
-                      <p className="text-sm font-light mb-2">Total Students: {degreeCourseCounts[course]?.total}</p>
-                      <p className="text-sm font-light mb-2">Total Validated: {degreeCourseCounts[course]?.validated}</p>
-                      <p className="text-sm font-light mb-2">To be Checked: {degreeCourseCounts[course]?.checked}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Tabs.Item>
+            <Tabs.Item title="Colleges Overview" icon={HiAdjustments}>
+              {/* Colleges */}
+                              <Card>
+                                <h2 className="text-xl font-semibold mb-4">Colleges</h2>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                  <CollegeCard
+                                    college="CAS"
+                                    total={totalCAS}
+                                    validated={totalCASValidated}
+                                    checked={totalCASChecked}
+                                    onClick={() => handleCollegeClick('CAS')}
+                                  />
+                                  <CollegeCard
+                                    college="CFOS"
+                                    total={totalCFOS}
+                                    validated={totalCFOSValidated}
+                                    checked={totalCFOSChecked}
+                                    onClick={() => handleCollegeClick('CFOS')}
+                                  />
+                                  <CollegeCard
+                                    college="SOTECH"
+                                    total={totalSOTECH}
+                                    validated={totalSOTECHValidated}
+                                    checked={totalSOTECHChecked}
+                                    onClick={() => handleCollegeClick('SOTECH')}
+                                  />
+                                </div>
+                              </Card>
+                            </Tabs.Item>
+                          <Tabs.Item title="Degree Programs" icon={HiOutlineAcademicCap}>
+                           <Card>
+                             <h2 className="text-xl font-semibold mb-4">Degree Programs</h2>
+                             <div className="grid md:grid-cols-3 gap-4">
+                               {degreeCourses.map((course) => (
+                                 <DegreeCard
+                                   key={course}
+                                   course={course}
+                                   stats={degreeCourseCounts[course]}
+                                   onClick={handleDegreeCourseClick}
+                                 />
+                               ))}
+                             </div>
+                           </Card>
+                         </Tabs.Item>
             <Tabs.Item title="View All" icon={HiUserCircle}>
               <UserInPerson />
             </Tabs.Item>
@@ -353,7 +499,7 @@ const InPerson = () => {
           </div>
         </div>
         {showPopup && (
-          <Modal className="p-20" show={showPopup} onClose={() => setShowPopup(false)}>
+          <Modal className="p-24  rounded-xl shadow-xl" show={showPopup} onClose={() => setShowPopup(false)}>
             <Modal.Header>Set Schedule</Modal.Header>
             <Modal.Body>
               <div className="flex flex-col p-5">
@@ -382,15 +528,18 @@ const InPerson = () => {
                 </Button>
               </div>
             </Modal.Body>
-            <Modal.Footer>
-              <Button color="failure" onClick={() => setShowPopup(false)}>
+            <Modal.Footer className="px-6 py-4 border-t flex justify-end">
+              <Button
+                className="py-2 px-4 text-white bg-gray-500 rounded-lg font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                onClick={() => setShowPopup(false)}
+              >
                 Close
               </Button>
             </Modal.Footer>
           </Modal>
         )}
       </div>
-    </div></>
+    </>
   );
 };
 export default InPerson;

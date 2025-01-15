@@ -70,6 +70,8 @@ import TopHeader from './components/TopHeader';
 import Facilities from './pages/Facilities';
 import News from './pages/News';
 import Notifications from './Dashboard/Components/Body Section/Top Section/Notifications';
+import AppointmentsHome from './Dashboard/Components/Admin/Appointments/AppointmentsHome';
+import RequestDocument from './Dashboard/Components/DocumentsUser/RequestDocument';
 
 
 export default function App() {
@@ -109,6 +111,8 @@ export default function App() {
           <Route path="/get-documents" element={<GetDocs />} />
           <Route path="/get-allDocuments" element={<GetAllDocs />} />
           <Route path="/docsuser" element={<DocsUserView />} />
+          <Route path="/requestDocs" element={<RequestDocument />} />
+
           <Route path="/annualhome" element={<AnnualHome />} />
           <Route path="/status" element={<Status />} />
           <Route path="/online2" element={<Online2 />} />
@@ -156,6 +160,8 @@ export default function App() {
           <Route path="/overallpresent" element={<OverallArrived />} />
           <Route path="/overallabsent" element={<OverallAbsent />} />
           <Route path="/yesterdaypresent" element={<YesterdayPresent />} />
+          <Route path="/appointmentAdmin" element={<AppointmentsHome />} />
+
         </Route>
 
         <Route element = {<OnlySuperAdminRoute />}>

@@ -56,6 +56,9 @@ const CourseStudents = () => {
     setFilteredUsers(filtered);
   };
 
+  const capitalizeWords = (string) => 
+    string.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  
   const totalPages = Math.ceil(totalUsers / limit);
   const statusOptions = [
     { value: "", label: "All" },
@@ -67,29 +70,16 @@ const CourseStudents = () => {
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
         <Sidebar />
-        <div className="mainContent">
-        <Card sx={{ maxHeight: 700}}>
-            <CardActionArea>
-              <CardMedia sx={{ maxHeight: 180}}
-                component="img"
-                object-fit="fill"
-                image="https://blog.coursify.me/wp-content/uploads/2019/09/online-education-cover.jpg"
-                alt="green iguana"
-              />
-              <CardContent>
-              <Typography gutterBottom variant="h4" component="div" sx={{ fontSize: '24px', fontFamily: 'Montserrat' }}>
-              {courseName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '16px', fontFamily: 'Montserrat' }}>
+        <div className="mainContent m-0 p-0">
+          <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+            <div className="text-5xl font-bold  text-white mb-4">{capitalizeWords(courseName)}</div>
+            <p className="font-light my-4 text-white">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
-            </Typography>
-
-                <Button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3">
-                  View Scheduled Today
-                </Button>
-              </CardContent>
-            </CardActionArea>
-          </Card>
+            </p>
+            <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
+              View Scheduled Today
+            </button>
+          </div>
           <div>
 
             <p className="font-bold my-4">Total Users: {totalUsers}</p>

@@ -11,6 +11,6 @@ router.post('/create', verifyToken, create);
 router.get('/available-slots/:date', fetchAvailableTimeSlots);
 
 // Route to fetch monthly availability status for a specific year and month
-router.get('/monthly-availability/:year/:month', fetchMonthlyAvailability);
+router.get('/monthly-availability/:yearMonth', fetchMonthlyAvailability);
 
 export default router;

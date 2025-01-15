@@ -1,108 +1,79 @@
 import React from 'react';
-import './features.css';
-import { Button, Card } from 'flowbite-react';
+import { Card } from 'flowbite-react';
 import { GrSchedule } from "react-icons/gr";
 import { IoDocumentsOutline } from "react-icons/io5";
 import { TfiAnnouncement } from "react-icons/tfi";
 import { LiaFileMedicalAltSolid } from "react-icons/lia";
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 
-const Features = () => {
-  const { currentUser } = useSelector((state) => state.user);
+const Features = ({ currentUser }) => {
+  const features = [
+    {
+      icon: <GrSchedule className="text-4xl" />,
+      title: currentUser?.isAdmin ? 'Annual PE Management' : 'PE Schedule',
+      description: currentUser?.isAdmin
+        ? 'Schedule and Reschedule Annual PE Examinations of Students'
+        : 'View Your Annual PE Examination Schedule',
+      link: currentUser?.isAdmin ? '/adminPE' : '/annualhome',
+      color: 'bg-gray-200',
+      iconColor: 'text-blue-600'
+    },
+    {
+      icon: <LiaFileMedicalAltSolid className="text-4xl" />,
+      title: currentUser?.isAdmin ? 'Medical Records' : 'Medical Forms',
+      description: currentUser?.isAdmin
+        ? 'View Submitted Medical Forms and Documents of Students'
+        : 'Submit and View Your Medical Forms',
+      link: currentUser?.isAdmin ? '/manageInPerson' : '/status',
+      color: 'bg-gray-200',
+      iconColor: 'text-emerald-600'
+    },
+    {
+      icon: <TfiAnnouncement className="text-4xl" />,
+      title: 'Announcements',
+      description: currentUser?.isAdmin
+        ? 'Create, Edit, View and Post Announcements Online'
+        : 'View Announcements',
+      link: '/announcement',
+      color: 'bg-gray-200',
+      iconColor: 'text-amber-600'
+    },
+    {
+      icon: <IoDocumentsOutline className="text-4xl" />,
+      title: currentUser?.isAdmin ? 'Document Management' : 'Documents',
+      description: currentUser?.isAdmin
+        ? 'Upload and View Downloadable Documents and Forms'
+        : 'Download Available Documents and Forms',
+      link: currentUser?.isAdmin ? '/documents' : '/docsuser',
+      color: 'bg-gray-200',
+      iconColor: 'text-purple-600'
+    }
+  ];
 
   return (
-    <div className='featuresSection'>
-      <div className="">
-        <h1 className='text-2xl font-bold mb-4'>Features</h1>
-      </div>
-
-      <div className="flex flex-1 w-full h-32 my-2">
-        <Card
-          href={currentUser.isAdmin ? '/adminPE' : '/annualhome'}
-          className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
-          horizontal
-        >
-          <div className="flex">
-            <div className="flex items-center w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <GrSchedule className='text-3xl' />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-lg w-3/4 text-gray-500 dark:text-gray-400">
-                  {currentUser.isAdmin
-                    ? 'Schedule and Reschedule Annual PE Examinations of Students'
-                    : 'View Your Annual PE Examination Schedule'}
+    <div className="p-6 bg-white rounded-lg">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Features</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {features.map((feature, index) => (
+          <Card
+            key={index}
+            href={feature.link}
+            className={`cursor-pointer transition-all duration-300 hover:scale-102 hover:shadow-lg border-none ${feature.color}`}
+          >
+            <div className="flex items-start space-x-4">
+              <div className={`p-3 rounded-lg bg-white shadow-md ${feature.iconColor}`}>
+                {React.cloneElement(feature.icon)}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">
+                  {feature.description}
                 </p>
               </div>
             </div>
-          </div>
-        </Card>
-
-        <Card
-          href={currentUser.isAdmin ? '/manageInPerson' : '/status'}
-          className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
-          horizontal
-        >
-          <div className="flex">
-            <div className="flex items-center  w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <LiaFileMedicalAltSolid className='text-3xl' />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-lg w-7/8 text-gray-500 dark:text-gray-400">
-                  {currentUser.isAdmin
-                    ? 'View Submitted Medical Forms and Documents of Students'
-                    : 'Submit and View Your Medical Forms'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="flex flex-1 w-full h-32 my-2">
-        <Card
-          href={currentUser.isAdmin ? '/announcement' : '/announcement'}
-          className="flex-1 cursor-pointer mr-2 p-5 bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
-          horizontal
-        >
-          <div className="flex">
-            <div className="flex items-center  w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <TfiAnnouncement className='text-3xl' />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-lg w-full text-gray-500 dark:text-gray-400">
-                  {currentUser.isAdmin
-                    ? 'Create, Edit, View and Post Announcements Online'
-                    : 'View Announcements'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          href={currentUser.isAdmin ? '/documents' : '/docsuser'}
-          className="flex-1 cursor-pointer mr-2 p-5 bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg"
-          horizontal
-        >
-          <div className="flex">
-            <div className="flex items-center w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <IoDocumentsOutline className='text-3xl'/>
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-lg text-gray-500 dark:text-gray-400">
-                  {currentUser.isAdmin
-                    ? 'Upload and View Downloadable Documents and Forms'
-                    : 'Download Available Documents and Forms'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ import logo from '../../../assets/logo1.png'
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAnnualPEOpen, setIsAnnualPEOpen] = useState(false);
+  const [isDocsOpen, setIsDocsOpen] = useState(false);
+
   const { currentUser } = useSelector((state) => state.user);
 
   const toggleCollapse = () => {
@@ -50,16 +52,50 @@ const Sidebar = () => {
             {!isCollapsed && <span className="ml-3">Home</span>}
           </a>
 
+        <div className="relative">
           {/* Documents */}
-          <a href={currentUser.isAdmin ? '/documents' : '/docsuser'} 
-            className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
-            <FileText className="w-5 h-5" />
-            {!isCollapsed && (
-              <span className="ml-3">
-                {currentUser.isAdmin ? 'Documents' : 'Documents'}
-              </span>
+          <button
+          onClick={() => setIsDocsOpen(!isDocsOpen)}
+              className="w-full flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <FileText className="w-5 h-5" />
+              {!isCollapsed && (
+                <>
+                  <span className="ml-3">Documents</span>
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isAnnualPEOpen ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+
+            {!isCollapsed && isDocsOpen && (
+              <div className="pl-11 mt-1 space-y-2">
+                <a
+                  href={currentUser.isAdmin ? '/documents' : '/docsuser'}
+                  className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                >
+                  {currentUser.isAdmin ? 'Documents' : 'Download Forms'}
+                </a>
+
+                {!currentUser.isAdmin && (
+                  <>
+                    <a
+                      href="/requestDocs"
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                     Request Document
+                    </a>
+                    <a
+                      href="/requestDocs"
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      Track Request
+                    </a>
+                  </>
+                )}
+              </div>
             )}
-          </a>
+
+          </div>
 
           {/* Annual PE Dropdown */}
           <div className="relative">
@@ -78,18 +114,32 @@ const Sidebar = () => {
             
             {!isCollapsed && isAnnualPEOpen && (
               <div className="pl-11 mt-1 space-y-2">
-                <a href={currentUser.isAdmin ? '/adminHome' : '/annualhome'} 
-                  className="block py-2 text-sm text-gray-600 hover:text-blue-600">
+                <a
+                  href={currentUser.isAdmin ? '/adminHome' : '/annualhome'}
+                  className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                >
                   {currentUser.isAdmin ? 'Manage PE' : 'View PE'}
                 </a>
-                <a href="/manageInPerson" className="block py-2 text-sm text-gray-600 hover:text-blue-600">
-                  View Schedule
-                </a>
-                <a href="/manage-online" className="block py-2 text-sm text-gray-600 hover:text-blue-600">
-                  View Submissions
-                </a>
+
+                {currentUser.isAdmin && (
+                  <>
+                    <a
+                      href="/manageInPerson"
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      View Schedule
+                    </a>
+                    <a
+                      href="/manage-online"
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      View Submissions
+                    </a>
+                  </>
+                )}
               </div>
             )}
+
           </div>
 
           {/* Announcements */}

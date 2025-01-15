@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Card } from 'flowbite-react'; 
+import { Table, Card, Spinner } from 'flowbite-react'; 
 import { Link } from 'react-router-dom'; 
 import { LiaFileMedicalAltSolid } from "react-icons/lia";
+import { HiOutlineCalendar, HiOutlineUsers, HiOutlineClipboardCheck } from 'react-icons/hi';
+
 
 const ScheduledForToday2 = () => {
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ const ScheduledForToday2 = () => {
     fetchUsersScheduledForToday();
   }, []);
 
-  const handleShowMore = () => {
+  const handleToggleView = () => {
     setShowMore(!showMore); // Toggle showMore state
   };
 
@@ -35,53 +37,48 @@ const ScheduledForToday2 = () => {
 
   return (
     <div>
-      <div className="flex flex-1 w-full my-4">
-        <Card href="/yesterdaypresent" target="_blank" className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg" horizontal>
-          <div className="flex">
-            <div className="flex items-center w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <LiaFileMedicalAltSolid />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
-                  View Yesterday's Annual PE Attendance
-                </p>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-8">
+              <Card href="/yesterdaypresent" target="_blank"  className="transition duration-300 ease-in-out transform hover:shadow-lg">
+                <div className="flex items-center">
+                  <div className="p-3 bg-cyan-100 rounded-lg">
+                    <HiOutlineCalendar className="w-6 h-6 text-cyan-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-700">Yesterday's Attendance</h3>
+                    <p className="text-sm text-gray-500">View Annual PE attendance</p>
+                  </div>
+                </div>
+              </Card>
+      
+              <Card  href="/overallabsent" target="_blank" className="transition duration-300 ease-in-out transform hover:shadow-lg">
+                <div className="flex items-center">
+                  <div className="p-3 bg-red-100 rounded-lg">
+                    <HiOutlineUsers className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-700">Missed Schedule</h3>
+                    <p className="text-sm text-gray-500">View all absent students</p>
+                  </div>
+                </div>
+              </Card>
+      
+              <Card  href="/overallpresent" target="_blank" className="transition duration-300 ease-in-out transform hover:shadow-lg">
+                <div className="flex items-center">
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <HiOutlineClipboardCheck className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-700">Present Students</h3>
+                    <p className="text-sm text-gray-500">View all attending students</p>
+                  </div>
+                </div>
+              </Card>
             </div>
-          </div>
-        </Card>
-        <Card href="/overallabsent" target="_blank" className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg" horizontal>
-          <div className="flex">
-            <div className="flex items-center w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <LiaFileMedicalAltSolid />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
-                  View All Students who missed their schedule
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-        <Card href="/overallpresent" target="_blank" className="flex-1 mr-2 p-5 cursor-pointer bg-gray-50 mb-4 transition duration-300 ease-in-out transform hover:shadow-lg" horizontal>
-          <div className="flex">
-            <div className="flex items-center w-full">
-              <h5 className="text-2xl font-light tracking-tight text-cyan-500 dark:text-white">
-                <LiaFileMedicalAltSolid />
-              </h5>
-              <div className="flex flex-col pl-4">
-                <p className="font-semibold text-gray-500 dark:text-gray-400">
-                  View All Students arrived at their schedule
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {loading ? (
-        <p className='text-center text-xl py-10'>Loading...</p>
+        <div className="flex justify-center items-center h-64">
+               <Spinner size="xl" />
+        </div>
       ) : error ? (
         <p className="text-red-500">{error}</p> // Display the error message
       ) : users.length > 0 ? (
@@ -113,7 +110,7 @@ const ScheduledForToday2 = () => {
                     </div>
                   </Table.Cell>
 
-                  <Table.Cell className="text-center px-1">
+                  <Table.Cell className="text-center px-2">
                     <div style={{ backgroundColor: user.status === 'approved' ? 'green' : user.status === 'denied' ? 'red' : '#888888' }} className="px-2 py-3 w-32 rounded">
                       <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
                         <span>{user.status || "NO ACTION"}</span>
@@ -132,12 +129,24 @@ const ScheduledForToday2 = () => {
               ))}
             </Table.Body>
           </Table>
-          <button onClick={handleShowMore} className="w-full text-teal-500 self-center text-sm py-7">
-            {showMore ? 'See Less' : 'See More'}
-          </button>
+
+          {users.length > 5 && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleToggleView}
+                className="text-teal-500 text-sm py-3 px-6 rounded-md hover:bg-teal-200 transition duration-200"
+              >
+                {showMore ? 'See Less' : 'See More'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <p>No users found</p>
+        <div className="text-center py-12">
+          <LiaFileMedicalAltSolid className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No Scheduled Users</h3>
+          <p className="mt-1 text-sm text-gray-500">No users are scheduled for today.</p>
+        </div>
       )}
     </div>
   );

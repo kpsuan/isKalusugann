@@ -7,19 +7,29 @@ module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    'node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}',
+    "node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}",
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    './node_modules/shadcn-ui/**/*.js',
+    "node_modules/shadcn-ui/**/*.js",
   ],
   darkMode: "class",
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        fadeIn: "fadeIn 0.8s ease-out forwards", // Add the animation name
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+    },
   },
   plugins: [
-    require('flowbite/plugin'),
-    require('tailwind-scrollbar'),
+    require("flowbite/plugin"),
+    require("tailwind-scrollbar"),
     addVariablesForColors, // Adding the custom plugin
   ],
 };

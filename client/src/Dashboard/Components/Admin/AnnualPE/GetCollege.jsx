@@ -142,13 +142,13 @@ const CollegeStudents = () => {
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
         <Sidebar />
-        <div className="mainContent">
-          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-            <div className="text-2xl font-bold mb-4">{collegeName}</div>
-            <p className="font-light my-4">
+        <div className="mainContent m-0 p-0">
+        <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+            <div className="text-5xl font-bold  text-white mb-4">{collegeName}</div>
+            <p className="font-light my-4 text-white">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
             </p>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
               View Scheduled Today
             </button>
           </div>

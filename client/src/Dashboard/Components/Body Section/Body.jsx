@@ -12,46 +12,38 @@ import ScheduledForToday from '../Admin/AnnualPE/ScheduledToday';
 import Reschedule from '../Admin/AnnualPE/Reschedule';
 import RescheduleRequest from '../Admin/AnnualPE/RescheduleRequest';
 import ScheduledForToday2 from '../Admin/AnnualPE/ScheduledToday2';
+import { Baby } from 'lucide-react';
+import EventsSection from './EventsBody';
 
 
 const Body = () => {
-  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [filter, setFilter] = useState("");
-  const [showMore, setShowMore] = useState(true);
-  const [limit, setLimit] = useState(9);
   const [eventType, setEventType] = useState("upcoming");
+  const [currentPage, setCurrentPage] = useState(0);
   const { currentUser } = useSelector((state) => state.user);
 
- 
+  const itemsPerPage = 4;
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        let url = `/api/events/getevents?limit=${limit}&order=desc`;
+        let url = `/api/events/getevents?order=desc`;
         if (categoryFilter && categoryFilter.value) url += `&category=${categoryFilter.value}`;
         if (filter) url += `&searchTerm=${filter}`;
 
         const res = await fetch(url, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         });
 
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
         const data = await res.json();
-
-        if (data.events.length < limit) setShowMore(false);
-
         const updatedEvents = data.events.map(event => {
           const eventDate = new Date(event.date);
-          return {
-            ...event,
-            isUpcoming: eventDate > new Date(),
-          };
+          return { ...event, isUpcoming: eventDate > new Date() };
         });
 
         setEvents(updatedEvents);
@@ -61,16 +53,22 @@ const Body = () => {
     };
 
     fetchEvents();
-  }, [limit, categoryFilter, filter]);
+  }, [categoryFilter, filter]);
 
   const filterEvents = (type) => {
     setEventType(type);
+    setCurrentPage(0); // Reset to first page when changing type
   };
 
-  const filteredEvents = eventType === "upcoming" 
+  const filteredEvents = eventType === "upcoming"
     ? events.filter(event => event.isUpcoming)
     : events.filter(event => !event.isUpcoming);
 
+  const paginatedEvents = filteredEvents.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
+  
   return (
     <div className='mainContent'>
       <Top />
@@ -105,50 +103,14 @@ const Body = () => {
 
 
         <div className="w-full mb-2">
-          <div className="text-2xl font-bold mb-7">
-            Events
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Badge
-                className={`p-3 text-sm ${eventType === 'upcoming' ? 'bg-blue-100 text-blue-500' : 'bg-gray-100 text-gray-500'} hover:bg-blue-200 focus:ring-blue-400 dark:bg-blue-200 dark:text-blue-600 dark:hover:bg-blue-300`}
-                icon={HiCheck}
-                onClick={() => filterEvents("upcoming")}
-              >
-                Upcoming ({events.filter(event => event.isUpcoming).length})
-              </Badge>
-              <Badge
-                className={`p-3 text-sm ${eventType === 'past' ? 'bg-blue-100 text-blue-500' : 'bg-gray-100 text-gray-500'} hover:bg-blue-200 focus:ring-blue-400 dark:bg-blue-200 dark:text-blue-600 dark:hover:bg-blue-300`}
-                icon={HiClock}
-                onClick={() => filterEvents("past")}
-              >
-                Past ({events.filter(event => !event.isUpcoming).length})
-              </Badge>
-            </div>
-            <div className="grid grid-cols-4 gap-4 mt-5 mr-3">
-              {filteredEvents.map((event, index) => (
-                <Card key={index} className="h-80 w-full flex flex-col justify-between max-w-sm shadow-gray-300 hover:border hover:border-gray-300 transition duration-200">
-                  <img className="w-full h-40 object-cover" src={event.image || "https://via.placeholder.com/150"} alt={`${event.title} image`} />
-                  <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white pl-3 pt-3">
-                    {event.title}
-                  </h5>
-                  <p className="font-semibold text-lg text-yellow-600 dark:text-gray-400 pl-3 m-0 leading-tight">
-                    {new Date(event.date).toLocaleString()}
-                  </p>
-                  <p className="font-light text-sm text-gray-700 dark:text-gray-400 pl-3 mt-1 mb-5">
-                    {event.location}
-                  </p>
-                </Card>
-              ))}
-            </div>
-
-            {showMore && (
-              <Button
-                className='text-2xl bg-blue-500 p-2 mt-4'
-                onClick={() => setLimit(limit + 9)}
-              >
-                Load More
-              </Button>
-            )}
-          </div>
+        <EventsSection 
+            events={events}
+            eventType={eventType}
+            filterEvents={filterEvents}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            filteredEvents={filteredEvents}
+          />
         </div>
 
         <div className="w-full mb-2">

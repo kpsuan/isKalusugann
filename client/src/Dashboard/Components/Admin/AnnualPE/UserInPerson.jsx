@@ -12,6 +12,7 @@ import { PiUsersFourLight } from "react-icons/pi";
 import { FaCheck } from "react-icons/fa";
 import { FaCircleXmark } from "react-icons/fa6";
 import { LuPin } from "react-icons/lu";
+import StatsDashboard from "./StatCard";
 
 
 
@@ -162,48 +163,12 @@ const UserInPerson = () => {
   return (
     <div>
       <p className="text-3xl font-light mb-4">Showing All Users</p>
-      <div className="flex space-x-8 my-4"> 
-        <div className="my-4">
-          <span className="font-bold block">Total Users</span> 
-          <div className="flex items-center mt-1"> 
-            <PiUsersFourLight className="mr-1 text-2xl" /> 
-            <span>{totalUsers}  </span>
-          </div> 
-        </div>
-        
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-        <div className="my-4">
-          <span className="font-bold block">Approved</span> 
-          <div className="flex items-center mt-1"> 
-            <FaCheck className="mr-1 text-2xl text-green-500" /> 
-            <span>{totalApproved} </span> 
-          </div> 
-        </div>
-
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-
-        <div className="my-4">
-          <span className="font-bold block">Denied</span> 
-          <div className="flex items-center mt-1 text-red-500"> 
-            <FaCircleXmark className="mr-1 text-2xl" /> 
-            <span>{totalDenied} </span> 
-          </div> 
-        </div>
-
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-
-        <div className="my-4">
-          <span className="font-bold block">Pending</span> 
-          <div className="flex items-center mt-1"> 
-            <LuPin className="mr-1 text-2xl text-yellow-500" /> 
-            <span>{totalPending} </span> 
-          </div> 
-        </div>
-
-      </div>
+      <StatsDashboard
+        totalUsers={totalUsers}
+        totalApproved={totalApproved}
+        totalDenied={totalDenied}
+        totalPending={totalPending}
+      />
 
 
       

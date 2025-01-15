@@ -9,6 +9,13 @@ const appointmentsSchema = new mongoose.Schema({
         type: String, // Store date as a string in 'YYYY-MM-DD' format
         required: true,
     },
+    firstName:{
+        type: String, // Store date as a string in 'YYYY-MM-DD' format
+       
+    },
+    lastName:{
+        type: String,
+    },
     timeSlot: {
         type: String, // Store time slot as a string, e.g., '09:00 AM - 10:00 AM'
         required: true,
@@ -22,6 +29,11 @@ const appointmentsSchema = new mongoose.Schema({
         type: String,
         default: 'uncategorized',
     },
+    phoneNumber: {
+        type: String,
+        default: '',
+    },
+    
     slug: {
         type: String,
         required: true,

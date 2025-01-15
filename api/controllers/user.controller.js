@@ -1654,7 +1654,6 @@ export const assignSchedule = async (req, res, next) => {
   }
 };
 
-
 export const rescheduleUser = async (req, res, next) => {
   try {
     // Check if the user is an admin and has permission to reschedule
@@ -1664,6 +1663,8 @@ export const rescheduleUser = async (req, res, next) => {
 
     const { userId } = req.params;
     const { startDate, endDate } = req.body;
+    console.log("Received start Date:", startDate);
+    console.log("Received end Date:", endDate);
 
     // Fetch the user's current schedule, excluding queueNumber field
     const user = await User.findById(userId).select('-queueNumber -queueNumberDate'); // Exclude both queueNumber and queueNumberDate
@@ -1679,6 +1680,7 @@ export const rescheduleUser = async (req, res, next) => {
     today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
 
     const rescheduledDates = [];
+    const remainingSlotsArray = [];
 
     // Find the 3 earliest available dates within the range
     while (rescheduledDates.length < 3 && currentDate <= endDateObj) {
@@ -1702,9 +1704,15 @@ export const rescheduleUser = async (req, res, next) => {
         // Log the number of users scheduled on this date
         console.log(`Date: ${currentDate.toDateString()}, Users Scheduled: ${userCount}`);
 
-        if (userCount < 20) {
-          // Add the date in the desired format to the available dates
+        // Calculate remaining slots
+        const remainingSlots = 20 - userCount;
+
+        if (remainingSlots > 0) {
+          // Add the date (without remaining slots) to the available dates
           rescheduledDates.push(currentDate.toString());
+
+          // Store remaining slots separately
+          remainingSlotsArray.push({ date: currentDate.toString(), remainingSlots });
         }
       }
 
@@ -1719,11 +1727,18 @@ export const rescheduleUser = async (req, res, next) => {
     user.queueNumber = undefined; // Prevent queueNumber modification
     await user.save(); // Save the user document with changes
 
-    res.status(200).json({ message: 'Rescheduled dates generated successfully', rescheduledDates });
+    // Send both the rescheduledDates and remainingSlotsArray separately
+    res.status(200).json({ 
+      message: 'Rescheduled dates generated successfully', 
+      rescheduledDates,
+      remainingSlots: remainingSlotsArray
+    });
   } catch (error) {
     next(error);
   }
 };
+
+
 
 
 

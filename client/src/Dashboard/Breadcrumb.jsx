@@ -1,35 +1,63 @@
 import React from 'react';
-import { Breadcrumb } from 'flowbite-react';
-import { HiHome } from 'react-icons/hi';
+import { ChevronRight, Home } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 
-const AutoBreadcrumb = () => {
+const Breadcrumb = () => {
   const location = useLocation();
-  
-  // Split the pathname into parts
   const pathParts = location.pathname.split('/').filter(part => part);
 
-  // Function to capitalize the first letter of each part
-  const capitalizeFirstLetter = (str) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' '); // Capitalize and replace hyphens with spaces
+  const formatPathPart = (part) => {
+    return part
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
-    <Breadcrumb aria-label="Default breadcrumb example" className="text-white">
-      <Breadcrumb.Item as={Link} to="/" icon={HiHome} className="text-white">
-        Home
-      </Breadcrumb.Item>
+    <nav aria-label="Breadcrumb" className="w-full">
+      <ol className="flex items-center space-x-2 text-sm">
+        <li className="flex items-center">
+          <Link
+            to="/"
+            className="flex items-center hover:text-blue-500 transition-colors"
+          >
+            <Home className="h-4 w-4" />
+            <span className="sr-only">Home</span>
+          </Link>
+        </li>
 
-      {pathParts.map((part, index) => {
-        const href = `/${pathParts.slice(0, index + 1).join('/')}`;
-        return (
-          <Breadcrumb.Item key={index} as={Link} to={href} className="text-white">
-            {capitalizeFirstLetter(part)}
-          </Breadcrumb.Item>
-        );
-      })}
-    </Breadcrumb>
+        {pathParts.length > 0 && (
+          <li>
+            <ChevronRight className="h-4 w-4 text-gray-500" />
+          </li>
+        )}
+
+        {pathParts.map((part, index) => {
+          const href = `/${pathParts.slice(0, index + 1).join('/')}`;
+          const isLast = index === pathParts.length - 1;
+
+          return (
+            <li key={part} className="flex items-center">
+              <Link
+                to={href}
+                className={`flex items-center ${
+                  isLast
+                    ? 'font-semibold text-gray-900'
+                    : 'text-gray-500 hover:text-blue-500 transition-colors'
+                }`}
+                aria-current={isLast ? 'page' : undefined}
+              >
+                {formatPathPart(part)}
+              </Link>
+              {!isLast && (
+                <ChevronRight className="h-4 w-4 text-gray-500 ml-2" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 };
 
-export default AutoBreadcrumb;
+export default Breadcrumb;

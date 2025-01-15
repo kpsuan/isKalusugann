@@ -3,6 +3,7 @@ import { Table } from 'flowbite-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Calendar from './Calendar';
+import { Spinner } from 'flowbite-react';
 
 const ScheduledForDate = () => {
   const [date, setDate] = useState('');
@@ -19,8 +20,6 @@ const ScheduledForDate = () => {
 
   const handleFetchUsers = async (dateString) => {
     if (!dateString) return;
-
-    console.log('Fetching users for date:', dateString);
 
     setLoading(true);
     try {
@@ -47,34 +46,38 @@ const ScheduledForDate = () => {
   };
 
   return (
-    <div className='my-2'>
+    <div className='my-5'>
       <div className="flex items-center justify-between px-5 mb-10">
-        <h2 className='text-2xl font-light'>View Students Scheduled On: {date}</h2>
+        <h2 className='text-2xl font-semibold text-gray-800'>
+          View Students Scheduled On: {date}
+        </h2>
         <button 
           onClick={toggleViewMode} 
-          className='px-4 py-2 bg-blue-500 text-white rounded'
+          className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all'
         >
           {viewMode === 'calendar' ? 'Show List View' : 'Show Calendar View'}
         </button>
       </div>
 
       {viewMode === 'calendar' ? (
-        <div className="w-full ">
+        <div className="w-full">
           <Calendar 
             onDateChange={handleDateChange} 
             selectedDate={date} // Pass selected date to Calendar
           /> 
         </div>
       ) : (
-        <div className='my-10 table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
+        <div className='my-10 table-auto overflow-x-scroll md:mx-auto p-4'>
           {loading ? (
-            <p>Loading...</p>
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
           ) : (
             <>
               {users.length > 0 ? (
                 <>
-                  <Table hoverable className='shadow-md  z-10 relative'>
-                    <Table.Head className="text-left px-3">
+                  <Table hoverable className='shadow-md z-10 relative'>
+                    <Table.Head className="text-left px-4 py-2 bg-gray-100">
                       <Table.HeadCell>Name</Table.HeadCell>
                       <Table.HeadCell>Sex</Table.HeadCell>
                       <Table.HeadCell>Year Level</Table.HeadCell>
@@ -86,9 +89,9 @@ const ScheduledForDate = () => {
                     </Table.Head>
                     <Table.Body>
                       {users.map((user) => (
-                        <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 " key={user._id}>
+                        <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 hover:bg-gray-50" key={user._id}>
                           <Table.Cell>
-                            <Link className="text-right text-lg text-gray-900 hover:underline" to={`/users/${user.slug}`}>
+                            <Link className="text-lg text-gray-900 hover:underline" to={`/users/${user.slug}`}>
                               {`${user.firstName} ${user.middleName || ''} ${user.lastName}`}
                             </Link>
                           </Table.Cell>
@@ -96,48 +99,23 @@ const ScheduledForDate = () => {
                           <Table.Cell className="text-left">{user.yearLevel}</Table.Cell>
                           <Table.Cell className="text-left">{user.degreeProgram}</Table.Cell>
                           <Table.Cell className="text-left">{user.college}</Table.Cell>
-                          <Table.Cell className="text-left flex-col">
-                            <div>
-                              {user.peForm ? (
-                                <Link className="text-teal-500 hover:underline" to={user.peForm}>
-                                  {user.lastName}_peForm.pdf
-                                </Link>
-                              ) : (
-                                <span className="text-gray-400">Empty</span>
-                              )}
-                            </div>
-                            <div>
-                              {user.labResults ? (
-                                <Link className="text-teal-500 hover:underline" to={user.labResults}>
-                                  {user.lastName}_labResults.pdf
-                                </Link>
-                              ) : (
-                                <span className="text-gray-400">Empty</span>
-                              )}
-                            </div>
-                            <div>
-                              {user.requestPE ? (
-                                <Link className="text-teal-500 hover:underline" to={user.requestPE}>
-                                  {user.lastName}_requestPE.pdf
-                                </Link>
-                              ) : (
-                                <span className="text-gray-400">Empty</span>
-                              )}
-                            </div>
-                            <div>
-                              {user.medcert ? (
-                                <Link className="text-teal-500 hover:underline" to={user.medcert}>
-                                  {user.lastName}_medcert.pdf
-                                </Link>
-                              ) : (
-                                <span className="text-gray-400">Empty</span>
-                              )}
-                            </div>
+                          <Table.Cell className="text-left flex-col space-y-1">
+                            {['peForm', 'labResults', 'requestPE', 'medcert'].map((file, index) => (
+                              <div key={index}>
+                                {user[file] ? (
+                                  <Link className="text-teal-500 hover:underline" to={user[file]}>
+                                    {user.lastName}_{file}.pdf
+                                  </Link>
+                                ) : (
+                                  <span className="text-gray-400">Empty</span>
+                                )}
+                              </div>
+                            ))}
                           </Table.Cell>
-                          <Table.Cell className="text-center px-2">
-                            <div style={{ backgroundColor: user.status === 'approved' ? 'green' : user.status === 'denied' ? 'red' : '#888888' }} className="px-2 py-1 rounded">
-                              <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
-                                <span>{user.status}</span>
+                          <Table.Cell className="text-center px-4">
+                            <div className={`px-2 py-1 rounded-full text-white text-sm ${user.status === 'approved' ? 'bg-green-500' : user.status === 'denied' ? 'bg-red-500' : 'bg-gray-500'}`}>
+                              <Link className="hover:underline" to={`/user-status/${user._id}`}>
+                                {user.status}
                               </Link>
                             </div>
                           </Table.Cell>
@@ -153,11 +131,16 @@ const ScheduledForDate = () => {
                     </Table.Body>
                   </Table>
                   {showMore && (
-                    <button onClick={handleShowMore} className="w-full text-teal-500 self-center text-sm py-7">Load more</button>
+                    <button 
+                      onClick={handleShowMore} 
+                      className="w-full text-teal-500 text-sm py-4 hover:bg-teal-100 transition-all"
+                    >
+                      Load more
+                    </button>
                   )}
                 </>
               ) : (
-                <p>NO USERS</p>
+                <p className="text-center text-gray-500">No users found for this date.</p>
               )}
             </>
           )}

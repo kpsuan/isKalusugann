@@ -131,7 +131,7 @@ const Activity = () => {
               <img 
                 src={announcement.image || "https://via.placeholder.com/150"} 
                 alt={announcement.title} 
-                className="w-full object-cover h-72 rounded-l-lg transition-transform duration-300 ease-in-out cursor-pointer hover:scale-125"
+                className="w-full object-cover h-full rounded-l-lg transition-transform duration-300 ease-in-out cursor-pointer hover:scale-125"
                 onClick={() => handleImageClick(announcement.image)}
               />
             </div>

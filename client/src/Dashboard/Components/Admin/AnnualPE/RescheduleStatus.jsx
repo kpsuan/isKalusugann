@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../SideBar Section/Sidebar";
-import { Select, Button, Modal, Card } from 'flowbite-react';
+import { Button, Card, Select, Spinner, Avatar } from 'flowbite-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useDispatch } from 'react-redux';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import Alert from '@mui/material/Alert';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Calendar, Clock, Users } from 'lucide-react';
+import AvailableDates from './AvailableDates'
+import Alert from '@mui/material/Alert';
 
 const RescheduleStatus = () => {
   const dispatch = useDispatch();
@@ -18,33 +20,56 @@ const RescheduleStatus = () => {
   const [formData, setFormData] = useState({});
   const [publishError, setPublishError] = useState(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
-  const [scrollTop, setScrollTop] = useState(false);
   const [loading, setLoading] = useState(true);
   const [availableDates, setAvailableDates] = useState([]);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [user, setUser] = useState(null);
+  const [remainingSlots, setRemainingSlots] = useState([]);
 
-  const startDate = localStorage.getItem('startDate');
-  const endDate = localStorage.getItem('endDate');
+  const [user, setUser] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [scrollTop, setScrollTop] = useState(false);
+
+  // Fetch startDate and endDate from API
+  useEffect(() => {
+    const fetchDates = async () => {
+      try {
+        const res = await fetch('/api/settings/getDates', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include token if needed
+          },
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          setStartDate(data.startDate);
+          setEndDate(data.endDate);
+        } else {
+          console.error('Error fetching dates:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching dates:', error.message);
+      }
+    };
+
+    fetchDates();
+  }, []);
 
   useEffect(() => {
     console.log("Received startDate:", startDate);
     console.log("Received endDate:", endDate);
   }, [startDate, endDate]);
-  
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch(`/api/user/${userId}`);
-        
         const userData = await res.json();
         if (res.ok) {
           setUser(userData);
           setFormData({
             rescheduleStatus: userData.rescheduleStatus || "",
             rescheduleRemarks: userData.rescheduleRemarks || ""
-
           });
         } else {
           console.error("Error fetching user data:", userData.message);
@@ -59,16 +84,6 @@ const RescheduleStatus = () => {
   }, [userId]);
 
   useEffect(() => {
-    if (scrollTop) {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-      setScrollTop(false);
-    }
-  }, [scrollTop]);
-
-  useEffect(() => {
     const fetchAvailableDates = async () => {
       try {
         const res = await fetch(`/api/user/reschedule/${userId}`, {
@@ -80,8 +95,15 @@ const RescheduleStatus = () => {
         });
         const scheduleData = await res.json();
         if (res.ok) {
+          // Update state with both dates and remaining slots
           setAvailableDates(scheduleData.rescheduledDates || []);
-          console.log("Available datess:", scheduleData.rescheduledDates);
+          setRemainingSlots(scheduleData.remainingSlots || []); 
+
+          console.log("Available dates:", scheduleData.rescheduledDates);
+          console.log("Remaining slots: ", scheduleData.remainingSlots);
+
+
+
         } else {
           console.error("Error fetching available dates:", scheduleData.message);
         }
@@ -89,18 +111,25 @@ const RescheduleStatus = () => {
         console.error("Error fetching available dates:", error.message);
       }
     };
-
-    fetchAvailableDates();
-  }, [startDate, endDate]);
+  
+    if (startDate && endDate) {
+      fetchAvailableDates();
+    }
+  }, [startDate, endDate, userId]);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Format the dates in the desired format
+    // Check if availableDates contains valid dates
     const formattedDates = availableDates.map(date => {
         const d = new Date(date);
+        if (isNaN(d.getTime())) {
+            console.error("Invalid date:", date);
+            return null; // Skip invalid date
+        }
         return d.toISOString(); // Converts the date to the desired format
-    });
+    }).filter(Boolean); // Remove null values
 
     // Conditional check to only include rescheduledDate if status is not denied
     const dataToSubmit = {
@@ -165,9 +194,23 @@ const RescheduleStatus = () => {
 
   
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+if (loading) {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Spinner size="xl" />
+    </div>
+  );
+}
+
+const formatDate = (date) => {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
+  });
+};
 
   return (
     <div className="dashboard my-flex">
@@ -204,32 +247,30 @@ const RescheduleStatus = () => {
             )}
             <form className="py-10 flex flex-col gap-2" onSubmit={handleSubmit}>
             
-            <Card className="max-w-10 p-3 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600">
-            <div className="flex flex-1">
-              <h1 className="text-2xl font-light text-white">Current Schedule: </h1>
-              <p className="font-medium text-2xl text-white ml-2">
-              {(() => {
-                              const date = new Date(user.schedule);
-                              const weekday = date.toLocaleString('en-US', { weekday: 'short' });
-                              const month = date.toLocaleString('en-US', { month: 'short' });
-                              const day = date.getDate().toString().padStart(2, '0');
-                              const year = date.getFullYear();
-                              return `${weekday} ${month} ${day} ${year}`;
-                            })()}
-                </p> 
-              </div>
-            </Card>
+            {/* Current Schedule Card */}
+          <Card className="bg-gradient-to-r from-cyan-500 to-blue-500">
+            <div className="text-white">
+              <h2 className="text-lg font-medium">Current Schedule</h2>
+              <p className="text-2xl font-bold mt-1">
+                {user && formatDate(user.schedule)}
+              </p>
+            </div>
+          </Card>
+
             
             <Card className="bg-white rounded-lg border border-gray-200 p-10 w-full">  
               <p className="font-medium text-2xl text-teal-500">Approve or Deny the Reschedule Request</p>
-              <div className="flex flex-col gap-4 mb-4">
-                <div className="flex flex-row gap-2">
-                  <p className="text-center text-lg py-3">Select Status:</p>
+              <div className="space-y-6">
+                {/* Status Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Status
+                  </label>
                   <Select
                     id="status"
                     value={formData.rescheduleStatus || "NO ACTION"}
                     onChange={(e) => setFormData({ ...formData, rescheduleStatus: e.target.value })}
-                    className="py-2 px-4 focus:outline-none focus:border-blue-500"
+                    required
                   >
                     <option value="NO ACTION">NO ACTION</option>
                     <option value="denied">DENIED</option>
@@ -250,20 +291,11 @@ const RescheduleStatus = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <p className="text-start text-2xl font-light py-3">3 Earliest Available Dates for Students to Select:</p>
-                <div className="py-2 flex flex-row gap-2">
-               
-                  {availableDates.map((date, idx) => (
-                    <Card href="#" className="max-w-sm p-3 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 m-2"><p key={idx} className="p-1 text-lg text-white">
-                      {new Date(date).toDateString()}
-                    </p> </Card>
-                  ))}
-                 
-                </div>
-              </div>
-
-              
+              <AvailableDates
+                availableDates={availableDates}      
+                remainingSlots = {remainingSlots}         
+              />
+                            
 
               <Button type="submit" onClick={handleSubmit} className="w-full text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
                 SAVE 

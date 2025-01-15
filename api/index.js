@@ -8,6 +8,7 @@ import docsRoutes from './routes/docs.route.js';
 import appointmentsRoute from './routes/appointments.route.js';
 import eventsRoutes from './routes/events.route.js';
 import settingsRoutes from './routes/settings.route.js';
+import documentRequestRoute from './routes/documentRequest.route.js'
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
@@ -39,6 +40,9 @@ app.use('/api/docs', docsRoutes);
 app.use('/api/appointments', appointmentsRoute);
 app.use('/api/events', eventsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/docrequest', documentRequestRoute);
+
+
 
 // Serve static files from the client
 app.use(express.static(path.join(__dirname, '/client/dist')));
