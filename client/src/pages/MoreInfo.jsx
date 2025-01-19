@@ -2,6 +2,7 @@ import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
 import { Card, Carousel  } from 'flowbite-react';
 import { toast, ToastContainer } from 'react-toastify';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from '../Dashboard/Components/SideBar Section/Sidebar';
 import Top from '../Dashboard/Components/Profile/Components/Header';
@@ -159,7 +160,25 @@ const handleChange = (e) => {
           <Sidebar/>
           
           <div className="mainContent">
-          <Top className="text-bold" title="User Profile"/>
+          <motion.div
+              initial={{ y: -20 }}
+              animate={{ y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <Card className="bg-gradient-to-r from-cyan-600 to-green-500 border-none">
+                <div className="relative overflow-hidden p-8">
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <h1 className="text-3xl font-bold text-white">
+                        User Profile
+                      </h1>
+                    </div>
+                    
+                  </div>
+                  <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mt-16 -mr-16 blur-3xl" />
+                </div>
+              </Card>
+            </motion.div>
             <div className='p-3  mx-auto mt-10'>
               
                 <div className="flex flex-row space-x-5">

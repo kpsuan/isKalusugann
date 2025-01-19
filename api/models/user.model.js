@@ -20,6 +20,11 @@ const notificationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now, // Automatically set the time of creation
     },
+    link: {
+      type: String,  // To store the URL as a string
+      required: false  // Optional, set to true if it's always required
+    }
+    
   },
  
 );

@@ -8,6 +8,9 @@ import GetDocs from "./GetDocs";
 import DocsListView from "./DocsListView";
 import "../../Annual/annual.css";
 import { DocumentProvider } from './DocumentContext';
+import { motion } from 'framer-motion';
+
+import { Card } from 'flowbite-react';
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState('upload'); // Track active tab
@@ -23,11 +26,26 @@ const Documents = () => {
         <div className="dashboardContainer my-flex">
           <Sidebar />
           <div className="mainContent">
-            <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-              <div className="bg-white rounded-lg border border-gray-200 p-10 w-3/4">
-                <div className="text-2xl font-bold mb-4">Documents</div>
-                <p className="font-light my-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-              </div>
+          <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 space-y-6"
+            >
+
+            <Card className="bg-gradient-to-r from-blue-600 to-cyan-500 border-none">
+                <div className="relative overflow-hidden p-8">
+                  <div className="relative z-10">
+                    <h1 className="text-3xl font-bold text-white mb-4">
+                      Documents
+                    </h1>
+                    <p className="text-white/80 max-w-xl">
+                     Manage and access all documents needed. 
+                    </p>
+                  </div>
+                  <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mt-16 -mr-16 blur-2xl" />
+                </div>
+              </Card>
+
               <Tabs aria-label="Default tabs" style="default" className="my-4 ">
                 <Tabs.Item 
                   active={activeTab === 'upload'} 
@@ -54,7 +72,7 @@ const Documents = () => {
                   <GetDocs />
                 </Tabs.Item>
               </Tabs>
-            </div>
+          </motion.div>
           </div>
         </div>
       </div>

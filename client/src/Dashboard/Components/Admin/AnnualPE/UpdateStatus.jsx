@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../SideBar Section/Sidebar";
 import { useSelector } from 'react-redux';
-import { Select, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
+import { Select, Button, Badge, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
 import Alert from '@mui/material/Alert';
 
 import "../../Annual/annual.css";
@@ -14,12 +14,18 @@ import { app } from '../../../../firebase';
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+
 import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from 'firebase/storage';
+
+import axios from 'axios';
+
+import { HiOutlineDocumentDownload, HiOutlineUpload, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
 
 const UserProfile = () => {
   const dispatch = useDispatch();
@@ -104,6 +110,7 @@ const UserProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Step 1: Update the user data
       const res = await fetch(`/api/user/update/${user._id}`, {
         method: 'POST',
         headers: {
@@ -112,56 +119,81 @@ const UserProfile = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+  
       if (data.success === false) {
         console.error('Failed to update user:', data.error);
+        toast.error("Failed to update status of user.");
         return;
       }
+  
+      // Step 2: Send email notification to the user
+      const emailResponse = await axios.post('/api/email/emailUser', {
+        email: user.email,
+        subject: 'Your Annual PE Status Update',
+        text: `Dear ${user.firstName},\n\nYour annual PE status is ${user.status}. Here is your comment: ${user.comment}\n\n Your generated medical certificate can be viewed in the system or alternatively here: ${user.medcert} \n\n\nBest regards,\nIsKalusugan`,
+      });
+  
+      if (emailResponse.status === 200) {
+        toast.success('User updated and email sent successfully!');
+      } else {
+        toast.error('Failed to send email.');
+      }
+  
+      // Step 3: Set update success and handle navigation
       setUpdateSuccess(true);
       setScrollTop(true); // Trigger scroll to top
       setTimeout(() => {
         setUpdateSuccess(false); // Hide alert after 3 seconds
         navigate(-1);
       }, 3000); // Alert duration
+  
     } catch (error) {
       console.error('Error updating user:', error.message);
     }
   };
+  
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
 
+  const getStatusBadge = (status) => {
+    const statusColors = {
+      'NO ACTION': 'warning',
+      'denied': 'failure',
+      'approved': 'success'
+    };
+    return <Badge color={statusColors[status] || 'warning'} size="lg">{status}</Badge>;
+  };
+
+
   return (
     <div className="dashboard my-flex">
       
       <div className="dashboardContainer my-flex">
+         <ToastContainer className="z-50" />
         <Sidebar />
         <div className="mainContent">
         <div className="bg-white rounded-lg border border-gray-200 p-10 w-full" style={{ position: 'relative' }}>
           {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}
-          {updateSuccess && (
-              <Alert variant="filled" severity="success" className="alert-top">
-                Update successful!
-              </Alert>
-            )}
+
             {user ? (
               <div>
                 <div className="rounded-lg border border-gray-200 p-10 w-full gap-3">
                   <h1 className="text-2xl font-light mb-4">Student Information</h1>
-                  <div className="flex items-center w-full gap-3">
+                  <div className="flex items-center gap-6 p-4 bg-white rounded-lg">
                     <img
                       src={user.profilePicture}
                       alt={user.username}
-                      className="profile-picture w-40 "
+                      className="w-32 h-32 rounded-full object-cover"
                     />
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-2xl font-semibold text-teal-500 mb-1">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
                         {`${user.firstName} ${user.middleName || ""} ${user.lastName}`}
-                      </h3>
-                      <p className="text-2xl font-light text-teal-500 mb-1">
-                        Student Number: {user.username}
-                      </p>
+                      </h2>
+                      <p className="text-gray-600">Student Number: {user.username}</p>
+                      {getStatusBadge(formData.status || "NO ACTION")}
                     </div>
                   </div>
                 </div>
@@ -264,20 +296,22 @@ const UserProfile = () => {
                     <div className="flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3 w-3/4">
                       <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
                       <Button
-                        type='button'
-                        size='sm'
-                        className="text-lg outline-black text-black px-14 py-4 rounded-md"
-                        onClick={handleUploadImage}
-                        disabled={imageUploadProgress}
-                      >
-                        {imageUploadProgress ? (
-                          <div className="w-16 h-16">
-                            <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} />
-                          </div>
-                        ) : (
-                          'Upload image'
-                        )}
-                      </Button>
+                          color="gray"
+                          onClick={handleUploadImage}
+                          disabled={imageUploadProgress}
+                        >
+                          {imageUploadProgress ? (
+                            <div className="w-6 h-6">
+                              <CircularProgressbar
+                                value={imageUploadProgress}
+                                text={`${imageUploadProgress}%`}
+                              />
+                            </div>
+                          ) : (
+                            <HiOutlineUpload className="mr-2 h-5 w-5" />
+                          )}
+                          Upload
+                        </Button>
                     </div>
 
                     {imageUploadError && <Alert color="failure">{imageUploadError}</Alert>}

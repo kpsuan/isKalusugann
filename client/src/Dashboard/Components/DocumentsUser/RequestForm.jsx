@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { useDispatch } from 'react-redux';
-import { Card } from 'flowbite-react';
+import { Card, Label, Textarea } from 'flowbite-react';
 
 import LabForm from './LabForm';
 
@@ -10,6 +10,10 @@ import LabForm from './LabForm';
 export default function RequestForm() {
   const dispatch = useDispatch();
   const { currentUser, loading, error } = useSelector((state) => state.user);
+
+  const [purpose, setPurpose] = useState('');
+  const [isAnnualPE, setIsAnnualPE] = useState(false); // Track the checkbox state
+
 
   const [formData, setFormData] = useState({
     studentNumber: '',
@@ -43,6 +47,7 @@ export default function RequestForm() {
     signedRequestForm: '',
     trackingNumber: '',
     userID: '',
+    purpose: ''
   });
 
   // Populate formData with currentUser data
@@ -70,12 +75,18 @@ export default function RequestForm() {
 
   const handleChange = (e) => {
     const { id, value, type } = e.target;
+    
     if (type === 'radio') {
       setFormData({ ...formData, sex: value });
+    } else if (id === 'annualPE') {
+      // Handle checkbox change for Annual PE
+      setIsAnnualPE(e.target.checked);
+      setPurpose(e.target.checked ? 'Annual PE' : formData.purpose); // Set 'Annual PE' if checked
     } else {
       setFormData({ ...formData, [id]: value });
     }
   };
+  
 
   const handleDocumentChange = (e) => {
     const { id, checked } = e.target;
@@ -87,17 +98,24 @@ export default function RequestForm() {
       },
     });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    
+    // Set purpose based on checkbox and comment text
+    const finalPurpose = isAnnualPE ? 'Annual PE' : formData.purpose;
+    
+    const formDataToSubmit = { 
+      ...formData, 
+      purpose: finalPurpose, // Add purpose to form data
+    };
+    
     try {
       const res = await fetch(`/api/docrequest/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formDataToSubmit),
       });
       const data = await res.json();
       if (data.success === false) {
@@ -109,6 +127,7 @@ export default function RequestForm() {
       toast.error('Something went wrong!');
     }
   };
+  
 
   return (
       <div className=" min-h-screen flex bg-gray-100">
@@ -464,8 +483,63 @@ export default function RequestForm() {
                                     )}
                                     </li>
                                 ))}
-                                </ul>
+                            </ul>
                         </Card>
+
+                        <Card className="max-w-full mt-8"> 
+                          <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Purpose: </h2>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              If for annual PE, check the annual PE checkbox.
+                            </p>
+                          </div>
+
+                          <ul className="">
+                            {[{ id: "annualPE", label: "Annual PE", description: "For Annual PE Requirement" }].map(({ id, label, description }) => (
+                              <li
+                                key={id}
+                                className="flex p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
+                              >
+                                <div className="flex items-center ps-3">
+                                  <input
+                                    id={id}
+                                    type="checkbox"
+                                    checked={isAnnualPE}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                  />
+                                  
+                                  <div className="ml-3 text-sm">
+                                    <label
+                                      htmlFor={id}
+                                      className="font-medium text-gray-900 dark:text-gray-300"
+                                    >
+                                      {label}
+                                    </label>
+                                    <p id={`${id}-description`} className="text-gray-500 dark:text-gray-400">
+                                      {description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>       
+
+                          <div>
+                            <div className="mb-2 block">
+                              <Label htmlFor="purpose" value="Enter purpose" />
+                            </div>
+                            <Textarea
+                              id="purpose"
+                              placeholder="Enter your comment here..."
+                              rows={4}
+                              value={formData.purpose} // Bind to formData.comment
+                              onChange={handleChange} // Handle change for textarea
+                              className="w-full"
+                            />
+                          </div>
+                        </Card>
+
 
                         
                         <button className='mt-10 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-lg font-semibold p-3 rounded-lg uppercase hover:from-green-600 hover:to-cyan-600 disabled:opacity-80'>

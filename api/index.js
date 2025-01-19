@@ -9,6 +9,7 @@ import appointmentsRoute from './routes/appointments.route.js';
 import eventsRoutes from './routes/events.route.js';
 import settingsRoutes from './routes/settings.route.js';
 import documentRequestRoute from './routes/documentRequest.route.js'
+import emailUserRoute from './routes/emailuser.route.js'
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
@@ -41,6 +42,8 @@ app.use('/api/appointments', appointmentsRoute);
 app.use('/api/events', eventsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/docrequest', documentRequestRoute);
+app.use('/api/email', emailUserRoute);
+
 
 
 

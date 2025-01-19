@@ -72,6 +72,12 @@ import News from './pages/News';
 import Notifications from './Dashboard/Components/Body Section/Top Section/Notifications';
 import AppointmentsHome from './Dashboard/Components/Admin/Appointments/AppointmentsHome';
 import RequestDocument from './Dashboard/Components/DocumentsUser/RequestDocument';
+import ManageRequests from './Dashboard/Components/Admin/Documents/ManageRequests';
+import TrackRequestHistory from './Dashboard/Components/DocumentsUser/TrackRequest';
+import TrackRequest from './Dashboard/Components/DocumentsUser/TrackRequest';
+import TrackRequest2 from './Dashboard/Components/DocumentsUser/TrackRequest2';
+import RequestForm from './Dashboard/Components/DocumentsUser/RequestForm';
+import Settings from './Dashboard/Settings';
 
 
 export default function App() {
@@ -86,6 +92,8 @@ export default function App() {
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/attendance' element={<Attendance />} />
         <Route path="/events" element={<Event />} />
+        <Route path="/trackRequest1" element={<TrackRequest2 />} />
+        <Route path="/requestForm" element={<RequestForm />} />
 
        
         <Route element={<PrivateRoute />}>
@@ -112,6 +120,7 @@ export default function App() {
           <Route path="/get-allDocuments" element={<GetAllDocs />} />
           <Route path="/docsuser" element={<DocsUserView />} />
           <Route path="/requestDocs" element={<RequestDocument />} />
+          <Route path="/trackRequest" element={<TrackRequest />} />
 
           <Route path="/annualhome" element={<AnnualHome />} />
           <Route path="/status" element={<Status />} />
@@ -122,6 +131,8 @@ export default function App() {
           <Route path="/noDocs" element={<NoDocsSubmitted />} />
           <Route path="/incDocs" element={<IncDocuments />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings" element={<Settings />} />
+
 
 
 
@@ -140,6 +151,7 @@ export default function App() {
           <Route path="/show-online" element={<UsersOnline />} />
           <Route path="/user-status/:userId" element={<UpdateStatus />} />
           <Route path="/user-profile/:userId" element={<UserProfile />} />
+          <Route path="/manageRequests" element={<ManageRequests />} />
 
 
           <Route path="/resched-status/:userId" element={<RescheduleStatus />} />

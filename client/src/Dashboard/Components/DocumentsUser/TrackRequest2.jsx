@@ -15,7 +15,7 @@ import {Link, useNavigate} from 'react-router-dom'
 import TrackRequestHistory from "./TrackRequestHistory";
 
 
-const TrackRequest = () => {
+const TrackRequest2 = () => {
 
   
 
@@ -24,7 +24,6 @@ const TrackRequest = () => {
       
         <div className="dashboard my-flex">
           <div className="dashboardContainer my-flex">
-            <Sidebar />
             <div className="mainContent">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -55,4 +54,4 @@ const TrackRequest = () => {
         </div>
     );
 };
-export default TrackRequest;
+export default TrackRequest2;

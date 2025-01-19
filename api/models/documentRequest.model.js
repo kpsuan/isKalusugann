@@ -4,7 +4,7 @@ const documentRequestSchema = new mongoose.Schema({
   generalInformation: {
     studentNumber: { type: String, required: true },
     firstName: { type: String, required: true },
-    middleName: { type: String, required: true },
+    middleName: { type: String, required: false },
     lastName: { type: String, required: true },
     yearLastAttended: { type: Number, required: false },
     birthday: { type: Date, required: false },
@@ -35,6 +35,7 @@ const documentRequestSchema = new mongoose.Schema({
   status: { type: String, required: false },  // Add status field
   comment: { type: String, default: '' },  // Add comment field
   signedRequestForm: { type: String, default: '' },  // Add signedRequestForm field
+  purpose: { type: String, default: '' },  // Add signedRequestForm field
   userId: {
     type: String,
     required: true,

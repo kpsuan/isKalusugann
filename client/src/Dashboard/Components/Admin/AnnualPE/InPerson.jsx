@@ -25,6 +25,7 @@ import {Link, useNavigate} from 'react-router-dom'
 import UserInPerson from "./UserInPerson";
 import ScheduledForDate from "./ScheduledOn";
 import ScheduledForToday from "./ScheduledToday";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 
 import { 
@@ -373,23 +374,42 @@ const InPerson = () => {
       toast.error('Please set the start and end dates before generating the schedule.');
       return;
     }
-
+  
     setLoading(true);
     try {
+      // Step 1: Generate the schedule
       await axios.post(`/api/user/assignschedule`, {
         startDate: savedStartDate,
         endDate: savedEndDate,
       });
-      toast.success('Schedule generated successfully!', {
+  
+      // Step 2: Fetch all users to send the email
+      const usersResponse = await axios.get(`/api/user/getinperson`);
+      const users = usersResponse.data;
+  
+      // Step 3: Send email to each user
+      for (const user of users) {
+        const emailResponse = await axios.post('/api/email/emailUser', {
+          email: user.email,
+          subject: 'Annual PE Schedule Now Available',
+          text: `Dear ${user.firstName},\n\nYour schedule is now up for viewing in the system. Here is your assigned date: ${user.schedule}\n\nBest regards,\nYour Organization`
+        });
+      }
+  
+      // Final toast message
+      toast.success('Schedule generated and emails sent successfully!', {
         onClose: () => navigate(0) // Navigate after toast closes
       });
     } catch (error) {
-      console.error('Error generating schedule:', error);
-      toast.error('Error generating schedule. Please try again.');
+      console.error('Error generating schedule or sending emails:', error);
+      toast.error('Error generating schedule or sending emails. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+  
+
+  
 
   const handleRescheduleClick = () => {
     navigate('/reschedule', { state: { startDate: savedStartDate, endDate: savedEndDate } });
@@ -491,7 +511,11 @@ const InPerson = () => {
                            </Card>
                          </Tabs.Item>
             <Tabs.Item title="View All" icon={HiUserCircle}>
+            {loading ? (
+                <LoadingSkeleton />
+              ) : (
               <UserInPerson />
+            )}
             </Tabs.Item>
 
 

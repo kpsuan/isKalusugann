@@ -2,7 +2,6 @@ import DocumentRequest from "../models/documentRequest.model.js";
 import { errorHandler } from "../utils/error.js";
 
 
-
 const generateTrackingNumber = () => {
   const timestamp = Date.now() 
   return `LR-${timestamp}`; // Combine both parts
@@ -47,7 +46,7 @@ export const createRequest = async (req, res, next) => {
       status: req.body.status || '',  // Adding the status field
       comment: req.body.comment || '',  // Adding the comment field
       signedRequestForm: req.body.signedRequestForm || '',  // Adding the signedRequestForm field
-      
+      purpose: req.body.purpose || '',  // Adding the signedRequestForm field
       userId: req.user.id,
     };
 
@@ -66,17 +65,16 @@ export const createRequest = async (req, res, next) => {
 };
 
 export const getRequestHistory = async (req, res, next) => {
-    try {
-      const userId = req.params.userId; 
-      console.log("Received userId:", userId);  // Log userId here
-      const requests = await DocumentRequest.find({ userId }) 
-        .sort({ dateRequested: -1 }); 
-      res.status(200).json(requests);
-    } catch (error) {
-      next(error);
-    }
-  };
-  
+  try {
+    // Fetch all document requests, sorted by dateRequested in descending order
+    const requests = await DocumentRequest.find().sort({ dateRequested: -1 });
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching request history:', error);
+    next(error);
+  }
+};
+
   export const getRequestHistory2 = async (req, res, next) => {
     try {
       const requests = await DocumentRequest.find({ userId: req.query.userId });
@@ -101,3 +99,70 @@ export const getRequestHistory = async (req, res, next) => {
     }
   };
   
+export const updateRequestStatus = async (req, res, next) => {
+  try {
+    const { requestId, status, comment, signedRequestForm } = req.body;
+
+    const request = await DocumentRequest.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    request.status = status || request.status;
+    request.comment = comment || request.comment;
+    request.dateUpdated = new Date();
+    request.signedRequestForm = signedRequestForm || request.signedRequestForm;
+
+
+    const updatedRequest = await request.save();
+    res.status(200).json(updatedRequest);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRequestDetails = async (req, res) => {
+  const { trackingNumber } = req.params;
+  
+  try {
+    const request = await DocumentRequest.findOne({ trackingNumber });
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    // Format dates
+    const formattedDateRequested = new Date(request.dateRequested).toLocaleDateString();
+    const formattedDateUpdated = new Date(request.dateUpdated).toLocaleDateString();
+
+    const statusMap = {
+      'pending': 'Under Review',
+      'rejected': 'Rejected',
+    };
+
+    const formattedStatus = statusMap[request.status.toLowerCase()] || request.status;
+
+    //  include fields that are true meaning those r requested v=by user
+    const filteredDocumentRequest = Object.keys(request.documentRequest)
+      .filter(key => request.documentRequest[key] === true)
+      .reduce((obj, key) => {
+        obj[key] = request.documentRequest[key];
+        return obj;
+      }, {});
+
+    res.json({
+      trackingId: request.trackingNumber,
+      status: formattedStatus,
+      dateRequested: formattedDateRequested,
+      dateUpdated: formattedDateUpdated,
+      documentRequest: filteredDocumentRequest, // Only return the true fields
+      timeline: [
+        { status: 'Submitted', date: formattedDateRequested, description: 'Request submitted successfully' },
+        { status: formattedStatus, date: formattedDateUpdated, description: `Request is currently in ${formattedStatus}` }
+      ],
+      type: 'Document Request'
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};

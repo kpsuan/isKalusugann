@@ -62,7 +62,7 @@ const Sidebar = () => {
               {!isCollapsed && (
                 <>
                   <span className="ml-3">Documents</span>
-                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isAnnualPEOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isDocsOpen ? 'rotate-180' : ''}`} />
                 </>
               )}
             </button>
@@ -85,11 +85,22 @@ const Sidebar = () => {
                      Request Document
                     </a>
                     <a
-                      href="/requestDocs"
+                      href="/trackRequest"
                       className="block py-2 text-sm text-gray-600 hover:text-blue-600"
                     >
                       Track Request
                     </a>
+                  </>
+                )}
+                {currentUser.isAdmin && (
+                  <>
+                    <a
+                      href="/manageRequests"
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                     Manage Requests
+                    </a>
+                    
                   </>
                 )}
               </div>
@@ -165,7 +176,7 @@ const Sidebar = () => {
             {!isCollapsed && 'SETTINGS'}
           </div>
           <nav className="space-y-2">
-            <a href="#" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <a href="/settings" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
               <Settings className="w-5 h-5" />
               {!isCollapsed && <span className="ml-3">Account</span>}
             </a>

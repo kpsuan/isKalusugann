@@ -96,6 +96,7 @@ const UploadDocs = () => {
     };
 
     return (
+        
         <div className="w-3/4 mb-10"> 
             {showToast && (
                 <Toast>
@@ -106,6 +107,18 @@ const UploadDocs = () => {
                     <Toast.Toggle onClick={() => setShowToast(false)} />
                 </Toast>
             )}
+
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+             
+              Upload a document
+            </h2>
+
+          </div>
+          
+        </div>
+        
             <h1 className="text-left text-1xl my-7 font-semibold"></h1>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-4 sm:flex-row justify-between">
@@ -124,7 +137,7 @@ const UploadDocs = () => {
                     <Button 
                         type='button' 
                         size='sm' 
-                        className="text-lg outline-black text-black px-14 py-4 rounded-md"
+                        className="text-lg bg-slate outline-black text-black px-8 py-2 rounded-md"
                         onClick={handleUploadImage}
                         disabled={imageUploadProgress}
                     >
@@ -141,7 +154,7 @@ const UploadDocs = () => {
                     <p className="w-full text-sm mb-1 border border-green-500 px-2 py-2 inline-block">{formData.title}</p>
                 )}
 
-                <Button type="submit" className="text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
+                <Button type="submit" className="text-3xl bg-cyan-500 text-white hover:bg-cyan-600 py-2 rounded-md">
                     Submit
                 </Button>
                 {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}

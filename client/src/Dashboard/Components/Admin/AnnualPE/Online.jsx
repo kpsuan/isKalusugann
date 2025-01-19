@@ -4,6 +4,8 @@ import { Card, Tabs } from 'flowbite-react';
 import {Link, useNavigate} from 'react-router-dom'
 import { FileText, Users } from 'lucide-react';
 
+import LoadingSkeleton from './LoadingSkeleton.jsx';
+
 import Sidebar from "../../SideBar Section/Sidebar";
 import Top from "../../Profile/Components/Header";
 import Breadcrumb from "../../../Breadcrumb.jsx";
@@ -244,6 +246,11 @@ const Online = () => {
             <Tabs>
               <Tabs.Item active title="Overview" icon={HiOutlineViewGrid}>
                 {/* Status Section */}
+
+                {loading ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <>
                 <div className="mb-8">
                   <Card>
                     <h2 className="text-xl font-semibold mb-4">Annual PE Status</h2>
@@ -333,6 +340,8 @@ const Online = () => {
                     />
                   </div>
                 </Card>
+                </>
+              )}
               </Tabs.Item>
 
               <Tabs.Item title="View All" icon={HiUsers}>
@@ -346,6 +355,9 @@ const Online = () => {
               </Tabs.Item>
 
               <Tabs.Item title="Degree Programs" icon={HiOutlineAcademicCap}>
+              {loading ? (
+                <LoadingSkeleton />
+              ) : (
                 <Card>
                   <h2 className="text-xl font-semibold mb-4">Degree Programs</h2>
                   <div className="grid md:grid-cols-3 gap-4">
@@ -359,7 +371,9 @@ const Online = () => {
                     ))}
                   </div>
                 </Card>
+              )}
               </Tabs.Item>
+              
             </Tabs>
           </div>
         </div>

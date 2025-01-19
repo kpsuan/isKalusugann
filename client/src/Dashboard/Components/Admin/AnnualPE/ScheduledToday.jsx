@@ -20,6 +20,7 @@ const ScheduledForToday = () => {
     const fetchUsersScheduledForToday = async () => {
       try {
         const response = await axios.get(`/api/user/sched-for-today`);
+        console.log(response.data); // Check the response to ensure `isPresent` is `"ARRIVED"`
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users scheduled for today:', error);
@@ -27,9 +28,10 @@ const ScheduledForToday = () => {
         setLoading(false);
       }
     };
-
+  
     fetchUsersScheduledForToday();
   }, []);
+  
 
   // Function to handle 'Load more' (this is just a placeholder)
   const handleShowMore = () => {
@@ -136,12 +138,25 @@ const ScheduledForToday = () => {
                 </Table.Cell>
 
                 <Table.Cell className="text-center px-2">
-                        <div style={{ backgroundColor: user.isPresent === 'ARRIVED' ? 'green' : user.isPresent === 'ABSENT' ? 'red' : user.isPresent === null ? '#e7aa18' : '#e7aa18' }} className="px-2 py-3 w-32 rounded">
-                            <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
-                                <span>{user.isPresent || "DID NOT YET ARRIVE"}</span>
-                            </Link>
-                        </div>
+                  <div
+                    style={{
+                      backgroundColor:
+                        user.isPresent === 'ARRIVED'
+                          ? 'green'
+                          : user.isPresent === 'ABSENT'
+                          ? 'red'
+                          : user.isPresent === null
+                          ? '#e7aa18'
+                          : '#e7aa18',
+                    }}
+                    className="px-2 py-3 w-32 rounded"
+                  >
+                    <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                      <span>{user.isPresent || "DID NOT YET ARRIVE"}</span>
+                    </Link>
+                  </div>
                 </Table.Cell>
+
               </Table.Row>
               ))}
             </Table.Body>

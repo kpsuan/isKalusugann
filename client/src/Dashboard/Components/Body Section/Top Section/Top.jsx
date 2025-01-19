@@ -8,7 +8,11 @@ import { Button } from 'flowbite-react';
 import video from '../../../Assets/med.mp4';
 import './top.css';
 import DOMPurify from "dompurify";
+
+import axios from 'axios';
 import { IoNotificationsCircleOutline } from "react-icons/io5";
+
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
 
 
 export const Top = () => {
@@ -16,6 +20,8 @@ export const Top = () => {
   const [latestAnnouncement, setLatestAnnouncement] = useState(null);
   const [events, setEvents] = useState([]);
   const [notifications, setNotifications] = useState([]); 
+  const navigate = useNavigate();  // Use useNavigate hook for navigation
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
   const nowUTC = new Date();
   const nowLocalUTCPlus8 = new Date(nowUTC.getTime() + (8 * 60 * 60 * 1000)); // Get current time in UTC+8
@@ -129,15 +135,9 @@ export const Top = () => {
       }
 
       try {
-        const res = await fetch(`/api/user/${currentUser._id}/notifications`);
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        const data = await res.json();
+        const response = await axios.get(`/api/user/${currentUser._id}/notifications`); // Match the backend route
+        setNotifications(response.data.notifications);
 
-        // Sort notifications by timestamp (newest first)
-        const sortedNotifications = data.notifications.sort((a, b) => b.timestamp - a.timestamp);
-        setNotifications(sortedNotifications);
       } catch (error) {
         console.error('Failed to fetch notifications:', error.message);
       }
@@ -148,7 +148,7 @@ export const Top = () => {
 
   const unreadNotificationsCount = notifications.filter(notif => !notif.read).length;
 
-  const handleNotificationClick = async (notifId) => {
+  const handleNotificationClick = async (notifId, link) => {
     try {
       const res = await fetch(`/api/user/${currentUser._id}/notifications/${notifId}`, {
         method: 'PUT',
@@ -159,18 +159,21 @@ export const Top = () => {
         throw new Error(`Failed to update notification: ${res.statusText}`);
       }
 
-      const { notification } = await res.json();
-
-      // Update the local notifications state
+      // Mark the notification as read locally
       setNotifications((prevNotifications) =>
         prevNotifications.map((notif) =>
           notif._id === notifId ? { ...notif, isRead: true } : notif
         )
       );
+
+      // Navigate to the notification's link
+      navigate(link);  // This will handle the redirection
+
     } catch (error) {
       console.error('Error marking notification as read:', error.message);
     }
   };
+  
 
   // Split notifications into new and earlier
   const newNotifications = notifications.filter(notif => {
@@ -220,8 +223,8 @@ export const Top = () => {
                         <li
                           key={notif._id}
                           className={`flex items-center gap-2 p-2 border-b hover:bg-gray-100 ${notif.isRead ? 'opacity-50' : ''}`}
-                          onClick={() => handleNotificationClick(notif._id)}
-                        >
+                          onClick={() => handleNotificationClick(notif._id, notif.link)}
+                          >
                           <IoNotificationsCircleOutline className={`text-lg text-${notif.type}`} />
                           <Link to={notif.link || "#"} className="text-sm text-blue-500 hover:underline">
                             {notif.message} - <small>{timeAgo(notif.timestamp)}</small>
@@ -237,8 +240,8 @@ export const Top = () => {
                         <li
                           key={notif._id}
                           className={`flex items-center gap-2 p-2 border-b hover:bg-gray-100 ${notif.isRead ? 'opacity-50' : ''}`}
-                          onClick={() => handleNotificationClick(notif._id)}
-                        >
+                          onClick={() => handleNotificationClick(notif._id, notif.link)}
+                          >
                           <IoNotificationsCircleOutline className={`text-5xl text-blue-500 text-${notif.type}`} />
                           <Link to={notif.link || "#"} className="text-sm text-blue-500 hover:underline">
                             {notif.message} <small>{timeAgo(notif.timestamp)}</small>

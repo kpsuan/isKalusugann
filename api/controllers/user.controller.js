@@ -95,6 +95,107 @@ export const updateUser = async (req, res, next) => {
     // Find and update the user in the database
     const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
+
+    // Dynamically generate notifications
+    const notifications = [];
+    const lastUpdated = nowLocalUTCPlus8;
+
+    if (updatedUser.status === 'approved') {
+      notifications.push({
+        message: 'Your documents have been verified. See attached medcert below.',
+        type: 'success',
+        link: '/status',
+        timestamp: lastUpdated,
+      });
+    } else if (updatedUser.status === 'denied') {
+      notifications.push({
+        message: 'Your documents were denied. Please submit again.',
+        type: 'error',
+        link: '/status',
+        timestamp: lastUpdated,
+      });
+    }
+
+    if (updatedUser.annualPE === 'Online') {
+      notifications.push({
+        message: 'You may now start submitting the forms needed for Annual PE.',
+        type: 'info',
+        link: '/status',
+        timestamp: lastUpdated,
+      });
+    } else if (updatedUser.annualPE === 'InPerson' && updatedUser.schedule.length > 0) {
+      notifications.push({
+        message: 'You can now view your schedule in the Schedule Tab below.',
+        type: 'info',
+        link: '/status',
+        timestamp: lastUpdated,
+      });
+    }
+
+    if (updatedUser.rescheduleStatus === 'approved') {
+      notifications.push({
+        message: 'You may view and select your preferred rescheduled date.',
+        type: 'success',
+        link: '/status',
+        timestamp: lastUpdated,
+      });
+    } else if (updatedUser.rescheduleStatus === 'denied') {
+      notifications.push({
+        message: `Your reschedule request was denied because: "${updatedUser.rescheduleRemarks}".`,
+        type: 'error',
+        link: '/status#denied',
+        timestamp: lastUpdated,
+      });
+    }
+
+    if (updatedUser.isPresent === 'ARRIVED') {
+      notifications.push({
+        message: 'Annual PE done.',
+        type: 'success',
+        timestamp: lastUpdated,
+      });
+    } else if (updatedUser.isPresent === 'ABSENT') {
+      notifications.push({
+        message: 'You missed your Annual PE schedule.',
+        type: 'warning',
+        timestamp: lastUpdated,
+      });
+    }
+
+    //ADMIN NOTIFICATION
+    if (req.user.isAdmin) {
+      const allUsers = await User.find(); // Fetch all users
+
+      // Iterate over all users to check their reschedule or document submission status
+      const notifications = [];
+      for (let currentUser of allUsers) {
+        // Notification for reschedule requests
+        if (currentUser.reschedule === 'YES') {
+          notifications.push({
+            message: `A user has requested to reschedule their schedule. User: ${currentUser.firstName} ${currentUser.lastName}`,
+            type: 'info',
+            link: `/resched-status/${currentUser._id}`,
+            timestamp: nowLocalUTCPlus8,
+          });
+        }
+
+        // Notification for document submissions
+        if (
+          (currentUser.peForm && currentUser.peForm !== "") ||
+          (currentUser.labResults && currentUser.labResults !== "") ||
+          (currentUser.requestPE && currentUser.requestPE !== "")
+        ) {
+          notifications.push({
+            message: `A user has submitted documents for approval. User: ${currentUser.firstName} ${currentUser.lastName}`,
+            type: 'info',
+            link: `/user-status/${currentUser._id}`,
+            timestamp: nowLocalUTCPlus8,
+          });
+        }
+      }
+    }
+
+
     // Remove password from the response
     const { password, ...rest } = updatedUser._doc;
     res.status(200).json(rest);
@@ -103,7 +204,26 @@ export const updateUser = async (req, res, next) => {
   }
 };
 
-export const updateNotifications = async (req, res) => { 
+export const updateNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params; 
+
+    const user = await User.findById(userId).select('-queueNumber -queueNumberDate').select('notifications'); // Fetch only notifications
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Sort notifications by timestamp (newest first)
+    const sortedNotifications = user.notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.status(200).json({ notifications: sortedNotifications });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateNotifications2 = async (req, res) => { 
   try {
     const { userId } = req.params; // Access userId correctly
     const user = await User.findById(userId).select('-queueNumber -queueNumberDate');
@@ -224,42 +344,34 @@ export const updateNotifications = async (req, res) => {
   }
 };
 
-
 export const markNotificationAsRead = async (req, res) => {
-  const { userId, notificationId } = req.params;
-
   try {
-    // Validate notificationId
-    if (!notificationId) {
-      return res.status(400).json({ message: 'Notification ID is required' });
-    }
+    const { userId, notificationId } = req.params; // Access userId and notificationId from params
 
-    const user = await User.findById(userId).select('-queueNumber -queueNumberDate');
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Validate user notifications array
-    if (!user.notifications || user.notifications.length === 0) {
-      return res.status(404).json({ message: 'No notifications found for user' });
-    }
+    // Find the notification by ID
+    const notification = user.notifications.id(notificationId); // Use Mongoose's `id()` method to find the notification
 
-    // Find notification
-    const notification = user.notifications.id(notificationId);
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
-    // Mark as read
+    // Mark the notification as read
     notification.isRead = true;
+
+    // Save the updated user document
     await user.save();
 
     res.status(200).json({ message: 'Notification marked as read', notification });
   } catch (error) {
-    console.error('Error marking notification as read:', error.message);
-    res.status(500).json({ message: 'Error updating notification', error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 
 
@@ -1634,6 +1746,17 @@ export const assignSchedule = async (req, res, next) => {
     for (const user of allUsers) {
       const assignedDate = assignedDates[assignedDatesIndex]; // Get the current date
       await User.findByIdAndUpdate(user._id, { schedule: new Date(assignedDate) });
+      
+      // Add a notification for the user
+      user.notifications.push({
+        message: `Your schedule has been generated. Your assigned date is ${new Date(assignedDate).toLocaleDateString()}.`,
+        type: 'info',
+        timestamp: new Date(),
+        link: '/status', // Link to the schedule page
+      });
+      await user.save(); // Save the updated user
+      
+          
       counter++;
 
       // Move to the next day if 20 users have been assigned for the current day
@@ -1722,6 +1845,19 @@ export const rescheduleUser = async (req, res, next) => {
     if (rescheduledDates.length === 0) {
       return res.status(400).json({ message: 'No available dates within the given range.' });
     }
+
+
+     // Add a notification for the user about the available dates
+    const notificationMessage = `New available dates for rescheduling: ${rescheduledDates
+      .map((date) => new Date(date).toLocaleDateString())
+      .join(', ')}. Please reschedule at your earliest convenience.`;
+
+    user.notifications.push({
+      message: notificationMessage,
+      type: 'info',
+      timestamp: new Date(),
+      link: '/status', // Link to the rescheduling page
+    });
 
     // Save the available dates and update the user (queueNumber is not touched)
     user.queueNumber = undefined; // Prevent queueNumber modification
@@ -1869,28 +2005,36 @@ export const scheduledToday = async (req, res, next) => {
 
 export const viewUsersScheduledToday = async (req, res, next) => {
   try {
-    // Get the current date
+    // Get the current date (in UTC)
     const today = new Date();
-    
-    // Calculate the start and end of today's date
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0); // Start of the day
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999); // End of the day
 
-    console.log('Start of the day:', startOfDay);
-    console.log('End of the day:', endOfDay);
+    // Calculate the start and end of today's date in local timezone (PST)
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0)); // Start of the day in local time
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999)); // End of the day in local time
 
-    // Fetch users with a non-empty schedule and sort them alphabetically by firstName (or lastName)
-    const users = await User.find({ schedule: { $ne: [] } }).sort({ lastName: 1 }); // Sort alphabetically by 'firstName'
-    
+    console.log('Start of the day (Local):', startOfDay);
+    console.log('End of the day (Local):', endOfDay);
+
+    // Fetch users with `annualPE` = 'InPerson', non-empty schedule, and sort by lastName
+    const users = await User.find({
+      annualPE: 'InPerson', // Filter for users with `annualPE` set to 'InPerson'
+      schedule: { $ne: [] }, // Ensure schedule is not empty
+    }).sort({ lastName: 1 });
+
     // Filter users scheduled for today
-    const usersScheduledForToday = users.filter(user => 
+    const usersScheduledForToday = users.filter(user =>
       user.schedule.some(scheduleDateStr => {
-        const scheduleDate = new Date(scheduleDateStr); // Convert string to Date
+        // Parse each schedule string into a Date object
+        const scheduleDate = new Date(scheduleDateStr);
+        
+        // Check if the schedule date is within today's range
         return scheduleDate >= startOfDay && scheduleDate <= endOfDay;
       })
     );
+
+    if (usersScheduledForToday.length === 0) {
+      console.log('No users scheduled for today');
+    }
 
     res.status(200).json(usersScheduledForToday);
   } catch (error) {
@@ -1898,6 +2042,8 @@ export const viewUsersScheduledToday = async (req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
 
 
 

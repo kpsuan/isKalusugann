@@ -1,19 +1,51 @@
-import { Alert, Button, Modal, Table } from 'flowbite-react';
-import { HiOutlineExclamationCircle } from 'react-icons/hi';
+import React, { useEffect, useState } from 'react';
+import { 
+  Alert, 
+  Button, 
+  Modal, 
+  Table,
+  Card,
+  Spinner,
+  Badge
+} from 'flowbite-react';
+import { 
+  HiOutlineExclamationCircle,
+  HiOutlineDocument,
+  HiOutlineTrash,
+  HiOutlineExternalLink,
+  HiOutlineDocumentDownload,
+  HiOutlineClock
+} from 'react-icons/hi';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from "react";
 import { useSelector } from 'react-redux';
 
-const DashAnnouncement = () => {
+const DashDocuments = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [userDocs, setUserDocs] = useState([]);
   const [showMore, setShowMore] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [docsIdToDelete, setDocsIdToDelete] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch documents
+  const getCategoryBadge = (category) => {
+    const categories = {
+      'Medical': 'info',
+      'Academic': 'success',
+      'Administrative': 'warning',
+      'General': 'gray',
+      'Urgent': 'failure'
+    };
+
+    return (
+      <Badge color={categories[category] || 'info'} size="md">
+        {category}
+      </Badge>
+    );
+  };
+
   const fetchDocs = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/docs/getdocuments`);
       const data = await res.json();
       if (res.ok) {
@@ -24,6 +56,8 @@ const DashAnnouncement = () => {
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,7 +67,6 @@ const DashAnnouncement = () => {
     }
   }, [currentUser._id]);
 
-  // Handle "Load More" button click
   const handleShowMore = async () => {
     const startIndex = userDocs.length;
     try {
@@ -50,7 +83,6 @@ const DashAnnouncement = () => {
     }
   };
 
-  // Handle document deletion
   const handleDeleteDocs = async () => {
     setShowModal(false);
     try {
@@ -61,7 +93,6 @@ const DashAnnouncement = () => {
       if (!res.ok) {
         console.log(data.message);
       } else {
-        // Refresh documents after deletion
         fetchDocs();
       }
     } catch (error) {
@@ -69,76 +100,140 @@ const DashAnnouncement = () => {
     }
   };
 
-  return (
-    <div className='table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
-      {currentUser.isAdmin && userDocs.length > 0 ? (
-        <>
-          <Table hoverable className='shadow-md z-10 relative'>
-            <Table.Head className="bg-gray-50 dark:bg-gray-700 text-lg">
-              <Table.HeadCell>Document name</Table.HeadCell>
-              <Table.HeadCell>Category</Table.HeadCell>
-              <Table.HeadCell>Delete</Table.HeadCell>
-              <Table.HeadCell>Date updated</Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y">
-              {userDocs.map((docs) => (
-                <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800" key={docs._id}>
-                  <Table.Cell>
-                    <Link to={docs.content} target="_blank" rel="noopener noreferrer" className="text-right font-medium text-gray-900 hover:underline">
-                      {docs.title}
-                    </Link>
-                  </Table.Cell>
-                  <Table.Cell>{docs.category}</Table.Cell>
-                  <Table.Cell className="text-center">
-                    <span onClick={() => {
-                      setShowModal(true);
-                      setDocsIdToDelete(docs._id);
-                    }} className="font-medium text-red-500 hover:underline cursor-pointer">Delete</span>
-                  </Table.Cell>
-                  <Table.Cell>{new Date(docs.updatedAt).toLocaleDateString()}</Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-          {showMore && (
-            <button onClick={handleShowMore} className="w-full text-teal-500 self-center text-sm py-7">Load more</button>
-          )}
-        </>
-      ) : (
-        <p>You have no docs yet!</p>
-      )}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner size="xl" />
+      </div>
+    );
+  }
 
-      {showModal && (
-        <div className='fixed inset-0 bg-gray-900 bg-opacity-50 z-40 flex items-center justify-center'>
-          <Modal
-            show={showModal}
-            onClose={() => setShowModal(false)}
-            popup
-            size='md'
-            className='relative z-50 p-40'
-          >
-            <Modal.Header />
-            <Modal.Body>
-              <div className='text-center pb-10'>
-                <HiOutlineExclamationCircle className='h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto' />
-                <h3 className='mb-5 text-lg text-gray-500 dark:text-gray-400'>
-                  Are you sure you want to delete this document?
-                </h3>
-                <div className='flex justify-center gap-4'>
-                  <Button color='red' className='bg-red-600 text-white hover:text-white hover:bg-red-800' onClick={handleDeleteDocs}>
-                    Delete
-                  </Button>
-                  <Button color='gray' onClick={() => setShowModal(false)}>
-                    No, cancel
-                  </Button>
-                </div>
-              </div>
-            </Modal.Body>
-          </Modal>
+  return (
+    <div className="max-w-6xl mx-auto p-4">
+      
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+             
+              Document Management
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Manage and track all uploaded documents
+            </p>
+          </div>
+          
         </div>
-      )}
+
+        {currentUser.isAdmin && userDocs.length > 0 ? (
+          <div className="overflow-x-auto">
+            <Table hoverable className="shadow-sm z-10 relative bg-slate">
+              <Table.Head>
+                <Table.HeadCell className="bg-gray-50">Document Title</Table.HeadCell>
+                <Table.HeadCell className="bg-gray-50">Category</Table.HeadCell>
+                <Table.HeadCell className="bg-gray-50">Last Updated</Table.HeadCell>
+                <Table.HeadCell className="bg-gray-50">Actions</Table.HeadCell>
+              </Table.Head>
+              <Table.Body className="divide-y">
+                {userDocs.map((doc) => (
+                  <Table.Row 
+                    key={doc._id}
+                    className="bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Table.Cell className="font-medium">
+                      <Link 
+                        to={doc.content} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <HiOutlineDocument className="h-5 w-5" />
+                        {doc.title}
+                        <HiOutlineExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {getCategoryBadge(doc.category)}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <HiOutlineClock className="h-4 w-4" />
+                        {new Date(doc.updatedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="md" 
+                          color="white"
+                          onClick={() => {
+                            setShowModal(true);
+                            setDocsIdToDelete(doc._id);
+                          }}
+                        >
+                          <HiOutlineTrash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+
+            {showMore && (
+              <div className="flex justify-center mt-4">
+                <Button 
+                  gradientDuoTone="cyanToBlue"
+                  size="sm"
+                  onClick={handleShowMore}
+                >
+                  Load More Documents
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Alert color="info" className="mt-4">
+            <span className="font-medium">No documents found!</span> Upload some documents to get started.
+          </Alert>
+        )}
+      
+
+      <Modal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        popup
+        size="md"
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500">
+              Are you sure you want to delete this document?
+            </h3>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="white"
+                onClick={handleDeleteDocs}
+              >
+                Yes, delete it
+              </Button>
+              <Button
+                color="gray"
+                onClick={() => setShowModal(false)}
+              >
+                No, cancel
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
 
-export default DashAnnouncement;
+export default DashDocuments;
