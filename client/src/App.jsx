@@ -54,7 +54,6 @@ import RescheduleStatus from './Dashboard/Components/Admin/AnnualPE/RescheduleSt
 import SuperAdminInPerson from './Dashboard/Components/Admin/AnnualPE/SuperAdminInPerson';
 import Post from './Dashboard/Components/AnnouncementUser/Post';
 import AnnualHomeAdmin from './Dashboard/Components/Admin/AnnualPE/AnnualHomeAdmin';
-import UserProfile from './pages/userProfile';
 import CompleteDocuments from './Dashboard/Components/Admin/AnnualPE/CompleteDocuments';
 import NoDocsSubmitted from './Dashboard/Components/Admin/AnnualPE/NoDocsSubmitted';
 import IncDocuments from './Dashboard/Components/Admin/AnnualPE/IncDocuments';
@@ -150,7 +149,6 @@ export default function App() {
           <Route path="/show-inPerson" element={<UserInPerson />} />
           <Route path="/show-online" element={<UsersOnline />} />
           <Route path="/user-status/:userId" element={<UpdateStatus />} />
-          <Route path="/user-profile/:userId" element={<UserProfile />} />
           <Route path="/manageRequests" element={<ManageRequests />} />
 
 
