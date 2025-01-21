@@ -1,11 +1,13 @@
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from "react";
-import { Card, Button, Badge, Tooltip, Table, Modal, Label, Textarea } from 'flowbite-react';
+import { Card, Button, Badge, Tooltip, Table, Modal, Label, TextInput } from 'flowbite-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { app } from '../../../../firebase';
 import DocumentRequestModal from './DocumentRequestModal';
+import { Search } from 'lucide-react';
+
 
 import {
   getDownloadURL,
@@ -39,7 +41,7 @@ const ManageRequests = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
- // New state for modal
+  const [searchTerm, setSearchTerm] = useState('');
 
  const [showActionModal, setShowActionModal] = useState(false);
  const [selectedAction, setSelectedAction] = useState(null);
@@ -120,6 +122,24 @@ const ManageRequests = () => {
     console.error("Error updating request:", error);
     toast.error("Error updating request. Please try again.");
   }
+};
+
+const filterRequests = (requests) => {
+  return requests.filter(request => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      request.trackingNumber?.toLowerCase().includes(searchLower) ||
+      request.generalInformation?.firstName?.toLowerCase().includes(searchLower) ||
+      request.generalInformation?.lastName?.toLowerCase().includes(searchLower) ||
+      request.generalInformation?.studentNumber?.toLowerCase().includes(searchLower);
+
+    const matchesTab = 
+      activeTab === 'new' ? request.status === 'pending' :
+      activeTab === 'history' ? request.status === 'approved' :
+      activeTab === 'rejected' ? request.status === 'rejected' : true;
+
+    return matchesSearch && matchesTab;
+  });
 };
 
 const handleEmailUser = async (request) => {
@@ -223,11 +243,8 @@ const handleEmailUser = async (request) => {
   }, []);
 
   const renderTableContent = () => {
-    const filteredRequests = recentRequests.filter(request => 
-      activeTab === 'new' ? request.status === 'pending' :
-      activeTab === 'history' ? request.status === 'approved' :
-      activeTab === 'rejected' ? request.status === 'rejected' : true
-    );
+    const filteredRequests = filterRequests(recentRequests);
+
     
     console.log('Rendering table with data:', filteredRequests);
 
@@ -284,7 +301,7 @@ const handleEmailUser = async (request) => {
           </Table.Cell>
           <Table.Cell>
             <div className="flex gap-2">
-            <Tooltip content="Approve Request">
+            <Tooltip content="Approve Request" className='text-black'>
                 <Button 
                   size="sm" 
                   color="green" 
@@ -294,7 +311,7 @@ const handleEmailUser = async (request) => {
                   <CheckCircle className="h-4 w-4" />
                 </Button>
               </Tooltip>
-              <Tooltip content="Reject Request">
+              <Tooltip content="Reject Request" className='text-black' >
                 <Button 
                   size="sm" 
                   color="red" 
@@ -304,11 +321,11 @@ const handleEmailUser = async (request) => {
                   <XCircle className="h-4 w-4" />
                 </Button>
               </Tooltip>
-              <Tooltip content="Email Laboratory Request Slip to User">
+              <Tooltip content="Email Laboratory Request Slip to User" className='text-black'>
                 <Button 
                   size="sm" 
                   color="info" 
-                  className="p-2" 
+                  className="p-2 " 
                   onClick={() => handleEmailUser(request)} // Trigger email sending when button is clicked
                 >
                   <FileText className="h-4 w-4" />
@@ -431,6 +448,20 @@ const handleEmailUser = async (request) => {
                 </div>
               </Card>
             </motion.div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <TextInput
+                type="text"
+                placeholder="Search by tracking number, name, or student number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
 
             {/* Tabs */}
             <div className="flex space-x-4 border-b border-gray-200">

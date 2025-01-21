@@ -258,7 +258,7 @@ export const Top = () => {
 
                 <div className="p-2">
                   <Link to="/notifications">
-                    <Button className="w-full text-cyan-500 hover:bg-cyan-100">
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-300 tex-blue-800">
                       See More
                     </Button>
                   </Link>

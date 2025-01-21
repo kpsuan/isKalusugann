@@ -1077,34 +1077,45 @@ export const getusersub = async (req, res, next) => {
 export const getUsersByCourse = async (req, res, next) => {
   try {
     const courseName = req.params.courseName;
-    const statusFilter = req.query.status; // Extract status filter from query parameters
-
+    const statusFilter = req.query.status;
+    const searchQuery = req.query.search;
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
 
     let query = { degreeProgram: courseName, annualPE: 'Online' };
+    
+    // Add status filter if provided
     if (statusFilter) {
-      query.status = statusFilter; // Add status filter to the query
+      query.status = statusFilter;
+    }
+
+    // Add search query if provided
+    if (searchQuery) {
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } }
+      ];
     }
 
     const users = await User.find(query)
-      .sort({ _id: sortDirection }) 
+      .sort({ lastName: sortDirection, firstName: sortDirection })
       .skip(startIndex)
       .limit(limit);
 
-    const totalUsers = await User.countDocuments(query); // Count total users matching the query
+    const totalUsers = await User.countDocuments(query);
 
     res.status(200).json({ users, totalUsers });
   } catch (error) {
     next(error);
   }
 };
-
 export const getUsersByCourseInPerson = async (req, res, next) => {
   try {
     const courseName = req.params.courseName;
     const statusFilter = req.query.status; // Extract status filter from query parameters
+    const searchQuery = req.query.search;
 
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
@@ -1113,6 +1124,15 @@ export const getUsersByCourseInPerson = async (req, res, next) => {
     let query = { degreeProgram: courseName, annualPE: 'InPerson' };
     if (statusFilter) {
       query.status = statusFilter; // Add status filter to the query
+    }
+
+    // Add search query if provided
+    if (searchQuery) {
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } }
+      ];
     }
 
     const users = await User.find(query)
@@ -1201,9 +1221,13 @@ export const getUsersByCollegeInPerson = async (req, res, next) => {
       query.degreeProgram = courseFilter;
     }
 
+// Add search query if provided
     if (search) {
-      // Case-insensitive search by name
-      query.$text = { $search: search };
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } }
+      ];
     }
 
     // Pagination and sorting parameters

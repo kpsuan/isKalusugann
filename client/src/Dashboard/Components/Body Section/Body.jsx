@@ -14,6 +14,7 @@ import RescheduleRequest from '../Admin/AnnualPE/RescheduleRequest';
 import ScheduledForToday2 from '../Admin/AnnualPE/ScheduledToday2';
 import { Baby } from 'lucide-react';
 import EventsSection from './EventsBody';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 const Body = () => {
@@ -23,6 +24,7 @@ const Body = () => {
   const [eventType, setEventType] = useState("upcoming");
   const [currentPage, setCurrentPage] = useState(0);
   const { currentUser } = useSelector((state) => state.user);
+  const [isVisible, setIsVisible] = useState(false);
 
   const itemsPerPage = 4;
 
@@ -68,9 +70,26 @@ const Body = () => {
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
+
+  const containerVariants = {
+   
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    
+  };
+
+
   
   return (
+    <motion.div 
+      className='mainContent'
+      initial="hidden"
+      animate
+    >
     <div className='mainContent'>
+      
       <Top />
 
       <div className="bottom flex flex-col">
@@ -119,6 +138,7 @@ const Body = () => {
         </div>
       </div>
     </div>
+    </motion.div>
   );
 };
 

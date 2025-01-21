@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { Bell, Check, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Check, Clock, Info } from 'lucide-react';
 import Sidebar from '../../SideBar Section/Sidebar';
 
 const Notifications = () => {
+  const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,9 +48,9 @@ const Notifications = () => {
     return `${Math.floor(diffInDays / 30)}mo ago`;
   };
 
-  const handleNotificationClick = async (notifId) => {
+  const handleNotificationClick = async (notif) => {
     try {
-      const res = await fetch(`/api/user/${currentUser._id}/notifications/${notifId}`, {
+      const res = await fetch(`/api/user/${currentUser._id}/notifications/${notif._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -57,10 +58,15 @@ const Notifications = () => {
       if (!res.ok) throw new Error(`Failed to update notification: ${res.statusText}`);
       
       setNotifications((prevNotifications) =>
-        prevNotifications.map((notif) =>
-          notif._id === notifId ? { ...notif, isRead: true } : notif
+        prevNotifications.map((n) =>
+          n._id === notif._id ? { ...n, isRead: true } : n
         )
       );
+
+      // Navigate to the notification link after marking as read
+      if (notif.link) {
+        navigate(notif.link);
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error.message);
     }
@@ -69,100 +75,116 @@ const Notifications = () => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'success':
-        return <Check className="h-4 w-4 text-green-500" />;
+        return <Check className="h-5 w-5 text-green-500" />;
       case 'warning':
-        return <Bell className="h-4 w-4 text-yellow-500" />;
+        return <Bell className="h-5 w-5 text-yellow-500" />;
       default:
-        return <Bell className="h-4 w-4 text-blue-500" />;
+        return <Bell className="h-5 w-5 text-blue-500" />;
     }
   };
 
   const getNotificationBadge = (type) => {
-    const baseClasses = "text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full";
     switch (type) {
       case 'success':
-        return <span className={`${baseClasses} bg-green-100 text-green-800`}>Success</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Success</span>;
       case 'warning':
-        return <span className={`${baseClasses} bg-yellow-100 text-yellow-800`}>Warning</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">Warning</span>;
       default:
-        return <span className={`${baseClasses} bg-blue-100 text-blue-800`}>Info</span>;
+        return <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">Info</span>;
     }
   };
 
   return (
-    <div className="dashboard flex">
-      <div className="dashboardContainer flex">
-        <Sidebar />
-        
-        <div className="flex-1 p-4">
-          <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md">
-            <div className="p-4 border-b border-gray-200">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      <Sidebar />
+      
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-8 py-6">
               <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  {notifications.filter(n => !n.isRead).length} Unread
-                </span>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Stay updated with your latest activities
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+                    <Bell className="w-4 h-4 mr-1" />
+                    {notifications.filter(n => !n.isRead).length} Unread
+                  </span>
+                </div>
               </div>
             </div>
-            
-            <div className="overflow-y-auto h-[600px]">
-              {loading ? (
-                <div className="p-4 space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1 space-y-2 py-1">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </div>
+          </div>
+
+          {/* Notifications Content */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="p-8 space-y-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse flex items-center space-x-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                    <div className="rounded-full bg-gray-200 dark:bg-gray-700 h-12 w-12"></div>
+                    <div className="flex-1 space-y-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-full p-4 mb-4">
+                  <Bell className="h-8 w-8 text-blue-500 dark:text-blue-400" />
                 </div>
-              ) : notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <Bell className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No notifications yet</h3>
-                  <p className="text-sm text-gray-500">We'll notify you when something important happens.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif._id}
-                      onClick={() => handleNotificationClick(notif._id)}
-                      className={`flex items-start p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                        notif.isRead ? 'bg-gray-50/50' : 'bg-white'
-                      }`}
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No notifications yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                  We'll notify you when something important happens in your account.
+                </p>
+              </div>
+            ) : (
+              <div className="p-8 space-y-4">
+                {notifications.map((notif) => (
+                  <div
+                    key={notif._id}
+                    onClick={() => handleNotificationClick(notif)}
+                    className={`group flex items-start p-6 rounded-lg transition-all cursor-pointer
+                      ${notif.isRead 
+                        ? 'bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800' 
+                        : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      } shadow-sm hover:shadow-md`}
+                  >
+                    <div className={`flex-shrink-0 rounded-full p-2 mr-4
+                      ${notif.type === 'success' ? 'bg-green-50 dark:bg-green-900/20' :
+                        notif.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20' :
+                        'bg-blue-50 dark:bg-blue-900/20'}`}
                     >
-                      <div className="flex-shrink-0 mr-4">
-                        {getNotificationIcon(notif.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Link 
-                          to={notif.link || '#'} 
-                          className="text-sm text-gray-900 hover:text-blue-600"
-                        >
-                          {notif.message}
-                        </Link>
-                        <div className="flex items-center mt-1">
-                          <Clock className="h-3 w-3 text-gray-400 mr-1" />
-                          <span className="text-xs text-gray-500 mr-2">
-                            {timeAgo(notif.timestamp)}
-                          </span>
-                          {getNotificationBadge(notif.type)}
-                        </div>
-                      </div>
-                      {!notif.isRead && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full flex-shrink-0"></div>
-                      )}
+                      {getNotificationIcon(notif.type)}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        {notif.message}
+                      </p>
+                      <div className="flex items-center mt-2 space-x-3">
+                        <span className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                          <Clock className="h-4 w-4 mr-1" />
+                          {timeAgo(notif.timestamp)}
+                        </span>
+                        {getNotificationBadge(notif.type)}
+                      </div>
+                    </div>
+                    {!notif.isRead && (
+                      <span className="flex-shrink-0 h-3 w-3 bg-blue-600 rounded-full"></span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

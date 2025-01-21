@@ -1,49 +1,41 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const appointmentsSchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        required: true,
-    },
-    date: {
-        type: String, // Store date as a string in 'YYYY-MM-DD' format
-        required: true,
-    },
-    firstName:{
-        type: String, // Store date as a string in 'YYYY-MM-DD' format
-       
-    },
-    lastName:{
-        type: String,
-    },
-    timeSlot: {
-        type: String, // Store time slot as a string, e.g., '09:00 AM - 10:00 AM'
-        required: true,
-    },
-    service: {
-        type: String,
-        required: true,
-        default: '',
-    },
-    category: {
-        type: String,
-        default: 'uncategorized',
-    },
-    phoneNumber: {
-        type: String,
-        default: '',
-    },
-    
-    slug: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-}, { timestamps: true });
+  userId: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: String, // Store date as a string in 'YYYY-MM-DD' format
+  },
+  firstName: {
+    type: String,
+  },
+  lastName: {
+    type: String,
+  },
+  phoneNumber: {
+    type: String,
+  },
+  email: {
+    type: String,
+  },
+  service: {
+    type: String,
+  },
+  timeSlot: {
+    type: String,
+  },
+  category: {
+    type: String,
+    default: 'uncategorized',
+  },
+  status: {
+    type: String,
+    default: 'pending', // Appointment status, can be 'pending', 'confirmed', 'completed', etc.
+  },
+});
 
-// Create a unique compound index for userId, date, and timeSlot
-appointmentsSchema.index({ userId: 1, date: 1, timeSlot: 1 }, { unique: true });
-
-const Appointments = mongoose.model('Appointments', appointmentsSchema);
+const Appointments = mongoose.model('Appointment', appointmentsSchema);
 
 export default Appointments;

@@ -1,4 +1,4 @@
-import Appointments from "../models/appointments.model.js";
+import Appointments from "../models/appointments.model.js"
 import { errorHandler } from "../utils/error.js";
 import dayjs from 'dayjs';
 import utc from "dayjs/plugin/utc.js";
@@ -8,16 +8,32 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export const fetchAvailableTimeSlots = async (req, res, next) => {
-    const { date } = req.params; // Expected format: YYYY-MM-DD
-    const timezone = "Asia/Manila";
+    const { date } = req.params;
+    const userId = req.query.userId; // Add this parameter to your frontend API call
 
     try {
-        // Convert the requested date to UTC midnight
-        const requestedDate = dayjs.tz(date, timezone).startOf('day');
-        const startOfDay = requestedDate.utc().toDate();
-        const endOfDay = requestedDate.add(1, 'day').utc().toDate();
+        if (!date || !dayjs(date).isValid()) {
+            return res.status(400).json({ message: 'Invalid or missing date parameter.' });
+        }
 
-        // Define all possible time slots
+        const parsedDateStart = dayjs.tz(date, "Asia/Manila").startOf('day').toISOString();
+        const parsedDateEnd = dayjs.tz(date, "Asia/Manila").endOf('day').toISOString();
+
+        // Check if user already has a booking on this date
+        if (userId) {
+            const existingUserBooking = await Appointments.findOne({
+                userId: userId,
+                date: { $gte: parsedDateStart, $lte: parsedDateEnd }
+            });
+
+            if (existingUserBooking) {
+                return res.status(200).json({ 
+                    availableTimeSlots: [],
+                    message: "You already have an appointment scheduled for this date."
+                });
+            }
+        }
+
         const allTimeSlots = [
             "09:00 AM - 10:00 AM",
             "10:00 AM - 11:00 AM",
@@ -26,94 +42,80 @@ export const fetchAvailableTimeSlots = async (req, res, next) => {
             "03:00 PM - 04:00 PM",
         ];
 
-        // Fetch all appointments for the selected date
         const bookedAppointments = await Appointments.find({
-            date: {
-                $gte: startOfDay,
-                $lt: endOfDay
-            }
+            date: { $gte: parsedDateStart, $lte: parsedDateEnd },
         }).select('timeSlot').lean();
 
-        // Create a Set of booked time slots for efficient lookup
         const bookedTimeSlots = new Set(bookedAppointments.map(app => app.timeSlot));
-
-        // Filter out booked time slots
         const availableTimeSlots = allTimeSlots.filter(slot => !bookedTimeSlots.has(slot));
-
-        // Log for debugging
-        console.log('Date Range:', {
-            date,
-            startOfDay,
-            endOfDay,
-            bookedTimeSlots: Array.from(bookedTimeSlots),
-            availableTimeSlots
-        });
 
         res.status(200).json({ availableTimeSlots });
     } catch (error) {
+        console.error("Error fetching available time slots:", error);
         next(errorHandler(error, req, res));
     }
 };
 
-export const create = async (req, res, next) => {
-    const slug = req.user.id.toLowerCase();
-    const { date, firstName, lastName, phoneNumber, timeSlot, service, category } = req.body;
+
+export const create = async (req, res) => {
+    const { userId, firstName, lastName, email, date, timeSlot, service, category, phoneNumber, status } = req.body;
 
     try {
-        // Convert the appointment date to UTC while preserving the date in Manila time
-        const appointmentDate = dayjs.tz(date, 'Asia/Manila').startOf('day').utc().toDate();
-
-        // Check if the user already has an appointment on this date
-        const userAppointmentOnDate = await Appointments.findOne({
-            userId: req.user.id,
-            date: {
-                $gte: appointmentDate,
-                $lt: dayjs(appointmentDate).add(1, 'day').toDate()
-            }
-        });
-
-        if (userAppointmentOnDate) {
-            return res.status(400).json({
-                message: 'You already have an appointment on this date.'
-            });
+        if (!dayjs(date).isValid()) {
+            return res.status(400).json({ message: "Invalid date format." });
         }
 
-        // Check if this time slot is already booked on this date
+        const parsedDateStart = dayjs.tz(date, "Asia/Manila").startOf('day').toISOString();
+        const parsedDateEnd = dayjs.tz(date, "Asia/Manila").endOf('day').toISOString();
+
+        // Check if user already has a booking on this date
+        const existingUserBooking = await Appointments.findOne({
+            userId: userId,
+            date: { $gte: parsedDateStart, $lte: parsedDateEnd }
+        });
+
+        if (existingUserBooking) {
+            return res.status(400).json({ message: "You already have an appointment scheduled for this date." });
+        }
+
+        // Check if the selected time slot is already booked
         const existingAppointment = await Appointments.findOne({
-            date: {
-                $gte: appointmentDate,
-                $lt: dayjs(appointmentDate).add(1, 'day').toDate()
-            },
-            timeSlot: timeSlot
+            date: { $gte: parsedDateStart, $lte: parsedDateEnd },
+            timeSlot: timeSlot,
         });
 
         if (existingAppointment) {
-            return res.status(400).json({
-                message: 'This time slot is already booked for the selected date.'
-            });
+            return res.status(400).json({ message: "The selected time slot is already booked." });
         }
 
+        // Create the appointment
         const newAppointment = new Appointments({
-            userId: req.user.id,
+            userId,
             firstName,
             lastName,
-            date: appointmentDate,
+            email,
+            date: dayjs(date).toISOString(),
             timeSlot,
             service,
-            phoneNumber,
             category,
-            slug,
+            phoneNumber,
+            status,
         });
 
-        const savedAppointment = await newAppointment.save();
-        res.status(200).json(savedAppointment);
+        await newAppointment.save();
+
+        res.status(201).json({ message: "Appointment created successfully!", appointment: newAppointment });
     } catch (error) {
-        next(errorHandler(error, req, res));
+        console.error("Error creating appointment:", error);
+        res.status(500).json({ message: "Failed to create appointment. Please try again." });
     }
 };
 
 
-// Update monthly availability check as well
+
+
+
+
 export const fetchMonthlyAvailability = async (req, res, next) => {
     const { yearMonth } = req.params;
     const [year, month] = yearMonth.split('-');
@@ -121,35 +123,93 @@ export const fetchMonthlyAvailability = async (req, res, next) => {
 
     try {
         const startOfMonth = dayjs.tz(`${year}-${month}-01`, timezone).startOf('month');
+        const endOfMonth = startOfMonth.endOf('month').utc().toDate();
         const startUTC = startOfMonth.utc().toDate();
-        const endUTC = startOfMonth.endOf('month').utc().toDate();
 
         const appointments = await Appointments.find({
-            date: { 
-                $gte: startUTC,
-                $lte: endUTC
-            }
+            date: { $gte: startUTC, $lte: endOfMonth },
         }).lean();
 
         const availabilityStatus = {};
         const daysInMonth = startOfMonth.daysInMonth();
+        const allTimeSlots = 5; // Total slots per day
 
         for (let i = 0; i < daysInMonth; i++) {
             const currentDate = startOfMonth.add(i, 'day');
             const formattedDate = currentDate.format('YYYY-MM-DD');
-            
-            // Count appointments for this specific day
-            const dateAppointments = appointments.filter(app => 
+
+            const dateAppointments = appointments.filter(app =>
                 dayjs(app.date).tz(timezone).format('YYYY-MM-DD') === formattedDate
             );
 
-            // Consider a day full if all time slots are taken
-            const maxSlotsPerDay = 5; // Since we have 5 possible time slots
-            availabilityStatus[formattedDate] = dateAppointments.length >= maxSlotsPerDay ? 'full' : 'available';
+            availabilityStatus[formattedDate] = dateAppointments.length >= allTimeSlots ? 'full' : 'available';
         }
 
         res.status(200).json(availabilityStatus);
     } catch (error) {
+        console.error("Error fetching monthly availability:", error);
+        next(errorHandler(error, req, res));
+    }
+};
+
+export const checkDateAvailability = async (req, res, next) => {
+    const { date } = req.params;
+    const { userId } = req.query;
+
+    try {
+        if (!date || !dayjs(date).isValid()) {
+            return res.status(400).json({ message: 'Invalid or missing date parameter.' });
+        }
+
+        const parsedDateStart = dayjs.tz(date, "Asia/Manila").startOf('day').toISOString();
+        const parsedDateEnd = dayjs.tz(date, "Asia/Manila").endOf('day').toISOString();
+
+        // Check if date has already passed
+        if (dayjs(date).isBefore(dayjs().startOf('day'))) {
+            return res.status(400).json({
+                message: 'Cannot book appointments for past dates.',
+                status: 'unavailable'
+            });
+        }
+
+        // Check if user already has booking on this date
+        if (userId) {
+            const existingUserBooking = await Appointments.findOne({
+                userId: userId,
+                date: { $gte: parsedDateStart, $lte: parsedDateEnd }
+            });
+
+            if (existingUserBooking) {
+                return res.status(400).json({
+                    message: 'You already have an appointment scheduled for this date.',
+                    status: 'unavailable'
+                });
+            }
+        }
+
+        // Count appointments for this date
+        const appointmentsCount = await Appointments.countDocuments({
+            date: { $gte: parsedDateStart, $lte: parsedDateEnd }
+        });
+
+        // Define max slots (matching your available time slots)
+        const maxSlotsPerDay = 5;
+
+        if (appointmentsCount >= maxSlotsPerDay) {
+            return res.status(400).json({
+                message: 'No available slots for this date.',
+                status: 'full'
+            });
+        }
+
+        res.status(200).json({
+            message: 'Slots available',
+            status: 'available',
+            availableSlots: maxSlotsPerDay - appointmentsCount
+        });
+
+    } catch (error) {
+        console.error("Error checking date availability:", error);
         next(errorHandler(error, req, res));
     }
 };

@@ -14,7 +14,7 @@ const Features = ({ currentUser }) => {
         ? 'Schedule and Reschedule Annual PE Examinations of Students'
         : 'View Your Annual PE Examination Schedule',
       link: currentUser?.isAdmin ? '/adminPE' : '/annualhome',
-      color: 'bg-gray-200',
+      color: 'bg-slate-200',
       iconColor: 'text-blue-600'
     },
     {
@@ -24,7 +24,7 @@ const Features = ({ currentUser }) => {
         ? 'View Submitted Medical Forms and Documents of Students'
         : 'Submit and View Your Medical Forms',
       link: currentUser?.isAdmin ? '/manageInPerson' : '/status',
-      color: 'bg-gray-200',
+      color: 'bg-slate-200',
       iconColor: 'text-emerald-600'
     },
     {
@@ -34,7 +34,7 @@ const Features = ({ currentUser }) => {
         ? 'Create, Edit, View and Post Announcements Online'
         : 'View Announcements',
       link: '/announcement',
-      color: 'bg-gray-200',
+      color: 'bg-slate-200',
       iconColor: 'text-amber-600'
     },
     {
@@ -44,7 +44,7 @@ const Features = ({ currentUser }) => {
         ? 'Upload and View Downloadable Documents and Forms'
         : 'Download Available Documents and Forms',
       link: currentUser?.isAdmin ? '/documents' : '/docsuser',
-      color: 'bg-gray-200',
+      color: 'bg-slate-200',
       iconColor: 'text-purple-600'
     }
   ];

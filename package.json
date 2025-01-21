@@ -16,6 +16,7 @@
     "@date-io/date-fns": "^3.0.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "cookie-parser": "^1.4.6",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
@@ -28,6 +29,8 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.0.1",
-    "react-toast": "^1.0.3"
+    "react-toast": "^1.0.3",
+    "shadcn-ui": "^0.9.4",
+    "tailwind-merge": "^2.6.0"
   }
 }

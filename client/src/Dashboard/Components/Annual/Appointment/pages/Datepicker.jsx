@@ -43,6 +43,7 @@ export default function Datepicker({ onDateChange, selectedDate }) {
     }
     setSelectDate(cleanDate);
     onDateChange(cleanDate);
+    fetchAvailableTimeSlots(formattedDate); // Fetch available slots for the clicked date
   };
 
   const fetchAvailabilityStatus = async (month, year) => {
@@ -54,27 +55,33 @@ export default function Datepicker({ onDateChange, selectedDate }) {
       console.error('Error fetching monthly availability:', error);
     }
   };
-  
 
   const fetchAvailableTimeSlots = async (dateString) => {
     if (!dateString) return;
     setLoading(true);
     try {
-        const response = await axios.get(`/api/appointments/available-slots/${dayjs(dateString).tz('Asia/Manila').format('YYYY-MM-DD')}`);
-        setAvailableSlots(response.data.availableTimeSlots);
+      // Ensure that the date format matches the expected format for the backend
+      const formattedDate = dayjs(dateString).tz('Asia/Manila').format('YYYY-MM-DD');
+      const response = await axios.get(`/api/appointments/available-slots/${formattedDate}`);
+      setAvailableSlots(response.data.availableTimeSlots);
     } catch (error) {
-        console.error('Error fetching available slots:', error);
+      console.error('Error fetching available slots:', error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleSlotChange = (slot) => {
     setSelectedSlot(slot);
     // Pass the selected date and slot back to the parent component
     onDateChange(selectDate, slot);
   };
-  
+
+  const handleMonthChange = (delta) => {
+    const newDate = today.add(delta, 'month');
+    setToday(newDate);
+    fetchAvailabilityStatus(newDate.month() + 1, newDate.year()); // Update availability status for the new month
+  };
 
   return (
     <div className="flex gap-8 sm:divide-x divide-gray-200 my-4 w-full items-start sm:flex-row flex-col">
@@ -86,7 +93,7 @@ export default function Datepicker({ onDateChange, selectedDate }) {
           <div className="flex items-center gap-4">
             <button 
               className="p-2 hover:bg-gray-100 rounded-full transition-all"
-              onClick={() => setToday(today.month(today.month() - 1))}
+              onClick={() => handleMonthChange(-1)} // Move to the previous month
             >
               <GrFormPrevious className="w-5 h-5" />
             </button>
@@ -98,7 +105,7 @@ export default function Datepicker({ onDateChange, selectedDate }) {
             </button>
             <button 
               className="p-2 hover:bg-gray-100 rounded-full transition-all"
-              onClick={() => setToday(today.month(today.month() + 1))}
+              onClick={() => handleMonthChange(1)} // Move to the next month
             >
               <GrFormNext className="w-5 h-5" />
             </button>
@@ -118,7 +125,12 @@ export default function Datepicker({ onDateChange, selectedDate }) {
             ({ date, currentMonth, today }, index) => {
               const formattedDate = dayjs(date).format('YYYY-MM-DD');
               const isPastDate = dayjs(date).isBefore(currentDate, 'day');
-              const isAvailableDate = !isPastDate && slotsStatus[formattedDate] !== 'full';
+              
+              // Ensure that the 'slotsStatus' object contains the availability for all days.
+              // If the status for the date isn't found, you can assume the date is available.
+              const isAvailableDate = !isPastDate && (slotsStatus[formattedDate] !== 'full' || !slotsStatus[formattedDate]);
+          
+              // Check if the selected date matches the button date
               const isSelected = selectDate.isSame(dayjs(date).startOf('day'), 'day');
 
               return (
@@ -127,13 +139,13 @@ export default function Datepicker({ onDateChange, selectedDate }) {
                   disabled={isPastDate || !isAvailableDate}
                   onClick={() => handleDateClick(date)}
                   className={cn(
-                    "aspect-square p-2 relative rounded-lg transition-all",
-                    !currentMonth && "text-gray-400",
-                    isPastDate && "bg-gray-100 cursor-not-allowed",
-                    !isPastDate && !isAvailableDate && "bg-red-50 cursor-not-allowed",
-                    isAvailableDate && !isSelected && "hover:bg-blue-50",
-                    isSelected && "bg-blue-500 text-white hover:bg-blue-600",
-                    !isPastDate && !isSelected && isAvailableDate && "bg-green-200"
+                 "aspect-square p-2 relative rounded-lg transition-all",
+                  !currentMonth && "text-gray-400",
+                  isPastDate && "bg-gray-100 cursor-not-allowed",
+                  !isPastDate && !isAvailableDate && "bg-red-100 text-red-600 cursor-not-allowed", // Red color for unavailable dates
+                  isAvailableDate && !isSelected && "hover:bg-blue-50",
+                  isSelected && "bg-blue-500 text-white hover:bg-blue-600",
+                  !isPastDate && !isSelected && isAvailableDate && "bg-green-200"
                   )}
                 >
                   <time 

@@ -11,6 +11,8 @@ import * as XLSX from 'xlsx'; // Import the XLSX library
 const CollegeStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
   const { collegeName } = useParams();
+  const [loading, setLoading] = useState(true);
+  
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -22,6 +24,7 @@ const CollegeStudents = () => {
   const [limit] = useState(9); // Keep this constant
 
   const fetchUsersByCollege = async () => {
+    setLoading(true);
     const startIndex = (currentPage - 1) * limit;
     try {
       const response = await fetch(`/api/user/getUsersByCollegeInPerson/${collegeName}?startIndex=${startIndex}&status=${statusFilter}&course=${selectedDegreeProgram}`);
@@ -36,6 +39,9 @@ const CollegeStudents = () => {
       }
     } catch (error) {
       console.error('Error fetching users by college:', error);
+    }
+    finally {
+      setLoading(false);
     }
   };
   
@@ -60,6 +66,8 @@ const CollegeStudents = () => {
     setStatusFilter(selectedOption ? selectedOption.value : "");
     setCurrentPage(1);
   };
+
+  
 
   const filterUsers = (users, query) => {
     const filtered = users.filter(user => {
@@ -147,15 +155,18 @@ const CollegeStudents = () => {
           <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
             <div className="text-5xl font-bold  text-white mb-4">{collegeName}</div>
             <p className="font-light my-4 text-white">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
-            </p>
+            View and manage student records and schedule for {collegeName} InPerson Annual PE</p>
             <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
               View Scheduled Today
             </button>
           </div>
-          <div className="bg-white border border-gray-200 p-5">
-            <p className="font-bold my-4">Total Users: {totalUsers}</p>
-            <div className="flex justify-start">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+          <div className='p-4 mx-auto'>
+              <h2 className="text-2xl font-semibold">Student Records</h2>
+                <p className="text-sm text-gray-500">
+                      Total Students: {totalUsers}
+                </p>
+            </div>            <div className="flex justify-start">
               <div className="flex items-center ">
                 <input
                   type="text"
@@ -318,7 +329,7 @@ const CollegeStudents = () => {
                 ))}
               </Table.Body>
                   </Table>
-                  <div className='m-4'>
+                  <div className=' flex m-4 justify-center gap-2'>
                     <Pagination 
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -330,6 +341,7 @@ const CollegeStudents = () => {
                 <p className="text-center text-2xl mx-auto p-10 font-light">NO USERS</p>
               )}
             </div>
+            
           </div>
         </div>
       </div>
