@@ -15,10 +15,12 @@ const StudentPackage = () => {
   );
 
   return (
-    <section className="bg-green-50 dark:bg-gray-900 p-3 sm:p-5">
+    <section className="bg-gradient-to-b from-black to-teal-400 dark:bg-gray-900 p-3 sm:p-5">
       <div className="mx-auto max-w-screen-xl px-4 lg:px-12">
+      
+
         <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg overflow-hidden">
-          <h2 className="bg-blue-600 text-white dark:text-white text-2xl font-bold px-5 py-8">
+          <h2 className="bg-teal-700 text-white dark:text-white text-2xl font-bold px-5 py-8">
             STUDENT PACKAGE RATE (PHP 180.00)
           </h2>
           <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">

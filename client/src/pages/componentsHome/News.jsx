@@ -132,7 +132,6 @@ const NewsCard = ({ post }) => {
             <Button
               as="a"
               href={`/post/${post.slug}`}
-              gradientDuoTone="greenToBlue"
               className="w-full group"
             >
               <span className="mr-2 group-hover:mr-4 transition-all">Read Article</span>

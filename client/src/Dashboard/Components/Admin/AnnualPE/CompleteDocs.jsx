@@ -4,9 +4,11 @@ import { useSelector } from 'react-redux';
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
 import { Table } from 'flowbite-react';
-import Pagination from './Pagination'; // Adjust the import path accordingly
+import Pagination from './Pagination'; 
 import Select from 'react-select';
-import * as XLSX from 'xlsx'; // Import the XLSX library
+import StatsDashboard from './StatCard';
+
+import * as XLSX from 'xlsx'; 
 
 const CompleteDocs = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -17,7 +19,11 @@ const CompleteDocs = () => {
   const [filter, setFilter] = useState("");
   const [selectedDegreeProgram, setSelectedDegreeProgram] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(9); // Keep this constant
+  const [limit] = useState(9); 
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  
   const fetchUsersByDocumentStatus = async () => {
     const startIndex = (currentPage - 1) * limit; // Pagination logic
     try {

@@ -77,6 +77,8 @@ import TrackRequest from './Dashboard/Components/DocumentsUser/TrackRequest';
 import TrackRequest2 from './Dashboard/Components/DocumentsUser/TrackRequest2';
 import RequestForm from './Dashboard/Components/DocumentsUser/RequestForm';
 import Settings from './Dashboard/Settings';
+import AvailableSchedules from './Dashboard/Components/Annual/AvailableSchedules';
+import HelpCenter from './pages/HelpCenter';
 
 
 export default function App() {
@@ -93,6 +95,7 @@ export default function App() {
         <Route path="/events" element={<Event />} />
         <Route path="/trackRequest1" element={<TrackRequest2 />} />
         <Route path="/requestForm" element={<RequestForm />} />
+        <Route path="/help-center" element={<HelpCenter />} />
 
        
         <Route element={<PrivateRoute />}>
@@ -131,6 +134,7 @@ export default function App() {
           <Route path="/incDocs" element={<IncDocuments />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/availableSched/:userId" element={<AvailableSchedules />} />
 
 
 

@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
-import Typography from '@mui/material/Typography';
-import CardActionArea from '@mui/material/CardActionArea';
 import { Alert, Button, Modal, ModalBody, TextInput, Table, TableCell } from 'flowbite-react';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
 import Pagination from './Pagination'; // Adjust the import path accordingly
+import StatsDashboard from './StatCard';
+import { FaCalendarAlt } from 'react-icons/fa'; // Import an icon
+
 
 const CourseStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
   const { courseName  } = useParams();
-
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -23,37 +21,60 @@ const CourseStudents = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(9); // keep this constant
+  const [loading, setLoading] = useState(true);
+
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
 
   useEffect(() => {
     const fetchUsersByCourse = async () => {
-      const startIndex = (currentPage - 1) * limit;
+      setLoading(true);
       try {
-        const response = await fetch(`/api/user/getUsersByCourseInPerson/${courseName}?startIndex=${startIndex}&status=${statusFilter}`);
-        const data = await response.json();
-        if (response.ok) {
+        const startIndex = (currentPage - 1) * limit;
+        let url = `/api/user/getUsersByCourseInPerson/${courseName}?startIndex=${startIndex}&limit=${limit}`;
+        if (filter) {
+          url += `&searchQuery=${encodeURIComponent(filter)}`;        
+        }
+        if (statusFilter) {
+          url += `&status=${statusFilter}`;
+        }
+  
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log("API Response:", data); // Log the API response for debugging
+  
+        if (res.ok) {
           setUsers(data.users);
           setTotalUsers(data.totalUsers);
-          filterUsers(data.users, filter);
+          setTotalApproved(data.totalApproved);
+          setTotalDenied(data.totalDenied);
+          setTotalPending(data.totalPending);
+          
+          console.log("Total Approved:", data.totalApproved);
+          console.log("Total Denied:", data.totalDenied);
+          console.log("Total Pending:", data.totalPending);
         }
       } catch (error) {
-        console.error('Error fetching users by course:', error);
+        console.log("Error fetching users:", error.message);
+      } finally{
+        setLoading(false);
       }
+      
     };
-
-    fetchUsersByCourse();
-  }, [courseName, statusFilter, currentPage, limit, filter]);
-
+  
+    if (currentUser.isAdmin) {
+      fetchUsersByCourse();
+    }
+  }, [currentUser._id, filter,  statusFilter, currentPage, limit]);
+  
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
-    filterUsers(users, event.target.value);
+    setCurrentPage(1);
   };
-
-  const filterUsers = (users, query) => {
-    const filtered = users.filter(user => {
-      const fullName = `${user.firstName} ${user.middleName || ''} ${user.lastName}`.toLowerCase();
-      return fullName.includes(query.toLowerCase());
-    });
-    setFilteredUsers(filtered);
+  
+  const handleViewSchedule = () => {
+    navigate('/manageInPerson'); // Navigate to the desired route
   };
 
   const capitalizeWords = (string) => 
@@ -71,35 +92,52 @@ const CourseStudents = () => {
       <div className="dashboardContainer my-flex">
         <Sidebar />
         <div className="mainContent m-0 p-0">
-          <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+          <div className=" bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
             <div className="text-5xl font-bold  text-white mb-4">{capitalizeWords(courseName)}</div>
-            <p className="font-light my-4 text-white">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
-            </p>
-            <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
+            <button
+              className="flex items-center justify-center bg-white text-blue-700 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
+              onClick={handleViewSchedule}>
+              <FaCalendarAlt className="mr-2" /> {/* Add an icon */}
               View Scheduled Today
             </button>
           </div>
           <div>
 
-            <p className="font-bold my-4">Total Users: {totalUsers}</p>
-            <div className="flex justify-between">
-              <div className="flex items-center">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className='p-4 mx-auto'>
+              <h2 className="text-2xl font-semibold">Student Records</h2>
+                <p className="text-sm text-gray-500">
+                      Total Students: {totalUsers}
+                </p>
+            </div>  
+            <StatsDashboard
+              totalUsers={totalUsers}
+              totalApproved={totalApproved}
+              totalDenied={totalDenied}
+              totalPending={totalPending}
+            />     
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+              {/* Search Input */}
+              <div className="w-full pl-3 md:w-auto flex-grow">
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search by name..."
                   value={filter}
                   onChange={handleFilterChange}
-                  className="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
-              <div className="flex items-center">
-                <label htmlFor="status" className="mr-2 font-semibold">Filter By Status:</label>
+
+              {/* Status Filter Dropdown */}
+              <div className="w-full md:w-auto flex items-center gap-2">
+                <label htmlFor="status" className="text-sm font-medium text-gray-700">
+                  Filter By Status:
+                </label>
                 <select
                   id="status"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-blue-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">All</option>
                   <option value="NO ACTION">No Action</option>
@@ -109,7 +147,12 @@ const CourseStudents = () => {
               </div>
             </div>
             <div className='my-10 table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
-              {currentUser.isAdmin && filteredUsers.length > 0 ? (
+            {loading ? ( 
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+            ) :
+              currentUser.isAdmin && users.length > 0 ? (
                 <>
                   <Table hoverable className='shadow-md relative'>
               <Table.Head className="text-left text-lg font-medium text-gray-500 dark:text-white px-3 py-2">
@@ -229,7 +272,7 @@ const CourseStudents = () => {
                 ))}
               </Table.Body>
             </Table>
-                  <div className='m-4'>
+                  <div className=' flex m-4 justify-center gap-2'>
                   <Pagination 
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -239,8 +282,11 @@ const CourseStudents = () => {
                  
                 </>
               ) : (
-                <p>NO USERS</p>
+                <div className="text-center py-12">
+                <p className="text-xl text-gray-500">No students found</p>
+                </div>
               )}
+              </div>
             </div>
           </div>
         </div>

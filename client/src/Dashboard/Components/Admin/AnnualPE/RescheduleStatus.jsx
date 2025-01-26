@@ -86,6 +86,7 @@ const RescheduleStatus = () => {
   useEffect(() => {
     const fetchAvailableDates = async () => {
       try {
+        setLoading(true);
         const res = await fetch(`/api/user/reschedule/${userId}`, {
           method: 'POST',
           headers: {
@@ -110,6 +111,7 @@ const RescheduleStatus = () => {
       } catch (error) {
         console.error("Error fetching available dates:", error.message);
       }
+      setLoading(false);
     };
   
     if (startDate && endDate) {
@@ -194,13 +196,6 @@ const RescheduleStatus = () => {
 
   
 
-if (loading) {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Spinner size="xl" />
-    </div>
-  );
-}
 
 const formatDate = (date) => {
   const d = new Date(date);
@@ -215,8 +210,8 @@ const formatDate = (date) => {
   return (
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
-      <ToastContainer className={"z-50"} />
-        <Sidebar />
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+      <Sidebar />
         <div className="mainContent">
           <div className="bg-white rounded-lg border border-gray-200 p-10 w-full" style={{ position: 'relative' }}>
             {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}
@@ -291,10 +286,17 @@ const formatDate = (date) => {
                 />
               </div>
 
+
+              {loading ? (
+               <div className="flex justify-center items-center py-8">
+               <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+             </div>
+              ) : (
               <AvailableDates
                 availableDates={availableDates}      
                 remainingSlots = {remainingSlots}         
               />
+              )}
                             
 
               <Button type="submit" onClick={handleSubmit} className="w-full text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">

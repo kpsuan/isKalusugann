@@ -4,10 +4,14 @@ import { useSelector } from 'react-redux';
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
 import * as XLSX from 'xlsx';
+import StatsDashboard from "./StatCard";
+import Pagination from './Pagination'; // Adjust the import path accordingly
+
 
 const CollegeStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
   const { collegeName } = useParams();
+  
   
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -16,6 +20,9 @@ const CollegeStudents = () => {
   const [selectedDegreeProgram, setSelectedDegreeProgram] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
   const [limit] = useState(9);
 
   // Fetch all users for search
@@ -24,6 +31,9 @@ const CollegeStudents = () => {
       const response = await fetch(`/api/user/getUsersByCollege/${collegeName}?limit=1000`);
       const data = await response.json();
       if (response.ok) {
+        setTotalApproved(data.totalApproved);
+        setTotalDenied(data.totalDenied);
+        setTotalPending(data.totalPending);
         return data.users;
       }
       return [];
@@ -47,6 +57,8 @@ const CollegeStudents = () => {
         });
 
         setTotalUsers(filteredUsers.length);
+       
+
         const startIndex = (currentPage - 1) * limit;
         setUsers(filteredUsers.slice(startIndex, startIndex + limit));
       } catch (error) {
@@ -205,14 +217,11 @@ const CollegeStudents = () => {
       <div className="dashboardContainer my-flex">
         <Sidebar />
         <div className="mainContent m-2 p-2 bg-gray-50">
-          <div className="bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg p-8 mb-8 text-white">
+          <div className="bg-gradient-to-r p-14 from-blue-700 to-cyan-500 rounded-lg  mb-8 text-white">
             <h1 className="text-5xl font-bold mb-4">{collegeName}</h1>
             <p className="text-lg opacity-90 mb-6">
                 View and manage student records for {collegeName}
             </p>
-            <button className="bg-white text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors">
-              View Schedule
-            </button>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -221,6 +230,14 @@ const CollegeStudents = () => {
                 <p className="text-sm text-gray-500">
                       Total Students: {totalUsers}
                 </p>
+            </div>
+            <div className="pl-4">
+            <StatsDashboard
+              totalUsers={totalUsers}
+              totalApproved={totalApproved}
+              totalDenied={totalDenied}
+              totalPending={totalPending}
+            />  
             </div>
             <div className="flex flex-wrap gap-4 mb-6 p-4">
               <input

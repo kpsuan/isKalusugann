@@ -18,8 +18,8 @@ const DocumentRequestModal = ({
       show={showActionModal}
       onClose={() => setShowActionModal(false)}
       size="xl"
-      className="w-full"
-    >
+      className="w-full fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
       <Modal.Header>
         {selectedAction === 'approved' ? 'Approve Request' : 'Reject Request'}
       </Modal.Header>

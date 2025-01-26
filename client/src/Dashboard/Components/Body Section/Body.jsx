@@ -88,9 +88,9 @@ const Body = () => {
       initial="hidden"
       animate
     >
-    <div className='mainContent'>
+    <div className='mainContent p-0 m-0'>
       
-      <Top />
+      <Top/>
 
       <div className="bottom flex flex-col">
         <div className="flex flex-row w-full">

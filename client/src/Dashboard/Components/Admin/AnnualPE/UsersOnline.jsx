@@ -1,5 +1,4 @@
-import Sidebar from "../../SideBar Section/Sidebar";
-import Top from "../../Profile/Components/Header";
+
 import "../../Annual/annual.css";
 import { Table, TableCell } from 'flowbite-react';
 import { Link } from 'react-router-dom';
@@ -8,10 +7,8 @@ import { useSelector } from 'react-redux';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import Select from 'react-select';
 import * as XLSX from 'xlsx'; // Import the XLSX library
-import { PiUsersFourLight } from "react-icons/pi";
-import { FaCheck } from "react-icons/fa";
-import { FaCircleXmark } from "react-icons/fa6";
-import { LuPin } from "react-icons/lu";
+import StatsDashboard from "./StatCard";
+
 
 const UsersOnline = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -28,6 +25,7 @@ const UsersOnline = () => {
   const [totalPending, setTotalPending] = useState(0);
   const [loading, setLoading] = useState(false); // Loading state
   const [error, setError] = useState(null); // Error state
+  
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -37,7 +35,7 @@ const UsersOnline = () => {
         const startIndex = (currentPage - 1) * limit;
         let url = `/api/user/getusers?startIndex=${startIndex}&limit=${limit}`;
         if (filter) {
-          url += `&filter=${filter}`;
+          url += `&searchQuery=${encodeURIComponent(filter)}`;        
         }
         if (selectedDegreeProgram) {
           url += `&degreeProgram=${selectedDegreeProgram}`;
@@ -71,9 +69,6 @@ const UsersOnline = () => {
     }
   }, [currentUser._id, filter, selectedDegreeProgram, statusFilter, documentStatusFilter, currentPage, limit]);
 
-  const handleShowMore = async () => {
-    setCurrentPage(prev => prev + 1);
-  };
 
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
@@ -170,51 +165,21 @@ const UsersOnline = () => {
 
   return (
     <div>
-      <p>Showing All Users</p>
+      <div className='p-3 pt-3 pb-0 mt-0'>
+        <h2 className="text-3xl font-semibold">All Students</h2>
+      </div>  
 
-      <div className="flex space-x-8 my-4">
-        {/* Total Users */}
-        <div className="my-4">
-          <span className="font-bold block">Total Users</span>
-          <div className="flex items-center mt-1">
-            <PiUsersFourLight className="mr-1 text-2xl" />
-            <span>{totalUsers}</span>
-          </div>
-        </div>
-
-        {/* Approved Users */}
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-        <div className="my-4">
-          <span className="font-bold block">Approved</span>
-          <div className="flex items-center mt-1">
-            <FaCheck className="mr-1 text-2xl text-green-500" />
-            <span>{totalApproved}</span>
-          </div>
-        </div>
-
-        {/* Denied Users */}
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-        <div className="my-4">
-          <span className="font-bold block">Denied</span>
-          <div className="flex items-center mt-1 text-red-500">
-            <FaCircleXmark className="mr-1 text-2xl" />
-            <span>{totalDenied}</span>
-          </div>
-        </div>
-
-        {/* Pending Users */}
-        <div className="h-12 my-4 w-px bg-gray-300"></div>
-        <div className="my-4">
-          <span className="font-bold block">Pending</span>
-          <div className="flex items-center mt-1">
-            <LuPin className="mr-1 text-2xl text-yellow-500" />
-            <span>{totalPending}</span>
-          </div>
-        </div>
-      </div>
+      <StatsDashboard
+        totalUsers={totalUsers}
+        totalApproved={totalApproved}
+        totalDenied={totalDenied}
+        totalPending={totalPending}
+      />   
 
       <div className="table-auto overflow-x-scroll md:mx-auto p-1 z-50">
         <div className="flex justify-start">
+          
+          
           {/* Search and Filters */}
           <div className="flex items-center">
             <input
@@ -265,8 +230,8 @@ const UsersOnline = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex justify-center items-center my-8">
-            <div className="loader">Loading...</div> {/* Add your loading spinner */}
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
         ) : currentUser.isAdmin && users.length > 0 ? (
           <>
@@ -372,7 +337,9 @@ const UsersOnline = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-8">No users found.</div>
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-500">No students found</p>
+          </div>
         )}
       </div>
     </div>

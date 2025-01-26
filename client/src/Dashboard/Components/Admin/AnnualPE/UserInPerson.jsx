@@ -1,5 +1,3 @@
-import Sidebar from "../../SideBar Section/Sidebar";
-import Top from "../../Profile/Components/Header";
 import "../../Annual/annual.css";
 import { Table, TableCell } from 'flowbite-react';
 import { Link } from 'react-router-dom';
@@ -8,10 +6,6 @@ import { useSelector } from 'react-redux';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import * as XLSX from 'xlsx'; // Import the XLSX library
 import Select from 'react-select';
-import { PiUsersFourLight } from "react-icons/pi";
-import { FaCheck } from "react-icons/fa";
-import { FaCircleXmark } from "react-icons/fa6";
-import { LuPin } from "react-icons/lu";
 import StatsDashboard from "./StatCard";
 
 
@@ -20,6 +14,7 @@ const UserInPerson = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
  
+  const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalApproved, setTotalApproved] = useState(0);
   const [totalDenied, setTotalDenied] = useState(0);
@@ -33,11 +28,12 @@ const UserInPerson = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
       try {
         const startIndex = (currentPage - 1) * limit;
         let url = `/api/user/getinperson?startIndex=${startIndex}&limit=${limit}`;
         if (filter) {
-          url += `&filter=${filter}`;
+          url += `&searchQuery=${encodeURIComponent(filter)}`;        
         }
         if (selectedDegreeProgram) {
           url += `&degreeProgram=${selectedDegreeProgram}`;
@@ -63,7 +59,10 @@ const UserInPerson = () => {
         }
       } catch (error) {
         console.log("Error fetching users:", error.message);
+      } finally{
+        setLoading(false);
       }
+      
     };
   
     if (currentUser.isAdmin) {
@@ -161,18 +160,17 @@ const UserInPerson = () => {
   const totalPages = Math.ceil(totalUsers / limit);
 
   return (
-    <div>
-      
-      <p className="text-3xl font-light mb-4">Showing All Users</p>
+    <div> 
+         
+      <div className='p-3 pt-0 mt-0'>
+      <h2 className="text-3xl font-semibold">All Students</h2>
+      </div>  
       <StatsDashboard
         totalUsers={totalUsers}
         totalApproved={totalApproved}
         totalDenied={totalDenied}
         totalPending={totalPending}
-      />
-
-
-      
+      />   
       <div className="flex justify-start mb-4">
               <div className="flex items-center ">
                 <input
@@ -180,7 +178,7 @@ const UserInPerson = () => {
                   placeholder="Search..."
                   value={filter}
                   onChange={handleFilterChange}
-                  className="w-80 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                  className="pl-3 w-80 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -214,13 +212,16 @@ const UserInPerson = () => {
                   Export to Excel
                 </button>
               </div>
-            </div>
-      <div className='table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
-      
-        {currentUser.isAdmin && users.length > 0 ? (
-          <>
-            
+      </div>
 
+      <div className='table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
+        {loading ? ( 
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : currentUser.isAdmin && users.length > 0 ? (
+        
+          <>
             <Table hoverable className='shadow-md relative'>
               <Table.Head className="text-left text-lg font-medium text-gray-500 dark:text-white px-3 py-2">
                 <Table.HeadCell>Name</Table.HeadCell>
@@ -340,7 +341,7 @@ const UserInPerson = () => {
               </Table.Body>
             </Table>
 
-            <div className='m-4'>
+            <div className='m-4 justify-center items-center'>
                     <Pagination 
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -349,7 +350,9 @@ const UserInPerson = () => {
                   </div>
           </>
         ) : (
-          <p className="text-center text-2xl mx-auto p-10 font-light">NO USERS</p>
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-500">No students found</p>
+          </div>
         )}
       </div>
     </div>

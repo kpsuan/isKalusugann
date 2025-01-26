@@ -5,7 +5,10 @@ import ConstructionRoundedIcon from '@mui/icons-material/ConstructionRounded';
 import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRounded';
 import ThumbUpAltRoundedIcon from '@mui/icons-material/ThumbUpAltRounded';
 import logo from '../assets/logo1.png';
-// Define the items for rendering
+import { motion } from 'framer-motion';
+
+
+
 const items = [
   {
     icon: <SettingsSuggestRoundedIcon className="text-white" />,
@@ -30,6 +33,12 @@ const items = [
 
 export default function Content() {
   return (
+    <motion.div 
+    className="justify-center space-y-6"
+    initial={{ opacity: 0, x: -100 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.7 }}
+  >
     <div className="flex flex-col items-center gap-4 max-w-sm mx-auto  ">
       {/* SitemarkIcon Section */}
       <div className="hidden md:flex">
@@ -41,16 +50,17 @@ export default function Content() {
       {items.map((item, index) => (
         <div 
         key={index} 
-        className="flex gap-2 "
+        className="flex items-center gap-4 p-4 bg-white/10 rounded-xl backdrop-blur-sm"
       >
         {item.icon}
         <div>
-          <h3 className="font-medium font-semibold text-gray-800">{item.title}</h3>
+          <h3 className="text-gray-800 font-semibold">{item.title}</h3>
           <p className="text-sm text-gray-600 mt-2">{item.description}</p>
         </div>
       </div>
       
       ))}
     </div>
+    </motion.div>
   );
 }

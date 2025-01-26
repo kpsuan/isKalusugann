@@ -8,6 +8,9 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar, Clock, RefreshCw, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 
+import {
+	ANNUALPE_SCHEDULE_TEMPLATE,
+} from "../../../../../../api/utils/emailTemplate";
 
 import { Tabs } from "flowbite-react";
 import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
@@ -27,6 +30,7 @@ import ScheduledForDate from "./ScheduledOn";
 import ScheduledForToday from "./ScheduledToday";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
+import { motion } from 'framer-motion';
 
 import { 
   HiOutlineDocumentText, 
@@ -228,6 +232,7 @@ const InPerson = () => {
   const [savedStartDate, setSavedStartDate] = useState(null);
   const [savedEndDate, setSavedEndDate] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
 
   const [startDate, setStartDate] = useState(new Date());
@@ -367,9 +372,8 @@ const InPerson = () => {
   }, [currentUser._id, filter]);
 
   const [loading, setLoading] = useState(false);
-
+ 
   const handleGenerateSchedule = async () => {
-    // Check if dates are set
     if (!savedStartDate || !savedEndDate) {
       toast.error('Please set the start and end dates before generating the schedule.');
       return;
@@ -383,33 +387,55 @@ const InPerson = () => {
         endDate: savedEndDate,
       });
   
-      // Step 2: Fetch all users to send the email
-      const usersResponse = await axios.get(`/api/user/getinperson`);
-      const users = usersResponse.data;
-  
-      // Step 3: Send email to each user
-      for (const user of users) {
-        const emailResponse = await axios.post('/api/email/emailUser', {
-          email: user.email,
-          subject: 'Annual PE Schedule Now Available',
-          text: `Dear ${user.firstName},\n\nYour schedule is now up for viewing in the system. Here is your assigned date: ${user.schedule}\n\nBest regards,\nYour Organization`
-        });
-      }
-  
-      // Final toast message
-      toast.success('Schedule generated and emails sent successfully!', {
-        onClose: () => navigate(0) // Navigate after toast closes
-      });
+     
+      toast.success('Schedule generated!');
+      setShowEmailModal(true);
     } catch (error) {
-      console.error('Error generating schedule or sending emails:', error);
-      toast.error('Error generating schedule or sending emails. Please try again.');
+      console.error('Error generating schedule', error);
+      toast.error('Error generating schedule. Please try again.');
     } finally {
       setLoading(false);
     }
   };
   
+  const handleEmailSchedule = async () => {
+    setLoading(true);
+    try {
+      // Step 2: Fetch all users to send the email
+      const usersResponse = await axios.get(`/api/user/getinperson`);
+      console.log(usersResponse.data); // Debugging step
 
-  
+    
+      // Extract the 'users' array from the response
+      const users = usersResponse.data.users;
+      if (!Array.isArray(users)) {
+        throw new Error('Invalid response format: expected an array of users');
+      }
+
+      
+      // Step 3: Send email to each user
+      for (const user of users) {
+
+         // Prepare email content by replacing template placeholders
+        let emailContent = ANNUALPE_SCHEDULE_TEMPLATE
+         .replace('{firstName}',user.firstName)
+         .replace('{schedule}', user.schedule);
+   
+        await axios.post('/api/email/emailUser', {
+          email: user.email,
+          subject: 'Annual PE Schedule Now Available',
+          html: emailContent // Use html instead of text for formatted email
+        });
+      }
+      toast.success('Emails sent successfully!');
+    } catch (error) {
+      console.error('Error sending emails', error);
+      toast.error('Error sending emails. Please try again.');
+    } finally {
+      setLoading(false);
+      setShowEmailModal(false);
+    }
+  };
 
   const handleRescheduleClick = () => {
     navigate('/reschedule', { state: { startDate: savedStartDate, endDate: savedEndDate } });
@@ -458,8 +484,8 @@ const InPerson = () => {
           onClearSchedules={handleClearSchedules}
           onReschedule={handleRescheduleClick}
     />
-          <div className="p-8">
-          <Tabs aria-label="Tabs for schedules" style="default" className="my-4">
+          <div className="p-8 bg-gray-50">
+          <Tabs aria-label="Tabs for schedules" style="default" className="my-4 ">
             <Tabs.Item active title="Scheduled for Today" icon={HiUserCircle}>
               <ScheduledForToday />
             </Tabs.Item>
@@ -523,9 +549,14 @@ const InPerson = () => {
           </div>
         </div>
         {showPopup && (
-          <Modal className="p-24  rounded-xl shadow-xl" show={showPopup} onClose={() => setShowPopup(false)}>
+          <Modal className="p-24  inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-xl shadow-xl" show={showPopup} onClose={() => setShowPopup(false)}>
             <Modal.Header>Set Schedule</Modal.Header>
             <Modal.Body>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+            >
               <div className="flex flex-col p-5">
                 <div className="flex flex-1 mb-4">
                   <div className="flex flex-col flex-1">
@@ -547,21 +578,38 @@ const InPerson = () => {
                     />
                   </div>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveDates} >
+                <Button className="bg-blue-600 p-3 hover:bg-blue-700" onClick={handleSaveDates} >
                   Save Dates
                 </Button>
               </div>
+              </motion.div>
             </Modal.Body>
-            <Modal.Footer className="px-6 py-4 border-t flex justify-end">
-              <Button
-                className="py-2 px-4 text-white bg-gray-500 rounded-lg font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                onClick={() => setShowPopup(false)}
-              >
-                Close
-              </Button>
-            </Modal.Footer>
+            
           </Modal>
         )}
+        {showEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Email Schedules</h2>
+            <p className="mb-6">Would you like to email the generated schedules to all students?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailSchedule}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                {loading ? 'Sending...' : 'Send Emails'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );

@@ -30,10 +30,10 @@ const LaboratoryServices = () => {
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 p-6 sm:p-10">
+    <section className="bg-gradient-to-b from-teal-400 to-black dark:bg-gray-900 p-6 sm:p-10">
       <div className="mx-auto max-w-screen-xl">
         <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-          <h2 className="bg-red-600 text-white text-center text-2xl font-bold p-6">
+          <h2 className="bg-teal-700 text-white text-center text-2xl font-bold p-6">
             Updated Laboratory Services as of October 2021
           </h2>
           <div className="p-6">

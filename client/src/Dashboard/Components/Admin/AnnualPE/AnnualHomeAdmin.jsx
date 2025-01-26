@@ -16,6 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { MdDashboard } from "react-icons/md"
 import { useDispatch } from 'react-redux';
+import { motion } from 'framer-motion';
 
 
 import axios from 'axios';
@@ -95,6 +96,18 @@ const AnnualHomeAdmin = () => {
         setShowPopup(!showPopup);
     };
 
+    const formattedpreEnlistStart = preEnlistStart.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    
+      const formattedpreEnlistEnd = preEnlistEnd.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
     return (
         <div className="dashboard my-flex">
             <div className="dashboardContainer my-flex">
@@ -109,7 +122,7 @@ const AnnualHomeAdmin = () => {
                                     <span className="[&_p]:inline">
                                         Pre-enlistment period starts on{" "}
                                         <span className="font-medium text-blue-500">
-                                            {preEnlistStart.toLocaleDateString()} and ends on {preEnlistEnd.toLocaleDateString()}
+                                            {formattedpreEnlistStart} and ends on {formattedpreEnlistEnd}
                                         </span>
                                     </span>
                                 </p>
@@ -148,9 +161,18 @@ const AnnualHomeAdmin = () => {
 
                                 
                                 {showPopup && (
-                                    <Modal className="p-20" show={showPopup} onClose={() => setShowPopup(false)}>
-                                        <Modal.Header>Set Schedule</Modal.Header>
+                                    <Modal className="w-full fixed p-24 pl-28 inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" show={showPopup} onClose={() => setShowPopup(false)}>
+                                        <Modal.Header className="border-b">
+                                        <div className="flex items-center gap-3 ">
+                                        <span>Set Pre-enlistment Period</span>
+                                        </div>
+                                        </Modal.Header>
                                         <Modal.Body>
+                                        <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="space-y-6"
+                                        >
                                             <div className="flex flex-col p-5">
                                                 <div className="flex flex-1 mb-4">
                                                     <div className="flex flex-col flex-1">
@@ -172,16 +194,13 @@ const AnnualHomeAdmin = () => {
                                                         />
                                                     </div>
                                                 </div>
-                                                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveDates}>
+                                                <Button className="bg-blue-600 p-2 hover:bg-blue-700" onClick={handleSaveDates}>
                                                     Save Dates
                                                 </Button>
                                             </div>
+                                            </motion.div>
                                         </Modal.Body>
-                                        <Modal.Footer>
-                                            <Button color="failure" onClick={() => setShowPopup(false)}>
-                                                Close
-                                            </Button>
-                                        </Modal.Footer>
+                                        
                                     </Modal>
                                 )}
                             </div>

@@ -12,12 +12,13 @@ import { motion } from 'framer-motion';
 
 import { Card } from 'flowbite-react';
 
+import { FileText } from 'lucide-react';
+
 const Documents = () => {
   const [activeTab, setActiveTab] = useState('upload'); // Track active tab
 
   useEffect(() => {
-    // This effect will run whenever the active tab changes
-    // Here you could trigger data fetching or other updates
+   
   }, [activeTab]);
 
   return (
@@ -25,7 +26,7 @@ const Documents = () => {
       <div className="dashboard my-flex">
         <div className="dashboardContainer my-flex">
           <Sidebar />
-          <div className="mainContent">
+          <div className="mainContent m-0 p-0">
           <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -35,9 +36,12 @@ const Documents = () => {
             <Card className="bg-gradient-to-r from-blue-600 to-cyan-500 border-none">
                 <div className="relative overflow-hidden p-8">
                   <div className="relative z-10">
-                    <h1 className="text-3xl font-bold text-white mb-4">
-                      Documents
-                    </h1>
+                    <div className="flex items-center gap-3 mb-4">
+                      <FileText className="w-8 h-8 text-white" />
+                      <h1 className="text-3xl font-bold text-white">
+                        Documents
+                      </h1>
+                    </div>
                     <p className="text-white/80 max-w-xl">
                      Manage and access all documents needed. 
                     </p>

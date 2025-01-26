@@ -1,7 +1,9 @@
 import User from '../models/user.model.js';
+import crypto from "crypto"
 import bcrypt from 'bcrypt'; 
 import { errorHandler } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
+import { emailUser } from './emailuser.controller.js';
 
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -87,6 +89,15 @@ export const attendance = async (req, res, next) => {
           lastLoggedIn: new Date(),
           queueNumber: newQueueNumber, // Assign the new queue number
           queueNumberDate: today // Store the date for today's queue
+        },
+        $push: {
+          notifications: {
+            message: `Annual PE done.`,
+            type: 'success',
+            timestamp: new Date(),
+            link: '/status',
+            isRead: false
+          }
         }
       },
       { new: true }
@@ -157,3 +168,76 @@ export const google = async (req, res, next) => {
 export const signout = (req, res) => {
   res.clearCookie('access_token').status(200).json('Signout success!');
 };
+
+// Backend changes - forgotPassword controller
+export const forgotPassword = async (req, res) => {
+  // Add request body logging for debugging
+  console.log('Request body:', req.body);
+  
+  if (!req.body || !req.body.email) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Email is required" 
+    });
+  }
+
+  const { email } = req.body;
+
+  // Validate email format
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Please provide a valid email address" 
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "If a user exists with this email, they will receive password reset instructions" 
+      });
+    }
+
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const resetTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
+
+    user.resetPasswordToken = resetToken;
+    user.resetTokenExpiresAt = resetTokenExpiresAt;
+
+    await user.save();
+
+    const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+    try {
+      await emailUser(user.email, 'Password Reset Request', resetURL);
+      return res.status(200).json({ 
+        success: true, 
+        message: "Password reset instructions have been sent to your email" 
+      });
+    } catch (emailError) {
+      // If email fails, reset the token
+      user.resetPasswordToken = undefined;
+      user.resetTokenExpiresAt = undefined;
+      await user.save();
+      
+      console.error('Email sending error:', emailError);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to send reset email. Please try again later." 
+      });
+    }
+
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'An error occurred. Please try again.' 
+    });
+  }
+};
+
+
+

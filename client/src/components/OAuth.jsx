@@ -41,9 +41,9 @@ export default function OAuth() {
     <button
       type='button'
       onClick={handleGoogleClick}
-      className='bg-blue-500 text-white rounded-lg p-3 uppercase hover:opacity-95'
+      className='bg-blue-500 hover:bg-blue-700 text-white rounded-lg p-3 uppercase hover:opacity-95'
     >
-      Continue with google
+      Sign in using your UP Mail
     </button>
   );
 }

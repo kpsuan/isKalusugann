@@ -21,7 +21,18 @@ cron.schedule('00 17 * * *', async () => {
         },
         isPresent: { $ne: 'ARRIVED' },
       },
-      { $set: { isPresent: 'ABSENT' } }
+      { $set: { isPresent: 'ABSENT' },
+        $push: {
+          notifications: {
+            message: `You missed your Annual PE schedule.`,
+            type: 'warning',
+            timestamp: new Date(),
+            link: '/status',
+            isRead: false
+          }
+      }  
+      },
+      
     );
 
     console.log(`Marked ${result.modifiedCount} users as absent at 5 PM.`);

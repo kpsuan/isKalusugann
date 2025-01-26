@@ -4,6 +4,7 @@
   margin: 0;
   box-sizing: border-box;
   font-family: "Inter", sans-serif;
+  
 }
 
 :root {
@@ -37,6 +38,7 @@
 
 html {
   font-size: 90%;
+  
 }
 
 a {
@@ -106,9 +108,11 @@ video {
   justify-content: center;
   margin: auto;
   padding: 1rem;
+  overflow-y: scroll
 }
 .dashboard .dashboardContainer {
   height: 95vh;
+  
   width: 100%;
   border-radius: 10px;
   overflow: hidden;
@@ -210,6 +214,3 @@ video {
     width: 85%;
   }
 }
-::-webkit-scrollbar {
-  display: none;
-}/*# sourceMappingURL=App.css.map */

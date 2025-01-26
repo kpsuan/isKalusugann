@@ -1,78 +1,97 @@
 import React from 'react';
-import { Card } from 'flowbite-react';
+import { Link } from 'react-router-dom';
 import { GrSchedule } from "react-icons/gr";
 import { IoDocumentsOutline } from "react-icons/io5";
 import { TfiAnnouncement } from "react-icons/tfi";
 import { LiaFileMedicalAltSolid } from "react-icons/lia";
+import { useSelector } from 'react-redux';
 
-const Features = ({ currentUser }) => {
+
+const Features = () => {
+  const { currentUser } = useSelector((state) => state.user);
+
   const features = [
     {
-      icon: <GrSchedule className="text-4xl" />,
-      title: currentUser?.isAdmin ? 'Annual PE Management' : 'PE Schedule',
+      icon: GrSchedule,
+      title: currentUser?.isAdmin ? 'PE Management' : 'PE Schedule',
       description: currentUser?.isAdmin
-        ? 'Schedule and Reschedule Annual PE Examinations of Students'
-        : 'View Your Annual PE Examination Schedule',
+        ? 'Manage Annual PE Examinations'
+        : 'View PE Examination Schedule',
       link: currentUser?.isAdmin ? '/adminPE' : '/annualhome',
-      color: 'bg-slate-200',
-      iconColor: 'text-blue-600'
+      gradient: 'from-teal-100 to-teal-200',
+      iconBg: 'bg-teal-500',
+      iconColor: 'text-white'
     },
     {
-      icon: <LiaFileMedicalAltSolid className="text-4xl" />,
+      icon: LiaFileMedicalAltSolid,
       title: currentUser?.isAdmin ? 'Medical Records' : 'Medical Forms',
       description: currentUser?.isAdmin
-        ? 'View Submitted Medical Forms and Documents of Students'
-        : 'Submit and View Your Medical Forms',
-      link: currentUser?.isAdmin ? '/manageInPerson' : '/status',
-      color: 'bg-slate-200',
-      iconColor: 'text-emerald-600'
+        ? 'Manage Submitted Medical Documents for Annual PE'
+        : 'Submit Medical Forms',
+      link: currentUser?.isAdmin ? '/manage-online' : '/status',
+      gradient: 'from-cyan-100 to-cyan-200',
+      iconBg: 'bg-cyan-500',
+      iconColor: 'text-white'
     },
     {
-      icon: <TfiAnnouncement className="text-4xl" />,
+      icon: TfiAnnouncement,
       title: 'Announcements',
       description: currentUser?.isAdmin
-        ? 'Create, Edit, View and Post Announcements Online'
-        : 'View Announcements',
+        ? 'Create and Manage Announcements'
+        : 'View Latest Announcements',
       link: '/announcement',
-      color: 'bg-slate-200',
-      iconColor: 'text-amber-600'
+      gradient: 'from-green-100 to-green-200',
+      iconBg: 'bg-green-500',
+      iconColor: 'text-white'
     },
     {
-      icon: <IoDocumentsOutline className="text-4xl" />,
+      icon: IoDocumentsOutline,
       title: currentUser?.isAdmin ? 'Document Management' : 'Documents',
       description: currentUser?.isAdmin
-        ? 'Upload and View Downloadable Documents and Forms'
-        : 'Download Available Documents and Forms',
+        ? 'Upload and Manage Documents'
+        : 'Download Available Forms',
       link: currentUser?.isAdmin ? '/documents' : '/docsuser',
-      color: 'bg-slate-200',
-      iconColor: 'text-purple-600'
+      gradient: 'from-emerald-100 to-emerald-200',
+      iconBg: 'bg-emerald-500',
+      iconColor: 'text-white'
     }
   ];
 
   return (
-    <div className="p-6 bg-white rounded-lg">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Features</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="bg-white rounded-2xl shadow-lg p-6">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Quick Access</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {features.map((feature, index) => (
-          <Card
+          <Link 
+            to={feature.link}
             key={index}
-            href={feature.link}
-            className={`cursor-pointer transition-all duration-300 hover:scale-102 hover:shadow-lg border-none ${feature.color}`}
+            className="block transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           >
-            <div className="flex items-start space-x-4">
-              <div className={`p-3 rounded-lg bg-white shadow-md ${feature.iconColor}`}>
-                {React.cloneElement(feature.icon)}
+            <div 
+              className={`
+                bg-gradient-to-br ${feature.gradient} 
+                rounded-2xl p-5 
+                flex items-center space-x-5 
+                shadow-md hover:shadow-lg
+              `}
+            >
+              <div className={`
+                ${feature.iconBg} ${feature.iconColor}
+                p-3 rounded-xl 
+                flex items-center justify-center
+              `}>
+                <feature.icon className="text-3xl" />
               </div>
-              <div className="flex-1">
+              <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-1">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm">
                   {feature.description}
                 </p>
               </div>
             </div>
-          </Card>
+          </Link>
         ))}
       </div>
     </div>

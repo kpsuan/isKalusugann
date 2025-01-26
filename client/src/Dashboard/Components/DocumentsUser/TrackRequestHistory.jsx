@@ -16,7 +16,8 @@ import {
   HiDocument,
   HiClipboardList,
   HiBeaker,
-  HiOutlineCalendar
+  HiOutlineCalendar,
+  HiDocumentDownload
 } from 'react-icons/hi';
 
 const TrackRequestHistory = () => {
@@ -91,9 +92,9 @@ const TrackRequestHistory = () => {
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString('en-US', {
-      weekday: 'long', // e.g., "Monday"
+      weekday: 'long',
       year: 'numeric',
-      month: 'long', // e.g., "January"
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -103,7 +104,8 @@ const TrackRequestHistory = () => {
   const getFormattedStatus = (status) => {
     if (status === 'pending') return 'Under Review';
     if (status === 'rejected') return 'Rejected';
-    return status;  // Returns the status if no mapping is needed
+    if (status === 'approved') return 'Approved';
+    return status;
   };
 
   return (
@@ -164,18 +166,21 @@ const TrackRequestHistory = () => {
                     <span className="font-semibold">Tracking ID:</span> {requestData.trackingId}
                   </p>
                   <p className="text-gray-600">
+                    <span className="font-semibold">Purpose:</span> {requestData.purpose}
+                  </p>
+                  <p className="text-gray-600">
                     <span className="font-semibold">Request Date:</span>{' '}
                     <span className="flex items-center gap-1">
                       <HiOutlineCalendar className="h-4 w-4" />
                       {formatDate(requestData.dateRequested)}
                     </span>
                   </p>
+                  
                 </div>
               </div>
               {getStatusBadge(getFormattedStatus(requestData.status))}
             </div>
 
-            {/* Requested Laboratory Tests */}
             <div>
               <h4 className="text-xl font-semibold text-gray-800 mb-4">Requested Laboratory Tests</h4>
               <Table striped className='bg-slate'>
@@ -206,7 +211,6 @@ const TrackRequestHistory = () => {
               </Table>
             </div>
 
-            {/* Request Timeline */}
             <div>
               <h4 className="text-xl font-semibold text-gray-800 mb-4">Request Timeline</h4>
               <Timeline>
@@ -227,6 +231,25 @@ const TrackRequestHistory = () => {
                 ))}
               </Timeline>
             </div>
+
+            {/* Signed Request Form Section */}
+            {requestData.signedRequestForm && (
+              <div className="border-t pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="text-xl font-semibold text-gray-800">Signed Request Form</h4>
+                    <p className="text-gray-600">Download the signed laboratory request form</p>
+                  </div>
+                  <Button 
+                    onClick={() => window.open(requestData.signedRequestForm, '_blank')}
+                    className="flex items-center gap-2"
+                  >
+                    <HiDocumentDownload className="h-5 w-5" />
+                    Download Form
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       )}
@@ -235,5 +258,3 @@ const TrackRequestHistory = () => {
 };
 
 export default TrackRequestHistory;
-
-

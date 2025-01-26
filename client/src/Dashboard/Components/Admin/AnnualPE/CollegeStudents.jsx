@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
@@ -7,11 +7,15 @@ import { Table } from 'flowbite-react';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import Select from 'react-select';
 import * as XLSX from 'xlsx'; // Import the XLSX library
+import StatsDashboard from './StatCard';
+import { FaCalendarAlt } from 'react-icons/fa'; // Import an icon
+
 
 const CollegeStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
   const { collegeName } = useParams();
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
 
   const [users, setUsers] = useState([]);
@@ -23,38 +27,59 @@ const CollegeStudents = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(9); // Keep this constant
 
-  const fetchUsersByCollege = async () => {
-    setLoading(true);
-    const startIndex = (currentPage - 1) * limit;
-    try {
-      const response = await fetch(`/api/user/getUsersByCollegeInPerson/${collegeName}?startIndex=${startIndex}&status=${statusFilter}&course=${selectedDegreeProgram}`);
-      const data = await response.json();
-      if (response.ok) {
-        console.log('Fetched users:', data.users); // Add this line
-        setUsers(data.users);
-        setTotalUsers(data.totalUsers);
-        filterUsers(data.users, filter);
-      } else {
-        console.error('Failed to fetch users:', data);
-      }
-    } catch (error) {
-      console.error('Error fetching users by college:', error);
-    }
-    finally {
-      setLoading(false);
-    }
-  };
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
   
-  
-
   useEffect(() => {
-    fetchUsersByCollege();
-  }, [collegeName, statusFilter, selectedDegreeProgram, currentPage, filter]);
+    const fetchUsersByCollege = async () => {
+      setLoading(true);
+      try {
+        const startIndex = (currentPage - 1) * limit;
+        let url = `/api/user/getUsersByCollegeInPerson/${collegeName}?startIndex=${startIndex}&limit=${limit}`;
+        if (filter) {
+          url += `&searchQuery=${encodeURIComponent(filter)}`;        
+        }
+        if (selectedDegreeProgram) {
+          url += `&degreeProgram=${selectedDegreeProgram}`;
+        }
+        if (statusFilter) {
+          url += `&status=${statusFilter}`;
+        }
+  
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log("API Response:", data); // Log the API response for debugging
+  
+        if (res.ok) {
+          setUsers(data.users);
+          setTotalUsers(data.totalUsers);
+          setTotalApproved(data.totalApproved);
+          setTotalDenied(data.totalDenied);
+          setTotalPending(data.totalPending);
+          
+          console.log("Total Approved:", data.totalApproved);
+          console.log("Total Denied:", data.totalDenied);
+          console.log("Total Pending:", data.totalPending);
+        }
+      } catch (error) {
+        console.log("Error fetching users:", error.message);
+      } finally{
+        setLoading(false);
+      }
+      
+    };
+  
+    if (currentUser.isAdmin) {
+      fetchUsersByCollege();
+    }
+  }, [currentUser._id, filter, selectedDegreeProgram, statusFilter, currentPage, limit]);
 
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
-    filterUsers(users, event.target.value);
+    setCurrentPage(1);
   };
+
 
   const handleDegreeProgramChange = (selectedOption) => {
     setSelectedDegreeProgram(selectedOption ? selectedOption.value : "");
@@ -66,17 +91,6 @@ const CollegeStudents = () => {
     setStatusFilter(selectedOption ? selectedOption.value : "");
     setCurrentPage(1);
   };
-
-  
-
-  const filterUsers = (users, query) => {
-    const filtered = users.filter(user => {
-      const fullName = `${user.firstName} ${user.middleName || ''} ${user.lastName}`.toLowerCase();
-      return fullName.includes(query.toLowerCase());
-    });
-    setFilteredUsers(filtered);
-  };
-
  
   const totalPages = Math.ceil(totalUsers / limit);
   const degreeProgramOptions = [
@@ -146,27 +160,38 @@ const CollegeStudents = () => {
   }
 };
 
+const handleViewSchedule = () => {
+  navigate('/manageInPerson'); // Navigate to the desired route
+};
 
   return (
     <div className="dashboard my-flex">
       <div className="dashboardContainer my-flex">
         <Sidebar />
         <div className="mainContent m-0 p-0">
-          <div className=" h-1/3 bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
+          <div className="bg-gradient-to-r from-blue-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full">
             <div className="text-5xl font-bold  text-white mb-4">{collegeName}</div>
             <p className="font-light my-4 text-white">
             View and manage student records and schedule for {collegeName} InPerson Annual PE</p>
-            <button className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
-              View Scheduled Today
+            <button
+              className="flex items-center justify-center bg-white text-blue-700 hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
+              onClick={handleViewSchedule}>
+              <FaCalendarAlt className="mr-2" /> 
+               View Scheduled Today
             </button>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-          <div className='p-4 mx-auto'>
+            <div className='p-4 mx-auto'>
               <h2 className="text-2xl font-semibold">Student Records</h2>
-                <p className="text-sm text-gray-500">
-                      Total Students: {totalUsers}
-                </p>
-            </div>            <div className="flex justify-start">
+              <p className="text-sm text-gray-500"> Total Students: {totalUsers} </p>
+            </div>  
+          <StatsDashboard
+            totalUsers={totalUsers}
+            totalApproved={totalApproved}
+            totalDenied={totalDenied}
+            totalPending={totalPending}
+          />            
+            <div className="flex justify-start">
               <div className="flex items-center ">
                 <input
                   type="text"
@@ -178,7 +203,7 @@ const CollegeStudents = () => {
               </div>
 
               <div className="flex items-center ml-4 w-64">
-                <Select
+              <Select
                   id="degreeProgram"
                   value={selectedDegreeProgram}
                   onChange={handleDegreeProgramChange}
@@ -209,7 +234,11 @@ const CollegeStudents = () => {
             </div>
 
             <div className='my-10 table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
-              {currentUser.isAdmin && filteredUsers.length > 0 ? (
+            {loading ? ( 
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+            ) : currentUser.isAdmin && users.length > 0 ? (
                 <>
                   <Table hoverable className='shadow-md relative'>
               <Table.Head className="text-left text-lg font-medium text-gray-500 dark:text-white px-3 py-2">
@@ -338,7 +367,9 @@ const CollegeStudents = () => {
                   </div>
                 </>
               ) : (
-                <p className="text-center text-2xl mx-auto p-10 font-light">NO USERS</p>
+                <div className="text-center py-12">
+                <p className="text-xl text-gray-500">No students found</p>
+                </div>
               )}
             </div>
             

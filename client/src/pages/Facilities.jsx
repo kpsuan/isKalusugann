@@ -23,12 +23,12 @@ const Facilities = () => {
                 </div>
             </div>
         </section>
-        <section class="bg-green-200 py-2 antialiased dark:bg-gray-900"> 
+        <section class="bg-teal-500 py-2 antialiased dark:bg-gray-900"> 
             <div class="mx-auto max-w-screen-xl px-11 2xl:px-0"> 
             </div> 
         </section>
         <Services/>
-        <section class="bg-green-200 py-2 antialiased dark:bg-gray-900"> 
+        <section class="bg-black py-2 antialiased dark:bg-gray-900"> 
             <div class="mx-auto max-w-screen-xl px-11 2xl:px-0"> 
             </div> 
         </section>

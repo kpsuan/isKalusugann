@@ -48,7 +48,6 @@ export default function SignIn() {
 
       {/* Sign In form section */}
       <div className='aa bg-white max-w-lg mx-auto p-8 md:p-12 mb-40 rounded-lg shadow-2xl flex-1'>
-        <h1 className='text-lg text-cyan-700 font-bold mt-4 '>isKalusugan</h1>
         <h1 className='text-4xl font-bold mt-3 mb-7'>Sign In</h1>
         <form onSubmit={handleSubmit} className='flex flex-col gap-4 '>
           <input
@@ -75,13 +74,13 @@ export default function SignIn() {
           <OAuth />
         </form>
 
-        <div className='gap-2 mt-5'>
+        <div className='gap-2 mt-5 flex-col '>
           <Link to='/sign-up'>
-            <span className='text-blue-500 hover:underline pl-35'>Forgot password</span>
+            <span className='text-blue-500  hover:underline pl-35'>Forgot password</span>
           </Link>
         </div>
 
-        <div className='aa flex gap-2 mt-5 w-full pl-20'>
+        <div className='flex gap-2 mt-5 w-full flex-col '>
           <Link to='/sign-up'>
             <button className='bg-transparent border-2 text-blue-500 p-3 rounded-lg uppercase hover:text-blue-700 disabled:opacity-80 w-full px-5'>
               Create an Account

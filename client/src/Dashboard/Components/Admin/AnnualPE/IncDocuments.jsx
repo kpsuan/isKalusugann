@@ -1,5 +1,4 @@
 import Sidebar from "../../SideBar Section/Sidebar";
-import Top from "../../Profile/Components/Header";
 import "../../Annual/annual.css";
 import { Table, TableCell } from 'flowbite-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,11 +6,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from 'react-redux';
 import Pagination from './Pagination'; // Adjust the import path accordingly
 import Select from 'react-select';
-import * as XLSX from 'xlsx'; // Import the XLSX library
-import { PiUsersFourLight } from "react-icons/pi";
-import { FaCheck } from "react-icons/fa";
-import { FaCircleXmark } from "react-icons/fa6";
-import { LuPin } from "react-icons/lu";
+import StatsDashboard from './StatCard';
 
 const IncDocuments = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -39,7 +34,7 @@ const IncDocuments = () => {
         const startIndex = (currentPage - 1) * limit;
         let url = `/api/user/inc-docs?startIndex=${startIndex}&limit=${limit}`;
         if (filter) {
-          url += `&filter=${filter}`;
+          url += `&searchQuery=${encodeURIComponent(filter)}`;  
         }
         if (selectedDegreeProgram) {
           url += `&degreeProgram=${selectedDegreeProgram}`;
@@ -131,100 +126,66 @@ const IncDocuments = () => {
       <div className="dashboardContainer my-flex">
         <Sidebar />
         <div className="mainContent">
-          <div className="bg-white rounded-lg border border-gray-200 p-10 w-full">
-            <h1 className="text-2xl font-bold mb-4">Incomplete Submissions</h1>
-            <p className="font-light my-4">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec nisl quis risus eleifend venenatis. Mauris nec justo nec ligula suscipit consequat. Donec rutrum nisi nec faucibus euismod. Sed sit amet vestibulum metus.
-            </p>
-            <button 
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => navigate('/manage-online')}>
-              View All Users
-            </button>
-          </div>
-            <div>
-        <div className="flex space-x-8 my-4"> 
-            <div className="my-4">
-            <span className="font-bold block">Total Users</span> 
-            <div className="flex items-center mt-1"> 
-                <PiUsersFourLight className="mr-1 text-2xl" /> 
-                <span>{totalUsers}  </span>
-            </div> 
-            </div>
-            
-            <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-            <div className="my-4">
-            <span className="font-bold block">Approved</span> 
-            <div className="flex items-center mt-1"> 
-                <FaCheck className="mr-1 text-2xl text-green-500" /> 
-                <span>{totalApproved} </span> 
-            </div> 
-            </div>
-
-            <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-
-            <div className="my-4">
-            <span className="font-bold block">Denied</span> 
-            <div className="flex items-center mt-1 text-red-500"> 
-                <FaCircleXmark className="mr-1 text-2xl" /> 
-                <span>{totalDenied} </span> 
-            </div> 
-            </div>
-
-            <div className="h-12 my-4 w-px bg-gray-300"></div>
-
-
-            <div className="my-4">
-            <span className="font-bold block">Pending</span> 
-            <div className="flex items-center mt-1"> 
-                <LuPin className="mr-1 text-2xl text-yellow-500" /> 
-                <span>{totalPending} </span> 
-            </div> 
-            </div>
-
+        <div className="bg-gradient-to-r from-red-700 to-rose-500 rounded-lg border border-gray-200 p-10 w-full">
+            <div className="text-5xl font-bold  text-white mb-4">Incomplete Documents</div>
+            <p className="font-light my-4 text-white">
+            View and manage students with incomplete submission</p>
+           
         </div>
+        <div>
+        <div className='p-4 pl-0 pt-4 mx-auto'>
+              <h2 className="text-2xl font-semibold">Student Records</h2>
+                <p className="text-sm text-gray-500">
+                      Total Students: {totalUsers}
+                </p>
+        </div>  
+        <StatsDashboard
+              totalUsers={totalUsers}
+              totalApproved={totalApproved}
+              totalDenied={totalDenied}
+              totalPending={totalPending}
+        />     
+         {/* Filters */}
+         <div className="rounded-lg pl-0 mb-6">
+            <div className="flex space-x-4">
+              <div className="flex-grow">
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={filter}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="w-1/4">
+                <Select
+                  value={selectedDegreeProgram}
+                  onChange={handleDegreeProgramChange}
+                  options={degreeProgramOptions}
+                  placeholder="Select Course"
+                  className="basic-single"
+                  classNamePrefix="select"
+                />
+              </div>
+              <div className="w-1/4">
+                <Select
+                  value={statusFilter}
+                  onChange={handleStatusFilterChange}
+                  options={statusOptions}
+                  placeholder="Select Status"
+                  className="basic-single"
+                  classNamePrefix="select"
+                />
+              </div>
+            </div>
+          </div>
 
         <div className='table-auto overflow-x-scroll md:mx-auto p-1 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
             
-                <div className="flex justify-start">
-                <div className="flex items-center ">
-                    <input
-                    type="text"
-                    placeholder="Search..."
-                    value={filter}
-                    onChange={handleFilterChange}
-                    className="w-80 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                    />
-                </div>
-
-                <div className="flex items-center ml-4 w-64">
-                    <Select
-                    id="degreeProgram"
-                    value={selectedDegreeProgram}
-                    onChange={handleDegreeProgramChange}
-                    options={degreeProgramOptions}
-                    placeholder={selectedDegreeProgram ? selectedDegreeProgram.label : "Course"}
-                    className="w-full"
-                    />
-                </div>
-
-                <div className="flex items-center ml-4 w-40">
-                    <Select
-                    id="status"
-                    value={statusFilter}
-                    onChange={handleStatusFilterChange}
-                    options={statusOptions}
-                    placeholder={statusFilter ? statusFilter.label : "Status"}
-                    className="w-full"
-                    />
-                </div>
-
-                </div>
+               
                 {loading ? (
                 <div className="flex justify-center items-center my-8">
-                    <div className="loader">Loading...</div> {/* Add your loading spinner */}
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
                 </div>
                 ) : currentUser.isAdmin && users.length > 0 ? (
                 <>
@@ -329,7 +290,7 @@ const IncDocuments = () => {
                         </Table.Body>
                     </Table>
 
-                <div className='m-4'>
+                <div className='m-4 justify-center items-center'>
                         <Pagination 
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -338,10 +299,12 @@ const IncDocuments = () => {
                     </div>
             </>
             ) : (
-            <p className="text-center text-2xl mx-auto p-10 font-light">NO USERS</p>
+              <div className="text-center py-12">
+              <p className="text-xl text-gray-500">No students found</p>
+            </div>
             )}
         </div>
-            </div>
+        </div>
         </div>
     </div>
     </div>

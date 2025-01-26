@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
 import { Search } from 'lucide-react';
+import StatsDashboard from './StatCard';
 
 const CourseStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -15,6 +16,11 @@ const CourseStudents = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalDenied, setTotalDenied] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
   const limit = 9;
 
   const capitalizeWords = (string) => 
@@ -36,6 +42,10 @@ const CourseStudents = () => {
         
         if (response.ok) {
           setUsers(data.users);
+          setTotalUsers(data.totalUsers);
+          setTotalApproved(data.totalApproved);
+          setTotalDenied(data.totalDenied);
+          setTotalPending(data.totalPending);
           setTotalPages(Math.ceil(data.totalUsers / limit));
         }
       } catch (error) {
@@ -85,6 +95,12 @@ const CourseStudents = () => {
                     </p>
                   </div>
                 </div>
+                <StatsDashboard
+              totalUsers={totalUsers}
+              totalApproved={totalApproved}
+              totalDenied={totalDenied}
+              totalPending={totalPending}
+            />  
 
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                   <div className="relative flex-1">

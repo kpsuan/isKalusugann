@@ -28,7 +28,11 @@ import {
   getStats,
   updateUserRescheduleDate,
   updateNotifications,
-  markNotificationAsRead
+  markNotificationAsRead,
+  releaseUser,
+  clearNotifications,
+  sendAdminNotification,
+  sendAdminNotification2
 
 
 } from '../controllers/user.controller.js';
@@ -62,6 +66,8 @@ router.get('/scheduled-for-date/:date', verifyToken, viewUsersScheduled);
 router.get('/sched-for-today', verifyToken, viewUsersScheduledToday);
 router.get('/:id', verifyToken, getUserById);
 router.delete('/deleteschedule', verifyToken, deleteSchedule);
+router.delete("/releaseSlot/:userId", verifyToken, releaseUser);
+
 
 router.get('/getUsersByCourse/:courseName', verifyToken, getUsersByCourse);
 router.get('/getUsersByCourseInPerson/:courseName', verifyToken, getUsersByCourseInPerson);
@@ -70,6 +76,11 @@ router.get('/getUsersByCollegeInPerson/:collegeName', verifyToken, getUsersByCol
 router.post('/reschedule/:userId', verifyToken, rescheduleUser);
 router.get('/getsubmmitedUsers', verifyToken, getusersub);
 router.post('/updateUserReschedule/:userId', verifyToken, updateUserWithReschedule);
+router.put('/:userId/notifications/clear', clearNotifications);
+router.put('/sendAdminNotification', verifyToken, sendAdminNotification);
+router.put('/sendAdminNotification2', verifyToken, sendAdminNotification2);
+
+
 
 
 

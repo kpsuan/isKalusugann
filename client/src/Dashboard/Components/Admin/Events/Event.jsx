@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+
 import Sidebar from "../../SideBar Section/Sidebar";
 import "../../Annual/annual.css";
 import { Link } from 'react-router-dom';
@@ -24,6 +26,8 @@ const Event = () => {
     const [viewType, setViewType] = useState('grid');
     const [showFilters, setShowFilters] = useState(false);
     const [limit, setLimit] = useState(9);
+      const { currentUser } = useSelector((state) => state.user);
+    
 
     useEffect(() => {
         fetchEvents();
@@ -261,6 +265,9 @@ const Event = () => {
                             </motion.div>
                         )}
 
+
+                        {currentUser.isAdmin ? (
+                            <>
                         {/* Create Event Button */}
                         <Link to="/create-event">
                             <motion.button
@@ -272,6 +279,12 @@ const Event = () => {
                                 <span>Create Event</span>
                             </motion.button>
                         </Link>
+                        </>
+                         ) : (
+                            <>
+                            <div className="div"></div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

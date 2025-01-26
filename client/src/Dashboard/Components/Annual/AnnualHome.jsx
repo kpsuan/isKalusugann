@@ -27,9 +27,34 @@ const AnnualHome = () => {
     const [isPreEnlistEnabled, setIsPreEnlistEnabled] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
-    const preEnlistStart = new Date(localStorage.getItem('preEnlistStart'));
-    const preEnlistEnd = new Date(localStorage.getItem('preEnlistEnd'));
+    // Define the pre-enlistment period
+    const [preEnlistStart, setPreEnlistStart] = useState(new Date());
+    const [preEnlistEnd, setPreEnlistEnd] = useState(new Date());
     
+    useEffect(() => {
+      const fetchSavedDates = async () => {
+          try {
+              const response = await axios.get('/api/settings/getPreEnlistmentDates');
+              if (response.status === 200) {
+                  const savedStartPR = new Date(response.data.preEnlistStart);
+                  const savedEndPR = new Date(response.data.preEnlistEnd);
+
+                  if (savedStartPR.getTime() && savedEndPR.getTime()) {
+                      setPreEnlistStart(savedStartPR);
+                      setPreEnlistEnd(savedEndPR);
+                  } else {
+                      console.error("Invalid date fetched:", response.data);
+                      toast.error("Failed to fetch valid start and end dates.");
+                  }
+              }
+          } catch (error) {
+              console.error("Error fetching saved dates:", error);
+              toast.error("Failed to fetch saved dates.");
+          }
+      };
+
+      fetchSavedDates();
+  }, []);
   
     useEffect(() => {
       console.log("Received preEnlistStart:", preEnlistStart);

@@ -25,7 +25,7 @@ import {
 
 import axios from 'axios';
 
-import { HiOutlineDocumentDownload, HiOutlineUpload, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
+import {HiOutlineUpload} from 'react-icons/hi';
 
 const UserProfile = () => {
   const dispatch = useDispatch();
@@ -138,8 +138,7 @@ const UserProfile = () => {
       } else {
         toast.error('Failed to send email.');
       }
-  
-      // Step 3: Set update success and handle navigation
+
       setUpdateSuccess(true);
       setScrollTop(true); // Trigger scroll to top
       setTimeout(() => {

@@ -127,7 +127,7 @@ const CreateEvent = () => {
                 <div className="mainContent m-0 p-0">
                     <div className="flex-1 transition-all duration-500 ease-in-out">
                         {/* Header Section with Gradient */}
-                        <div className="bg-gradient-to-r from-blue-700 to-cyan-500 p-10 animate-gradient-x">
+                        <div className="bg-gradient-to-r from-red-700 to-rose-600 p-10 animate-gradient-x">
                             <div className="max-w-4xl mx-auto ">
                                 <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
                                             Create an Event
@@ -258,7 +258,7 @@ const CreateEvent = () => {
                                                             />
                                                             <label
                                                                 htmlFor="file-upload"
-                                                                className="mt-2 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors"
+                                                                className="mt-2 inline-block px-4 py-2 bg-red-500 text-white rounded-lg cursor-pointer hover:bg-red-600 transition-colors"
                                                             >
                                                                 Browse Files
                                                             </label>
@@ -305,7 +305,7 @@ const CreateEvent = () => {
                                             type="submit"
                                             disabled={isSubmitting}
                                             className={`w-full py-3 rounded-lg text-white font-medium transition-all ${
-                                                isSubmitting ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+                                                isSubmitting ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'
                                             }`}
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}

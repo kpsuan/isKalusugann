@@ -233,7 +233,7 @@ const Online = () => {
                   <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
                     <div className="flex items-center space-x-2">
                       <FileText className="h-5 w-5 text-emerald-100" />
-                      <span className="text-emerald-50">Pending Review</span>
+                      <span className="text-emerald-50">For Review</span>
                     </div>
                     <p className="text-2xl font-bold text-white mt-2">{totalIncomplete}</p>
                   </div>

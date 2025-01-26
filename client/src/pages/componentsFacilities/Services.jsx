@@ -2,7 +2,7 @@ import React from 'react';
 
 const Services = () => {
   return (
-    <section className="px-8 bg-gradient-to-br from-green-600 to-green-800 py-12 text-white dark:bg-gray-900 md:py-16">
+    <section className="px-8 bg-gradient-to-b from-teal-500 to-black py-12 text-white dark:bg-gray-900 md:py-16">
       <div className="container mx-auto max-w-screen-xl">
         {/* Heading */}
         <div className="mb-10 text-center">

@@ -7,7 +7,9 @@ import { toast, ToastContainer } from 'react-toastify';
 import { app } from '../../../../firebase';
 import DocumentRequestModal from './DocumentRequestModal';
 import { Search } from 'lucide-react';
-
+import {
+	DOCUMENT_REQUEST_TEMPLATE,
+} from "../../../../../../api/utils/emailTemplate";
 
 import {
   getDownloadURL,
@@ -141,42 +143,35 @@ const filterRequests = (requests) => {
     return matchesSearch && matchesTab;
   });
 };
-
 const handleEmailUser = async (request) => {
   try {
     if (!request.signedRequestForm) {
       toast.error("No signed request form available. Cannot send email.");
-      return; 
+      return;
     }
 
-    const signedRequestFormUrl = request.signedRequestForm; 
+    const signedRequestFormUrl = request.signedRequestForm;
+    
+    // Prepare email content by replacing template placeholders
+    let emailContent = DOCUMENT_REQUEST_TEMPLATE
+      .replace('{firstName}', request.generalInformation.firstName)
+      .replace('{signedRequestFormUrl}', signedRequestFormUrl);
 
-    // Send email if signedRequestForm is present
     const response = await fetch('/api/email/emailUser', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: request.generalInformation.email,
         subject: 'Document Request Notification',
-        text: `Dear ${request.generalInformation.firstName}, your document request has been processed. 
-
-        
-        Here is the file link for your Signed Request Form:
-        ${signedRequestFormUrl}
-
-        You may also view the attached request slip by logging in to the system using your account. 
-
-        Please let us know if you have any questions.
-
-        Best regards,
-        IsKalusugan`,
+        html: emailContent // Use html instead of text for formatted email
       }),
     });
 
     if (response.ok) {
       toast.success("Email sent successfully!");
     } else {
-      toast.error("Failed to send email.");
+      const errorData = await response.json();
+      toast.error(errorData.message || "Failed to send email.");
     }
   } catch (error) {
     console.error('Error:', error);
@@ -413,13 +408,13 @@ const handleEmailUser = async (request) => {
   };
 
   return (
-    <div className="dashboard my-flex">
+    <div className="dashboard my-flex ">
           <ToastContainer className="z-50" />
         
       <div className="dashboardContainer my-flex">
         
         <Sidebar />
-        <div className="mainContent">
+        <div className="mainContent m-0 p-0">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

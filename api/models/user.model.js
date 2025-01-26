@@ -175,6 +175,10 @@ const userSchema = new mongoose.Schema(
       type: Date, 
       default: Date.now 
     },
+
+    resetPasswordToken: String,
+    resetPasswordTokenExpiresAt: Date,
+    
     
     notifications: {
       type: [notificationSchema],

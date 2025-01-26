@@ -12,9 +12,10 @@ export default function Home() {
     <Header/> 
     <div className='w-full h-3/4'>
       <Hero/>
+      
       <News/>
-      <Events/>
       <Features/>
+      <Events/>
       <Footer/>
     </div>
     </>

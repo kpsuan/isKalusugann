@@ -3,7 +3,7 @@ import { Badge, Card, Button } from "flowbite-react";
 import { HiCalendar, HiLocationMarker, HiCheck, HiClock } from "react-icons/hi";
 
 const EventsSection = ({ events, eventType, filterEvents, currentPage, setCurrentPage, filteredEvents }) => {
-  const itemsPerPage = 4;
+  const itemsPerPage = 3;
   const paginatedEvents = filteredEvents.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
@@ -31,20 +31,20 @@ const EventsSection = ({ events, eventType, filterEvents, currentPage, setCurren
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedEvents.map((event, index) => (
-          <Card key={index} className="w-full h-96 hover:shadow-lg transition-shadow duration-300">
-            <div className="relative w-full h-52">
-              <img
-                className="absolute inset-0 w-full h-full object-cover"
-                src={event.image || "https://via.placeholder.com/400x300"}
-                alt={`${event.title}`}
-              />
+          <div key={index} className="w-full bg-white rounded-xl shadow-lg overflow-hidden  h-86 hover:bg-gray-100 transition-shadow duration-300">
+            <div className="relative rounded-xl  shadow-lg w-full p-0">
+            <img
+              src={event.image}
+              alt={event.title}
+              className= 'w-full h-40 object-cover'
+            />
               <Badge color="warning" className="absolute top-3 right-3">
                 {eventType === 'upcoming' ? 'Upcoming' : 'Past'}
               </Badge>
             </div>
-            <div className="p-4 flex flex-col justify-between h-44">
+            <div className="p-4 flex flex-col justify-between h-36">
               <h5 className="text-xl font-bold tracking-tight text-gray-900 line-clamp-2">
                 {event.title}
               </h5>
@@ -61,7 +61,7 @@ const EventsSection = ({ events, eventType, filterEvents, currentPage, setCurren
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 

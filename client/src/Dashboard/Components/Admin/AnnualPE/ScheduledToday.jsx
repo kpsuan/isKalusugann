@@ -4,10 +4,12 @@ import { Table, Card, Spinner  } from 'flowbite-react'; // Make sure you have th
 import { Link } from 'react-router-dom'; // Make sure to use react-router for linking
 import { LiaFileMedicalAltSolid } from "react-icons/lia";
 import { HiOutlineCalendar, HiOutlineUsers, HiOutlineClipboardCheck } from 'react-icons/hi';
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
-
-
-
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const ScheduledForToday = () => {
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,7 @@ const ScheduledForToday = () => {
   const [showMore, setShowMore] = useState(false); // Show more feature state
   const [error, setError] = useState(null); // State to handle errors
   const [todayDate, setTodayDate] = useState(''); // State to store today's date
+  const currentDate = dayjs().tz('Asia/Manila').format('MMMM D, YYYY');
 
   useEffect(() => {
     const fetchUsersScheduledForToday = async () => {
@@ -84,13 +87,18 @@ const ScheduledForToday = () => {
       </div>
       
       
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-        Users Scheduled for Today
-      </h2>
+      <div className="block text-center ">
+        <h2 className="text-lg p-2 font-semibold text-gray-800">
+           Today's Schedule:
+        </h2>
+        <span className="text-blue-500 text-4xl mt-0 block font-light">
+          {currentDate}
+        </span>
+      </div>
 
       {loading ? (
        <div className="flex justify-center items-center h-64">
-       <Spinner size="xl" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : error ? (
         <p className="text-red-500">{error}</p> // Display the error message
@@ -119,7 +127,7 @@ const ScheduledForToday = () => {
                       </div>
                     )}
                     <div>
-                      <Link className="text-lg font-medium text-gray-900 hover:underline" to={`/users/${user.slug}`}>
+                      <Link className="text-lg font-medium text-gray-900 hover:underline" to={`/user-status/${user._id}`}>
                         {`${user.lastName}, ${user.middleName || ''} ${user.firstName}`}
                       </Link>
                       <span className="text-sm font-light block">{`${user.yearLevel} | ${user.college} | ${user.degreeProgram}`}</span>

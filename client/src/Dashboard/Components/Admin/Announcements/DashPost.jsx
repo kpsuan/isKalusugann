@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle, HiOutlineCalendar, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
+import { toast, ToastContainer } from 'react-toastify';
 
 const DashPost = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -34,11 +35,42 @@ const DashPost = () => {
   }, [currentUser._id]);
 
   const handleShowMore = async () => {
-    // ... existing handleShowMore logic ...
+    const startIndex = userPosts.length;
+    try {
+      const res = await fetch(
+        `/api/post/getposts?userId=${currentUser._id}&startIndex=${startIndex}`
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setUserPosts((prev) => [...prev, ...data.posts]);
+        if (data.posts.length < 9) {
+          setShowMore(false);
+        }
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
   };
-
   const handleDeletePost = async () => {
-    // ... existing handleDeletePost logic ...
+
+    try {
+      const res = await fetch(`/api/post/deletepost/${postIdToDelete}/${currentUser._id}`, 
+        {
+          method: 'DELETE',
+        }
+      );
+      
+      const data = await res.json();
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
+        toast.success("Post deleted successfully!");
+      }
+    } catch (error) {
+      console.log(error.message);
+      toast.error("Unable to delete post");
+      
+    }
   };
 
   if (isLoading) {
@@ -51,6 +83,7 @@ const DashPost = () => {
 
   return (
     <div className="p-0">
+      <ToastContainer className="z-50" />
       {currentUser.isAdmin && userPosts.length > 0 ? (
         <div className="animate-fade-in">
            

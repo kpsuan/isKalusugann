@@ -77,8 +77,8 @@ const ScheduledForToday2 = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-               <Spinner size="xl" />
-        </div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
       ) : error ? (
         <p className="text-red-500">{error}</p> // Display the error message
       ) : users.length > 0 ? (
@@ -102,7 +102,7 @@ const ScheduledForToday2 = () => {
                         </div>
                       )}
                       <div>
-                        <Link className="text-lg font-medium text-gray-900 hover:underline" to={`/users/${user.slug}`}>
+                        <Link className="text-lg font-medium text-gray-900 hover:underline" to={`/user-status/${user._id}`}>
                           {`${user.lastName}, ${user.middleName || ''} ${user.firstName}`}
                         </Link>
                         <span className="text-sm font-light block">{`${user.yearLevel} | ${user.college} | ${user.degreeProgram}`}</span>

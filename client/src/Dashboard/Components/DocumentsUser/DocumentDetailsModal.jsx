@@ -10,6 +10,10 @@ import {
   FileCheck,
   MessageSquare
 } from 'lucide-react';
+import { 
+  HiDocumentDownload
+} from 'react-icons/hi';
+
 import { motion } from 'framer-motion';
 
 const DocumentDetailsModal = ({ isOpen, onClose, request }) => {
@@ -27,9 +31,10 @@ const DocumentDetailsModal = ({ isOpen, onClose, request }) => {
   const StatusIcon = getStatusIcon(request.status);
 
   return (
+    <><div className="w-full fixed inset-0 bg-black bg-opacity-10 z-50">
     <Modal show={isOpen} onClose={onClose} size="xl">
       <Modal.Header className="border-b">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ">
           <StatusIcon className="w-6 h-6 text-blue-600" />
           <span>Document Request Details</span>
         </div>
@@ -62,16 +67,16 @@ const DocumentDetailsModal = ({ isOpen, onClose, request }) => {
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Requested Documents</h3>
             <div className="grid grid-cols-2 gap-3">
-                  <div 
-                    className="p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <FileText className="w-5 h-5 text-blue-600 mb-2" />
-                    <p className="text-sm font-medium capitalize">
-                    <h3 className="font-medium text-gray-900">
-                              {request.type}
-                            </h3>
-                    </p>
-                  </div>
+              <div
+                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <FileText className="w-5 h-5 text-blue-600 mb-2" />
+                <p className="text-sm font-medium capitalize">
+                  <h3 className="font-medium text-gray-900">
+                    {request.type}
+                  </h3>
+                </p>
+              </div>
             </div>
           </div>
 
@@ -110,6 +115,25 @@ const DocumentDetailsModal = ({ isOpen, onClose, request }) => {
               )}
             </Timeline>
           </div>
+
+          {/* Signed Request Form Section */}
+
+          <div className="border-t pt-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h4 className="text-lg font-semibold text-gray-800">Signed Request Form</h4>
+                <p className="text-sm text-gray-600">Download the signed laboratory request form</p>
+              </div>
+              <Button
+                onClick={() => window.open(request.signedRequestForm, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <HiDocumentDownload className="h-5 w-5" />
+                Download Form
+              </Button>
+            </div>
+          </div>
+
         </motion.div>
       </Modal.Body>
       <Modal.Footer>
@@ -118,6 +142,9 @@ const DocumentDetailsModal = ({ isOpen, onClose, request }) => {
         </Button>
       </Modal.Footer>
     </Modal>
+    </div>
+    </>
+   
   );
 };
 

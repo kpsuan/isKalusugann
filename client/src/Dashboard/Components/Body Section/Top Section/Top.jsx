@@ -8,6 +8,9 @@ import { Button } from 'flowbite-react';
 import video from '../../../Assets/med.mp4';
 import './top.css';
 import DOMPurify from "dompurify";
+import { toast, ToastContainer } from 'react-toastify';
+
+
 
 import axios from 'axios';
 import { IoNotificationsCircleOutline } from "react-icons/io5";
@@ -146,6 +149,12 @@ export const Top = () => {
     fetchNotifications();
   }, [currentUser._id]);
 
+
+  const clearNotifications = () => {
+    setNotifications([]); // Clear the notifications panel by setting it to an empty array
+    setIsDropdownOpen(false); // Optionally close the dropdown
+  };
+  
   const unreadNotificationsCount = notifications.filter(notif => !notif.read).length;
 
   const handleNotificationClick = async (notifId, link) => {
@@ -192,19 +201,64 @@ export const Top = () => {
   
 
   
-
+  const handleClearAllNotifications = async () => {
+    if (!currentUser || !currentUser._id) {
+      console.error('Error: User ID is missing.');
+      toast.error('Unable to clear notifications. User ID is missing.');
+      return;
+    }
+  
+    try {
+      const res = await fetch(`/api/user/${currentUser._id}/notifications/clear`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (!res.ok) {
+        throw new Error(`Failed to clear notifications: ${res.statusText}`);
+      }
+  
+      // Clear notifications locally
+      setNotifications([]);
+      setIsDropdownOpen(false);
+  
+      toast.success('All notifications cleared successfully');
+    } catch (error) {
+      console.error('Error clearing notifications:', error.message);
+      toast.error('Failed to clear notifications. Please try again.');
+    }
+  };
+  
+  
   return (
-    <div className='topSection'>
+    <div className='topSection '>
       <div className="headerSection flex">
-        <div className="title text-2xl mt-5">
-          <h1 className='font-light'>Hi {currentUser.firstName}!</h1>
-          <p>What would you like to do today?</p>
+      <ToastContainer className={"z-50"} />
+      <div className="welcome-section w-full p-6 rounded-xl shadow-soft">
+       <div className="flex items-center space-x-4">
+    <div className="welcome-avatar w-16 h-13 rounded-full overflow-hidden border-2 border-cyan-300">
+      <img 
+        src={currentUser.profilePicture} 
+        alt={`${currentUser.firstName}'s avatar`} 
+        className="w-full h-full object-cover"
+      />
+    </div>
+    <div className=''>
+      <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
+            Hi, {currentUser.firstName}
+            <span className="wave text-2xl ml-2">👋</span>
+          </h1>
+          <p className="text-gray-600 mt-1 text-lg">
+            What will you do today?
+          </p>
         </div>
+      </div>
+    </div>
 
-        <div className="adminDiv flex relative">
+    <div className="adminDiv flex relative">
         <div className="dropdown relative mt-1">
             <IoIosNotificationsOutline 
-              className="icon cursor-pointer"
+              className="icon h-12 w-12 cursor-pointer"
               onClick={toggleDropdown}
             />
             {unreadNotificationsCount > 0 && (
@@ -212,9 +266,17 @@ export const Top = () => {
                 {unreadNotificationsCount}
               </span>
             )}
-            {isDropdownOpen && (
-              <div className="dropdown-content absolute right-0 bg-white shadow-lg w-96 rounded-md z-[1000]">
+           {isDropdownOpen && (
+              <div className="dropdown-content absolute right-0 bg-white shadow-lg w-96 rounded-md z-[1000] transition-all duration-300 ease-in-out transform">
                 <h1 className="p-2 font-bold border-b text-lg">Notifications</h1>
+                <button
+                  className="text-red-600 hover:bg-red-100 p-2 rounded-md flex items-center space-x-2 transition duration-200"
+                  onClick={handleClearAllNotifications}
+                  title="Clear all notifications"
+                >
+                  <IoNotificationsCircleOutline className="text-lg" />
+                  <span className="font-medium">Clear All</span>
+                </button>
                 <ul>
                   {newNotifications.length > 0 && (
                     <div>
@@ -224,7 +286,7 @@ export const Top = () => {
                           key={notif._id}
                           className={`flex items-center gap-2 p-2 border-b hover:bg-gray-100 ${notif.isRead ? 'opacity-50' : ''}`}
                           onClick={() => handleNotificationClick(notif._id, notif.link)}
-                          >
+                        >
                           <IoNotificationsCircleOutline className={`text-lg text-${notif.type}`} />
                           <Link to={notif.link || "#"} className="text-sm text-blue-500 hover:underline">
                             {notif.message} - <small>{timeAgo(notif.timestamp)}</small>
@@ -241,12 +303,11 @@ export const Top = () => {
                           key={notif._id}
                           className={`flex items-center gap-2 p-2 border-b hover:bg-gray-100 ${notif.isRead ? 'opacity-50' : ''}`}
                           onClick={() => handleNotificationClick(notif._id, notif.link)}
-                          >
+                        >
                           <IoNotificationsCircleOutline className={`text-5xl text-blue-500 text-${notif.type}`} />
-                          <Link to={notif.link || "#"} className="text-sm text-blue-500 hover:underline">
+                          <Link to={notif.link || "#"} className="text-sm text-gray-500 hover:underline">
                             {notif.message} <small>{timeAgo(notif.timestamp)}</small>
                           </Link>
-                          
                         </li>
                       ))}
                     </div>
@@ -255,29 +316,23 @@ export const Top = () => {
                     <li className="p-2 text-gray-500">No notifications</li>
                   )}
                 </ul>
-
+            
                 <div className="p-2">
                   <Link to="/notifications">
-                    <Button className="w-full bg-cyan-500 hover:bg-cyan-300 tex-blue-800">
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-700 tex-blue-800">
                       See More
                     </Button>
                   </Link>
                 </div>
+               
               </div>
             )}
+            
         </div>
 
 
 
-          <div className="adminImage h-10 w-7">
-            <Link to='/profile'>
-              {currentUser ? (
-                <img src={currentUser.profilePicture} alt='profile' className='object-cover' />
-              ) : (
-                <li>Sign In</li>
-              )}
-            </Link>
-          </div>
+          
         </div>
       </div>
 
@@ -300,7 +355,7 @@ export const Top = () => {
           <div className="flex w-full mb-5">
             <Link to={`/post/${latestAnnouncement?.slug}`} target='_blank' rel="noopener noreferrer">
               <Button type="submit" className="w- py-2 my-5 text-3xl bg-cyan-500 text-white hover:bg-cyan-600  rounded-md z-10">
-                View All 
+                Read Announcement 
               </Button>
             </Link>
           </div>

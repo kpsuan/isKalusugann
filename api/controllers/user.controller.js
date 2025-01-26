@@ -1,6 +1,9 @@
 import User from '../models/user.model.js';
+import mongoose from "mongoose";
+
 import { errorHandler } from '../utils/error.js';
 import bcryptjs from 'bcryptjs';
+import DateSlot from '../models/dateSlot.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -14,38 +17,83 @@ export const test = (req, res) => {
   });
 };
 
-// update user
-
 export const updateUser = async (req, res, next) => {
-  // Check if the user has the right to update the account
   if (req.user.id !== req.params.id && !req.user.isAdmin) {
     return next(errorHandler(401, 'You can update only your account!'));
   }
 
   try {
-    // Hash password if updated
-    if (req.body.password) {
-      req.body.password = bcryptjs.hashSync(req.body.password, 10);
-    }
-
     const today = new Date();
     const todayString = today.toDateString();
     const cutoffHour = 17; // 5 PM cutoff
     const nowUTC = new Date();
-    const nowLocalUTCPlus8 = new Date(nowUTC.getTime() + (8 * 60 * 60 * 1000)); // 8 hours in milliseconds
-
+    const nowLocalUTCPlus8 = new Date(nowUTC.getTime() + 8 * 60 * 60 * 1000); // Adjust for UTC+8
 
     let userScheduleString;
     if (Array.isArray(req.body.schedule) && req.body.schedule.length > 0) {
       const userSchedule = new Date(req.body.schedule[0]);
       userScheduleString = userSchedule.toDateString();
     }
-    // Initialize the update data object
+
+    // Create notifications array
+    const notifications = [];
+
+    // Reschedule status notification
+    if (req.body.rescheduleStatus) {
+      notifications.push({
+        message: req.body.rescheduleStatus === 'denied' 
+          ? 'Your reschedule was denied.' 
+          : (req.body.rescheduleStatus === 'approved' 
+            ? `Your reschedule request was approved. You may view your available dates for rescheduling.` 
+            : 'Your reschedule request is pending.'),
+        type: req.body.rescheduleStatus === 'denied' ? 'warning' 
+             : req.body.rescheduleStatus === 'approved' ? 'success' 
+             : 'info',
+        isRead: false,
+        timestamp: new Date(),
+        link: '/status',
+      });
+    }
+
+    // Status-based notifications
+    if (req.body.status === 'approved') {
+      notifications.push({
+        message: 'Your documents have been verified. See attached medcert below.',
+        type: 'success',
+        link: '/status',
+        timestamp: new Date()
+      });
+    } else if (req.body.status === 'denied') {
+      notifications.push({
+        message: 'Your documents were denied. Please submit again.',
+        type: 'error',
+        link: '/status',
+        timestamp: new Date()
+      });
+    }
+
+    // Annual PE notifications
+    if (req.body.annualPE === 'Online') {
+      notifications.push({
+        message: 'You may now start submitting the forms needed for Annual PE.',
+        type: 'info',
+        link: '/status',
+        timestamp: new Date()
+      });
+    } else if (req.body.annualPE === 'InPerson' && req.body.schedule && req.body.schedule.length > 0) {
+      notifications.push({
+        message: 'You can now view your schedule in the Schedule Tab below.',
+        type: 'info',
+        link: '/status',
+        timestamp: new Date()
+      });
+    }
+
     const updateData = {
       $set: {
         username: req.body.username,
         email: req.body.email,
-        password: req.body.password,
+        password: req.body.password ? bcryptjs.hashSync(req.body.password, 10) : undefined,
         firstName: req.body.firstName,
         middleName: req.body.middleName,
         lastName: req.body.lastName,
@@ -69,140 +117,96 @@ export const updateUser = async (req, res, next) => {
         rescheduledDate: req.body.rescheduledDate,
         rescheduleRemarks: req.body.rescheduleRemarks,
         isRescheduled: req.body.isRescheduled,
-        lastUpdated: nowLocalUTCPlus8,
+        lastUpdated: new Date(),
+        queueNumber: req.body.queueNumber ? Number(req.body.queueNumber) : 0,
+        queueNumberDate: req.body.queueNumberDate ? new Date(req.body.queueNumberDate) : undefined,
+        isPresent: userScheduleString === todayString && today.getHours() >= cutoffHour && !req.body.isPresent ? 'ABSENT' : undefined, 
       },
+      ...(notifications.length > 0 && { $push: { notifications: { $each: notifications } } }),
     };
 
-    // Handle queueNumber and queueNumberDate
-      // Use 0 if queueNumber is not provided in the request
-    updateData.$set.queueNumber = req.body.queueNumber ? Number(req.body.queueNumber) : 0;
-
-
-    if (req.body.queueNumberDate) {
-      const parsedDate = new Date(req.body.queueNumberDate);
-      if (!isNaN(parsedDate)) {
-        updateData.$set.queueNumberDate = parsedDate;
-      }
-    }
-    
-
-    // Mark as 'ABSENT' if schedule date is today and current time is past cutoff hour
-    const currentHour = today.getHours();
-    if (userScheduleString === todayString && currentHour >= cutoffHour && !req.body.isPresent) {
-      updateData.$set.isPresent = 'ABSENT';
-    }
-
-    // Find and update the user in the database
+    // Update the user
     const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
 
-    // Dynamically generate notifications
-    const notifications = [];
-    const lastUpdated = nowLocalUTCPlus8;
-
-    if (updatedUser.status === 'approved') {
-      notifications.push({
-        message: 'Your documents have been verified. See attached medcert below.',
-        type: 'success',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    } else if (updatedUser.status === 'denied') {
-      notifications.push({
-        message: 'Your documents were denied. Please submit again.',
-        type: 'error',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (updatedUser.annualPE === 'Online') {
-      notifications.push({
-        message: 'You may now start submitting the forms needed for Annual PE.',
-        type: 'info',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    } else if (updatedUser.annualPE === 'InPerson' && updatedUser.schedule.length > 0) {
-      notifications.push({
-        message: 'You can now view your schedule in the Schedule Tab below.',
-        type: 'info',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (updatedUser.rescheduleStatus === 'approved') {
-      notifications.push({
-        message: 'You may view and select your preferred rescheduled date.',
-        type: 'success',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    } else if (updatedUser.rescheduleStatus === 'denied') {
-      notifications.push({
-        message: `Your reschedule request was denied because: "${updatedUser.rescheduleRemarks}".`,
-        type: 'error',
-        link: '/status#denied',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (updatedUser.isPresent === 'ARRIVED') {
-      notifications.push({
-        message: 'Annual PE done.',
-        type: 'success',
-        timestamp: lastUpdated,
-      });
-    } else if (updatedUser.isPresent === 'ABSENT') {
-      notifications.push({
-        message: 'You missed your Annual PE schedule.',
-        type: 'warning',
-        timestamp: lastUpdated,
-      });
-    }
-
-    //ADMIN NOTIFICATION
-    if (req.user.isAdmin) {
-      const allUsers = await User.find(); // Fetch all users
-
-      // Iterate over all users to check their reschedule or document submission status
-      const notifications = [];
-      for (let currentUser of allUsers) {
-        // Notification for reschedule requests
-        if (currentUser.reschedule === 'YES') {
-          notifications.push({
-            message: `A user has requested to reschedule their schedule. User: ${currentUser.firstName} ${currentUser.lastName}`,
-            type: 'info',
-            link: `/resched-status/${currentUser._id}`,
-            timestamp: nowLocalUTCPlus8,
-          });
-        }
-
-        // Notification for document submissions
-        if (
-          (currentUser.peForm && currentUser.peForm !== "") ||
-          (currentUser.labResults && currentUser.labResults !== "") ||
-          (currentUser.requestPE && currentUser.requestPE !== "")
-        ) {
-          notifications.push({
-            message: `A user has submitted documents for approval. User: ${currentUser.firstName} ${currentUser.lastName}`,
-            type: 'info',
-            link: `/user-status/${currentUser._id}`,
-            timestamp: nowLocalUTCPlus8,
-          });
-        }
-      }
-    }
-
-
-    // Remove password from the response
+    // Remove password from response
     const { password, ...rest } = updatedUser._doc;
     res.status(200).json(rest);
   } catch (error) {
     next(error);
   }
 };
+
+
+export const sendAdminNotification = async (req, res) => {
+  try {
+    const { userId, firstName, lastName } = req.body;
+
+    if (!userId || !firstName || !lastName) {
+      return res.status(400).json({ message: 'Invalid data provided.' });
+    }
+
+    // Create a notification object adhering to the schema
+    const notification = {
+      message: `New annual PE submission: ${firstName} ${lastName}`,
+      type: 'info',
+      link: `/user-status/${userId}`, // Optional link to user status
+      timestamp: new Date(),
+      isRead: false, // Default value (can omit since the schema sets it)
+    };
+
+    // Update all admin users to include the new notification
+    const updateResult = await User.updateMany(
+      { isAdmin: true }, // Target all admin users
+      { $push: { notifications: notification } } // Push the new notification
+    );
+
+    if (updateResult.modifiedCount > 0) {
+      res.status(200).json({ message: 'Notification sent to admins successfully.' });
+    } else {
+      res.status(404).json({ message: 'No admin users found to notify.' });
+    }
+  } catch (error) {
+    console.error('Error sending admin notification:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const sendAdminNotification2 = async (req, res) => {
+  try {
+    const { userId, firstName, lastName } = req.body;
+
+    if (!userId || !firstName || !lastName) {
+      return res.status(400).json({ message: 'Invalid data provided.' });
+    }
+
+    // Create a notification object adhering to the schema
+    const notification = {
+      message: `Annual PE Reschedule Request: ${firstName} ${lastName}`,
+      type: 'info',
+      link: `/resched-status/${userId}`, // Optional link to user status
+      timestamp: new Date(),
+      isRead: false, // Default value (can omit since the schema sets it)
+    };
+
+    // Update all admin users to include the new notification
+    const updateResult = await User.updateMany(
+      { isAdmin: true }, // Target all admin users
+      { $push: { notifications: notification } } // Push the new notification
+    );
+
+    if (updateResult.modifiedCount > 0) {
+      res.status(200).json({ message: 'Notification sent to admins successfully.' });
+    } else {
+      res.status(404).json({ message: 'No admin users found to notify.' });
+    }
+  } catch (error) {
+    console.error('Error sending admin notification:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
 
 export const updateNotifications = async (req, res) => {
   try {
@@ -214,6 +218,8 @@ export const updateNotifications = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+
+    
     // Sort notifications by timestamp (newest first)
     const sortedNotifications = user.notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -223,126 +229,34 @@ export const updateNotifications = async (req, res) => {
   }
 };
 
-export const updateNotifications2 = async (req, res) => { 
+
+export const clearNotifications = async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
+
   try {
-    const { userId } = req.params; // Access userId correctly
-    const user = await User.findById(userId).select('-queueNumber -queueNumberDate');
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const notifications = [];
-    const lastUpdated = user.lastUpdated; // Get the last updated timestamp
-
-    // Add notifications based on user status
-    if (user.status === 'approved') {
-      notifications.push({
-        message: 'Your documents have been verified. See attached medcert below.',
-        type: 'success',
-        link: '/status',
-        timestamp: lastUpdated, // Use the last updated timestamp
-      });
-    } else if (user.status === 'denied') {
-      notifications.push({
-        message: 'Your documents were denied. Please submit again.',
-        type: 'error',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (user.annualPE === 'Online') {
-      notifications.push({
-        message: 'You may now start submitting the forms needed for Annual PE.',
-        type: 'info',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    } else if (user.annualPE === 'InPerson' && user.schedule.length > 0) {
-      notifications.push({
-        message: 'You can now view your schedule in the Schedule Tab below.',
-        type: 'info',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (user.rescheduleStatus === 'approved') {
-      notifications.push({
-        message: 'You may view and select your preferred rescheduled date.',
-        type: 'success',
-        link: '/status',
-        timestamp: lastUpdated,
-      });
-    } else if (user.rescheduleStatus === 'denied') {
-      notifications.push({
-        message: `Your reschedule request was denied because: "${user.rescheduleRemarks}".`,
-        type: 'error',
-        link: '/status#denied',
-        timestamp: lastUpdated,
-      });
-    }
-
-    if (user.isPresent === 'ARRIVED') {
-      notifications.push({
-        message: 'Annual PE done.',
-        type: 'success',
-        timestamp: lastUpdated,
-      });
-    } else if (user.isPresent === 'ABSENT') {
-      notifications.push({
-        message: 'You missed your Annual PE schedule.',
-        type: 'warning',
-        timestamp: lastUpdated,
-      });
-    }
-
-    // Admin notifications for reschedule status and document submission (for all users)
-    // Check if the logged-in user is an admin
-    if (user.isAdmin) {  // Check if the user is an admin
-      const allUsers = await User.find();  // Fetch all users
-
-      // Iterate over all users to check if their reschedule status is "YES" or they have submitted documents
-      for (let currentUser of allUsers) {
-        // Admin notification for reschedule status
-        if (currentUser.reschedule === 'YES') {
-          notifications.push({
-            message: `A user has requested to rescheduled their schedule. User: ${currentUser.firstName} ${currentUser.lastName}`,
-            type: 'info',
-            link: `/resched-status/${currentUser._id}`,  // Link to the user's reschedule status page
-            timestamp: lastUpdated,
-          });
-        }
-
-        // Admin notification for document submission
-        if (
-          (currentUser.peForm && currentUser.peForm !== "") ||
-          (currentUser.labResults && currentUser.labResults !== "") ||
-          (currentUser.requestPE && currentUser.requestPE !== "")
-        ) {
-          notifications.push({
-            message: `A user has submitted documents for approval. User: ${currentUser.firstName} ${currentUser.lastName}`,
-            type: 'info',
-            link: `/user-status/${currentUser._id}`,  // Link to the user's status page
-            timestamp: lastUpdated,
-          });
-        }
-      }
-    }
-
-    // Sort notifications by timestamp (newest first)
-    notifications.sort((a, b) => b.timestamp - a.timestamp);
-
-    // Update user notifications
-    user.notifications = notifications;
+    // Clear the notifications array
+    user.notifications = [];
     await user.save();
 
-    res.status(200).json({ message: 'Notifications updated', notifications });
+    res.status(200).json({ message: 'All notifications cleared successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error clearing notifications:', error.message);
+    res.status(500).json({ message: 'Server error. Failed to clear notifications.' });
   }
 };
+
+
+
 
 export const markNotificationAsRead = async (req, res) => {
   try {
@@ -371,7 +285,6 @@ export const markNotificationAsRead = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 
 
@@ -443,6 +356,11 @@ export const updateUserRescheduleDate = async (req, res, next) => {
         const formattedSchedule = new Date(req.body.schedule);
         updateData.$set.schedule = formattedSchedule;
 
+        // Release the previously reserved slot (if applicable) before updating
+        if (user.schedule) {
+          await releaseSlot(user.id); // Call releaseSlot to release the previous slot
+        }
+
         // Increment rescheduleLimit if schedule is updated
         updateData.$set.rescheduleLimit = (user.rescheduleLimit || 0) + 1;
       } else {
@@ -475,6 +393,7 @@ export const updateUserRescheduleDate = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 
@@ -578,6 +497,19 @@ export const getUsers = async (req, res, next) => {
     // Base query
     let query = { annualPE: 'Online' };
 
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+
     // Apply filtering by degree program if provided
     if (req.query.degreeProgram) {
       query.degreeProgram = req.query.degreeProgram;
@@ -642,17 +574,6 @@ export const getUsers = async (req, res, next) => {
       }
     }
     
-    // Add the console.log here to inspect the query before executing it
-    console.log('Query:', JSON.stringify(query));
-    
-    // Now, execute your database query here
-    // Example:
-    // const users = await User.find(query);
-    
-    
-  
-
-    // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
@@ -675,7 +596,6 @@ export const getUsers = async (req, res, next) => {
       return rest;
     });
 
-    // Count documents for various metrics
     const totalUsers = await User.countDocuments(query); // Count with filters
     const totalInPersonUsers = totalUsers; // Since totalUsers already reflects the filtered count
     
@@ -829,6 +749,15 @@ export const getUsersWithCompleteDocs = async (req, res, next) => {
       requestPE: { $exists: true, $ne: "" },
     };
 
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+
     if (req.query.degreeProgram) {
       query.degreeProgram = req.query.degreeProgram;
     }
@@ -836,8 +765,6 @@ export const getUsersWithCompleteDocs = async (req, res, next) => {
     if (req.query.status) {
       query.status = req.query.status;
     }
-
-
     // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
@@ -899,6 +826,19 @@ export const getUsersNoDocs = async (req, res, next) => {
       requestPE: ""  // Field is empty
     };
 
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+
     if (req.query.degreeProgram) {
       query.degreeProgram = req.query.degreeProgram;
     }
@@ -912,6 +852,19 @@ export const getUsersNoDocs = async (req, res, next) => {
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
 
     // Fetch users with pagination, sorting, and filtering
     const users = await User.find(query)
@@ -977,6 +930,19 @@ export const getUsersIncDocs = async (req, res, next) => {
       ]
     };
 
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+
     // Additional filters based on query parameters
     if (req.query.degreeProgram) {
       query.degreeProgram = req.query.degreeProgram;
@@ -1029,14 +995,6 @@ export const getUsersIncDocs = async (req, res, next) => {
 };
 
 
-
-
-
-
-
-
-
-
 export const getusersub = async (req, res, next) => {
   if (!req.user.isAdmin) {
     return next(errorHandler(403, 'Only admins can see all users!'));
@@ -1081,10 +1039,11 @@ export const getUsersByCourse = async (req, res, next) => {
     const searchQuery = req.query.search;
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
-    const sortDirection = req.query.order === 'asc' ? 1 : -1;
+    const sortBy = req.query.sortBy || "lastName"; // Default to sorting by lastName
+    const sortDirection = req.query.order === "asc" ? 1 : -1;
 
-    let query = { degreeProgram: courseName, annualPE: 'Online' };
-    
+    let query = { degreeProgram: courseName, annualPE: "Online" };
+
     // Add status filter if provided
     if (statusFilter) {
       query.status = statusFilter;
@@ -1093,56 +1052,102 @@ export const getUsersByCourse = async (req, res, next) => {
     // Add search query if provided
     if (searchQuery) {
       query.$or = [
-        { firstName: { $regex: searchQuery, $options: 'i' } },
-        { lastName: { $regex: searchQuery, $options: 'i' } },
-        { middleName: { $regex: searchQuery, $options: 'i' } }
+        { firstName: { $regex: searchQuery, $options: "i" } },
+        { lastName: { $regex: searchQuery, $options: "i" } },
+        { middleName: { $regex: searchQuery, $options: "i" } },
       ];
     }
 
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortDirection;
+
     const users = await User.find(query)
-      .sort({ lastName: sortDirection, firstName: sortDirection })
+    .sort({
+      yearLevel: sortDirection,
+      lastName: 1
+    })
       .skip(startIndex)
       .limit(limit);
 
-    const totalUsers = await User.countDocuments(query);
+    const totalUsers = await User.countDocuments(query)
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
 
-    res.status(200).json({ users, totalUsers });
+    res.status(200).json({ 
+      users, 
+      totalUsers, 
+      totalApproved,
+      totalDenied,
+      totalPending });
   } catch (error) {
     next(error);
   }
 };
+
 export const getUsersByCourseInPerson = async (req, res, next) => {
   try {
     const courseName = req.params.courseName;
     const statusFilter = req.query.status; // Extract status filter from query parameters
     const searchQuery = req.query.search;
 
+    // Base query
+    let query = { degreeProgram: courseName, annualPE: 'InPerson' };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+
+    // Apply filtering by status and course if provided
+    if (statusFilter) {
+      query.status = statusFilter;
+    }
+
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
+    }
+
+
+    // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
 
-    let query = { degreeProgram: courseName, annualPE: 'InPerson' };
-    if (statusFilter) {
-      query.status = statusFilter; // Add status filter to the query
-    }
-
-    // Add search query if provided
-    if (searchQuery) {
-      query.$or = [
-        { firstName: { $regex: searchQuery, $options: 'i' } },
-        { lastName: { $regex: searchQuery, $options: 'i' } },
-        { middleName: { $regex: searchQuery, $options: 'i' } }
-      ];
-    }
-
+    // Fetch users with pagination, sorting, and filtering
     const users = await User.find(query)
-      .sort({ _id: sortDirection }) 
+      .sort({
+        yearLevel: sortDirection,
+        lastName: 1
+      })
       .skip(startIndex)
       .limit(limit);
 
-    const totalUsers = await User.countDocuments(query); // Count total users matching the query
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
 
-    res.status(200).json({ users, totalUsers });
+    // Count documents for various metrics
+    const totalUsers = await User.countDocuments(query);
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
+
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers,
+      totalApproved,
+      totalDenied, 
+      totalPending
+    });
   } catch (error) {
     next(error);
   }
@@ -1192,19 +1197,28 @@ export const getUsersByCollege = async (req, res, next) => {
     const totalUsers = await User.countDocuments(query);
     const totalInPersonUsers = await User.countDocuments({ ...query, annualPE: 'InPerson' });
 
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
     // Send response
     res.status(200).json({
       users: usersWithoutPassword,
       totalUsers,
-      totalInPersonUsers
+      totalInPersonUsers,
+      totalApproved,
+      totalDenied,
+      totalPending
     });
   } catch (error) {
     next(error);
   }
 };
+
 export const getUsersByCollegeInPerson = async (req, res, next) => {
   try {
     const collegeName = req.params.collegeName;
+  
     const statusFilter = req.query.status;
     const courseFilter = req.query.course;
     const search = req.query.search; // Added for search functionality
@@ -1212,23 +1226,24 @@ export const getUsersByCollegeInPerson = async (req, res, next) => {
     // Base query
     let query = { college: collegeName, annualPE: 'InPerson' };
 
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+
     // Apply filtering by status and course if provided
     if (statusFilter) {
       query.status = statusFilter;
     }
 
-    if (courseFilter) {
-      query.degreeProgram = courseFilter;
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
     }
 
-// Add search query if provided
-    if (search) {
-      query.$or = [
-        { firstName: { $regex: searchQuery, $options: 'i' } },
-        { lastName: { $regex: searchQuery, $options: 'i' } },
-        { middleName: { $regex: searchQuery, $options: 'i' } }
-      ];
-    }
 
     // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
@@ -1254,11 +1269,18 @@ export const getUsersByCollegeInPerson = async (req, res, next) => {
 
     // Count documents for various metrics
     const totalUsers = await User.countDocuments(query);
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
 
     // Send response
     res.status(200).json({
       users: usersWithoutPassword,
-      totalUsers
+      totalUsers,
+      totalApproved,
+      totalDenied, 
+      totalPending
     });
   } catch (error) {
     next(error);
@@ -1482,7 +1504,19 @@ export const getInperson = async (req, res, next) => {
     // Base query
     let query = { annualPE: 'InPerson' };
 
-    // Apply filtering by degree program if provided
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+    
     if (req.query.degreeProgram) {
       query.degreeProgram = req.query.degreeProgram;
     }
@@ -1493,7 +1527,7 @@ export const getInperson = async (req, res, next) => {
 
     // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
-    const limit = req.query.limit === 'all' ? 0 : parseInt(req.query.limit) || 9; // Set limit to 0 if 'all' is requested
+    const limit = req.query.limit === 'all' ? 0 : parseInt(req.query.limit) || 9; 
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
 
     // Fetch users with pagination, sorting, and filtering
@@ -1505,7 +1539,7 @@ export const getInperson = async (req, res, next) => {
         lastName: 1
       })
       .skip(startIndex)
-      .limit(limit); // No limit if limit is set to 0
+      .limit(limit); 
 
     // Remove sensitive data (password)
     const usersWithoutPassword = users.map((user) => {
@@ -1513,7 +1547,6 @@ export const getInperson = async (req, res, next) => {
       return rest;
     });
 
-    // Count documents for various metrics
     const totalUsers = await User.countDocuments(query); // Count with filters
     const totalInPersonUsers = totalUsers; // Since totalUsers already reflects the filtered count
 
@@ -1729,71 +1762,75 @@ export const getreschedUsers = async (req, res, next) => {
 
 export const assignSchedule = async (req, res, next) => {
   try {
-    // Check if the user is an admin and has permission to assign dates
     if (!req.user.isAdmin) {
       return next(errorHandler(403, 'Only admins are allowed to generate schedules.'));
     }
 
     const { startDate, endDate } = req.body;
 
-    // Calculate the number of days between startDate and endDate
-    const oneDay = 24 * 60 * 60 * 1000; // hours * minutes * seconds * milliseconds
+    // Calculate available dates
+    const oneDay = 24 * 60 * 60 * 1000;
     const days = Math.round(Math.abs((new Date(startDate) - new Date(endDate)) / oneDay));
-
     let currentDate = new Date(startDate);
     const assignedDates = [];
 
-    // Loop through each day in the time span
     for (let i = 0; i <= days; i++) {
-      // Skip weekends (Saturday and Sunday)
       if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
-        assignedDates.push(currentDate.toISOString()); // Add the current date to the array of assigned dates
+        assignedDates.push(currentDate.toISOString());
       }
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Fetch all users sorted according to specified criteria
+    // Fetch all users
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
-
     const allUsers = await User.find({ annualPE: 'InPerson' })
       .sort({
         yearLevel: sortDirection,
-        college: 1, // Ascending alphabetical order
-        degreeProgram: 1, // Ascending alphabetical order
-        lastName: 1 // Ascending alphabetical order
+        college: 1,
+        degreeProgram: 1,
+        lastName: 1
       })
-      .select('_id');
+      .lean(); // Use lean() for faster query
 
-    // Assign dates to users, 20 users per day
+    // Prepare bulk operations
+    const bulkOps = [];
     let counter = 0;
-    let assignedDatesIndex = 0; // Keep track of the index in assignedDates array
+    let assignedDatesIndex = 0;
+
     for (const user of allUsers) {
-      const assignedDate = assignedDates[assignedDatesIndex]; // Get the current date
-      await User.findByIdAndUpdate(user._id, { schedule: new Date(assignedDate) });
+      const assignedDate = assignedDates[assignedDatesIndex];
       
-      // Add a notification for the user
-      user.notifications.push({
-        message: `Your schedule has been generated. Your assigned date is ${new Date(assignedDate).toLocaleDateString()}.`,
-        type: 'info',
-        timestamp: new Date(),
-        link: '/status', // Link to the schedule page
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: user._id },
+          update: {
+            $set: { schedule: new Date(assignedDate) },
+            $push: {
+              notifications: {
+                message: `Your schedule has been generated. Your assigned date is ${new Date(assignedDate).toLocaleDateString()}.`,
+                type: 'info',
+                timestamp: new Date(),
+                link: '/status',
+                isRead: false
+              }
+            }
+          }
+        }
       });
-      await user.save(); // Save the updated user
-      
-          
+
       counter++;
-
-      // Move to the next day if 20 users have been assigned for the current day
       if (counter % 20 === 0 && assignedDatesIndex < assignedDates.length - 1) {
-        assignedDatesIndex++; // Move to the next day
+        assignedDatesIndex++;
       }
-
-      // Reset the index to 0 when the last date in the array is reached
       if (assignedDatesIndex === assignedDates.length - 1) {
         assignedDatesIndex = 0;
       }
     }
 
+    // Execute all updates in bulk
+    if (bulkOps.length > 0) {
+      await User.bulkWrite(bulkOps, { ordered: false });
+    }
 
     res.status(200).json({ message: 'Assigned dates to all users successfully' });
   } catch (error) {
@@ -1802,102 +1839,155 @@ export const assignSchedule = async (req, res, next) => {
 };
 
 export const rescheduleUser = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Check if the user is an admin and has permission to reschedule
-    if (!req.user.isAdmin) {
-      return next(errorHandler(403, 'Only admins are allowed to reschedule.'));
-    }
-
+   
     const { userId } = req.params;
     const { startDate, endDate } = req.body;
-    console.log("Received start Date:", startDate);
-    console.log("Received end Date:", endDate);
 
-    // Fetch the user's current schedule, excluding queueNumber field
-    const user = await User.findById(userId).select('-queueNumber -queueNumberDate'); // Exclude both queueNumber and queueNumberDate
+    // Fetch the user's current schedule
+    const user = await User.findById(userId).select('-queueNumber -queueNumberDate');
 
     if (!user) {
       return next(errorHandler(404, 'User not found.'));
     }
 
-    // Calculate available dates
+    // Calculate available dates (your existing logic)
     let currentDate = new Date(startDate);
     const endDateObj = new Date(endDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
+    today.setHours(0, 0, 0, 0);
 
     const rescheduledDates = [];
     const remainingSlotsArray = [];
 
-    // Find the 3 earliest available dates within the range
     while (rescheduledDates.length < 3 && currentDate <= endDateObj) {
-      // Skip past dates
-      if (currentDate < today) {
-        currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
-        continue; // Skip to the next iteration
+      // Skip past dates and weekends
+      if (currentDate < today || currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
       }
 
-      // Skip weekends (Saturday and Sunday)
-      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
-        // Skip the current user's already scheduled date
-        if (user.schedule && currentDate.toString() === new Date(user.schedule).toString()) {
-          currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
-          continue; // Skip to the next iteration
-        }
-
-        // Count the number of users scheduled on this date
-        const userCount = await User.countDocuments({ schedule: currentDate });
-
-        // Log the number of users scheduled on this date
-        console.log(`Date: ${currentDate.toDateString()}, Users Scheduled: ${userCount}`);
-
-        // Calculate remaining slots
-        const remainingSlots = 20 - userCount;
-
-        if (remainingSlots > 0) {
-          // Add the date (without remaining slots) to the available dates
-          rescheduledDates.push(currentDate.toString());
-
-          // Store remaining slots separately
-          remainingSlotsArray.push({ date: currentDate.toString(), remainingSlots });
-        }
+      // Skip the current user's already scheduled date
+      if (user.schedule && currentDate.toString() === new Date(user.schedule).toString()) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
       }
 
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      // Check if the slot is already reserved in the DateSlot collection
+      const dateSlot = await DateSlot.findOne({ date: currentDate.toString() });
+
+      // If date is already in the DateSlot collection and is reserved, skip it
+      if (dateSlot && dateSlot.reservedSlots >= dateSlot.totalSlots) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      // Count the number of users scheduled on this date if slot is not reserved
+      const userCount = await User.countDocuments({ schedule: currentDate });
+
+      // Calculate remaining slots
+      const remainingSlots = 20 - userCount;
+
+      if (remainingSlots > 0) {
+        rescheduledDates.push(currentDate.toString());
+        remainingSlotsArray.push({ 
+          date: currentDate.toString(), 
+          remainingSlots 
+        });
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     if (rescheduledDates.length === 0) {
       return res.status(400).json({ message: 'No available dates within the given range.' });
     }
 
+    // Atomically reserve slots for dates with limited availability
+    for (const slot of remainingSlotsArray.filter(s => s.remainingSlots === 1)) {
+      // If the slot is available, reserve it
+      const dateSlot = await DateSlot.findOne({ date: slot.date });
 
-     // Add a notification for the user about the available dates
-    const notificationMessage = `New available dates for rescheduling: ${rescheduledDates
-      .map((date) => new Date(date).toLocaleDateString())
-      .join(', ')}. Please reschedule at your earliest convenience.`;
+      if (dateSlot) {
+        await DateSlot.findOneAndUpdate(
+          { 
+            date: slot.date, 
+            reservedSlots: { $lt: 1 } 
+          },
+          { 
+            $inc: { reservedSlots: 1 },
+            $addToSet: { reservedBy: user._id }
+          },
+          { 
+            new: true,
+            session
+          }
+        );
+      } else {
+        await DateSlot.create([{
+          date: slot.date,
+          reservedSlots: 1,
+          totalSlots: 1,
+          reservedBy: [user._id]
+        }], { session });
+      }
+    }
 
-    user.notifications.push({
-      message: notificationMessage,
-      type: 'info',
-      timestamp: new Date(),
-      link: '/status', // Link to the rescheduling page
-    });
+    // Update user's reschedule information
+    user.rescheduleStatus = 'NO ACTION';
+    user.isRescheduled = true;
 
-    // Save the available dates and update the user (queueNumber is not touched)
-    user.queueNumber = undefined; // Prevent queueNumber modification
-    await user.save(); // Save the user document with changes
+    await user.save({ session });
 
-    // Send both the rescheduledDates and remainingSlotsArray separately
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(200).json({ 
       message: 'Rescheduled dates generated successfully', 
       rescheduledDates,
       remainingSlots: remainingSlotsArray
     });
+
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     next(error);
   }
 };
 
+
+export const releaseUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    await releaseSlot(userId);
+    res.status(200).json({ message: "Slots released successfully." });
+  } catch (error) {
+    console.error("Error releasing slots:", error);
+    res.status(500).json({ message: "Failed to release slots." });
+  }
+};
+
+export const releaseSlot = async (userId) => {
+  try {
+    // Delete all DateSlot documents where the user is listed in the reservedBy array
+    const result = await DateSlot.deleteMany({ reservedBy: userId });
+
+    // If documents were deleted, return a success message
+    if (result.deletedCount > 0) {
+      console.log(`${result.deletedCount} slots released for user ${userId}`);
+    } else {
+      console.log(`No slots found to release for user ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error releasing slots:', error);
+    throw new Error('Failed to release slots');
+  }
+};
 
 
 
@@ -1943,6 +2033,7 @@ export const deleteSchedule = async (req, res, next) => {
       status: "NO ACTION", 
       reschedule: "", 
       comment: "",  
+      medcert: "",
       rescheduleStatus: "",
       rescheduleRemarks: "",
       rescheduledDate: [], 
@@ -2066,9 +2157,3 @@ export const viewUsersScheduledToday = async (req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-
-
-
-
-

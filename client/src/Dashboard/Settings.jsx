@@ -111,46 +111,57 @@ const Settings = () => {
     }
   };
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    setIsResetting(true);
-    setResetStatus({ type: '', message: '' });
+// Frontend changes - Settings.js
+const handleForgotPassword = async (e) => {
+  e.preventDefault();
+  setIsResetting(true);
+  setResetStatus({ type: '', message: '' });
 
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: resetEmail }),
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json', // Ensure this header is set
+      },
+      body: JSON.stringify({ 
+        email: resetEmail.trim() // Trim the email and ensure it's properly structured
+      }),
+    });
+
+    // Check if the response is ok before parsing JSON
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const data = await res.json();
+
+    if (data.success) {
+      setResetStatus({
+        type: 'success',
+        message: 'Reset instructions have been sent to your email.'
       });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setResetStatus({
-          type: 'success',
-          message: 'Reset instructions have been sent to your email.'
-        });
-        setTimeout(() => {
-          setShowForgotModal(false);
-          setResetEmail('');
-        }, 3000);
-      } else {
-        setResetStatus({
-          type: 'error',
-          message: data.message || 'Failed to send reset email.'
-        });
-      }
-    } catch (error) {
+      setTimeout(() => {
+        setShowForgotModal(false);
+        setResetEmail('');
+      }, 3000);
+    } else {
       setResetStatus({
         type: 'error',
-        message: 'An error occurred. Please try again.'
+        message: data.message || 'Failed to send reset email.'
       });
-    } finally {
-      setIsResetting(false);
     }
-  };
+  } catch (error) {
+    console.error('Error in handleForgotPassword:', error);
+    setResetStatus({
+      type: 'error',
+      message: 'An error occurred. Please try again.'
+    });
+  } finally {
+    setIsResetting(false);
+  }
+};
+
+
 
   return (
     <div className="dashboard flex min-h-screen bg-gray-50">
