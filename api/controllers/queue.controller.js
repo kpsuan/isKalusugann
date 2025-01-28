@@ -4,7 +4,7 @@ import User from '../models/user.model.js';
 
 
 export const addToQueue = async (req, res) => {
-  const { studentId, studentNumber, firstName, lastName, college, yearLevel, degreeProgram, step, isPriority } = req.body;
+  const { studentId, studentNumber, firstName, lastName, isGeneral, isDental, college, yearLevel, degreeProgram, step, isPriority } = req.body;
   const today = new Date().toDateString();
 
   try {
@@ -14,7 +14,6 @@ export const addToQueue = async (req, res) => {
       queue = await Queue.create({ step, date: today, students: [] });
     }
 
-    // Use `new` to create an ObjectId instance
     const studentObjectId = new mongoose.Types.ObjectId(studentId);
 
     // Check if the student is already in the queue
@@ -30,6 +29,8 @@ export const addToQueue = async (req, res) => {
       lastName,
       yearLevel,
       college,
+      isGeneral,
+      isDental,
       degreeProgram,
       queueNumber: queue.students.length + 1,
       priority: isPriority,
@@ -79,86 +80,134 @@ export const addToQueue = async (req, res) => {
 
 
 export const getQueueStudents = async (req, res) => {
-    const today = new Date().toDateString();
-    const { step } = req.query; // Optionally filter by step
+  const today = new Date().toDateString();
+  const { step, studentId } = req.query; // Optionally filter by step and studentId
+
+  try {
+    // Construct the query to filter by step or date
+    const query = step ? { step, date: today } : { date: today };
+
+    // Find the queue for today
+    const queue = await Queue.findOne(query);
+
+    if (!queue) {
+      return res.status(404).json({ error: 'No queue found for today.' });
+    }
+
+    if (studentId) {
+      // If studentId is provided, find the specific student
+      const student = queue.students.find(student => String(student.studentId) === String(studentId));
+
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found in the queue.' });
+      }
+
+      return res.json({ student });
+    } else {
+      // Return all students if no studentId is provided
+      return res.json({ students: queue.students });
+    }
+
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+  export const moveToNextStep = async (req, res) => {
+    const { studentId, currentStep, nextStep } = req.body;
   
     try {
-      // If step is provided, filter by step and today's date
-      // If step is not provided, fetch all queues for today
-      const query = step ? { step, date: today } : { date: today };
+      const today = new Date().toDateString();
   
-      const queue = await Queue.findOne(query);
-      
-      if (!queue) {
-        return res.status(404).json({ error: 'No queue found for today.' });
+      // Find the current queue
+      let currentQueue = await Queue.findOne({ step: currentStep, date: today });
+      if (!currentQueue) {
+        return res.status(404).json({ error: `Queue for step "${currentStep}" not found.` });
       }
   
-      // Return the students in the queue
-      return res.json({ students: queue.students });
+      // Find the student in the current queue
+      const student = currentQueue.students.find((student) =>
+        student.studentId.equals(studentId)
+      );
+      if (!student) {
+        return res.status(404).json({ error: "Student not found in the current queue." });
+      }
+  
+      if (currentStep === "General PE") {
+        const updatedUser =  await User.updateOne(
+          { _id: studentId },  
+          {
+            $set: {
+              isGeneral: true,
+            },
+          },
+          { new: true }
+        );
+    
+        if (!updatedUser) {
+          return res.status(404).json({ error: 'User not found.' });
+        }
+      } 
+      
+      
+      else if (currentStep === "Dental") {
+        const updatedUser =  await User.updateOne(
+          { _id: studentId },  
+          {
+            $set: {
+              isDental: true,
+            },
+          },
+          { new: true }
+        );
+    
+        if (!updatedUser) {
+          return res.status(404).json({ error: 'User not found.' });
+        }
+      } 
+  
+      // Remove the student from the current queue
+      currentQueue.students = currentQueue.students.filter(
+        (s) => !s.studentId.equals(studentId)
+      );
+  
+      await currentQueue.save(); 
+  
+      // Handle the next step queue
+      let nextQueue = await Queue.findOne({ step: nextStep, date: today });
+      if (!nextQueue) {
+        nextQueue = await Queue.create({ step: nextStep, date: today, students: [] });
+      }
+  
+      const newQueueNumber = nextQueue.students.length + 1;
+  
+      nextQueue.students.push({
+        studentId: studentId,
+        queueNumber: newQueueNumber,
+        studentNumber: student.studentNumber,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        yearLevel: student.yearLevel,
+        degreeProgram: student.degreeProgram,
+        college: student.college,
+        isGeneral: student.isGeneral,
+        isDental: student.isDental,
+        isDoctor: student.isDoctor,
+      });
+  
+      await nextQueue.save();
+  
+      return res.status(200).json({
+        message: `Student moved to "${nextStep}". Queue number: ${newQueueNumber}`,
+      });
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
   };
   
-
-
-
-
-export const moveToNextStep = async (req, res) => {
-  const { studentId, currentStep, nextStep } = req.body;
-  console.log(studentId);
-  try {
-    const today = new Date().toDateString();
-
-    // Find the current queue
-    let currentQueue = await Queue.findOne({ step: currentStep, date: today });
-    if (!currentQueue) {
-      return res.status(404).json({ error: `Queue for step "${currentStep}" not found.` });
-    }
-
-    // Find the student in the current queue
-    const student = currentQueue.students.find((student) =>
-      student.studentId.equals(studentId)
-    );
-    if (!student) {
-      return res.status(404).json({ error: "Student not found in the current queue." });
-    }
-
-    // Remove the student from the current queue
-    currentQueue.students = currentQueue.students.filter(
-      (student) => !student.studentId.equals(studentId)
-    );
-    await currentQueue.save();
-
-    // Handle the next step queue 
-    let nextQueue = await Queue.findOne({ step: nextStep, date: today });
-    if (!nextQueue) {
-      nextQueue = await Queue.create({ step: nextStep, date: today, students: [] });
-    }
-
-    const newQueueNumber = nextQueue.students.length + 1;
-
-    // Add student details to the next queue, including the new queue number
-    nextQueue.students.push({
-      studentId: studentId,
-      queueNumber: newQueueNumber,
-      studentNumber: student.studentNumber,
-      firstName: student.firstName,
-      lastName: student.lastName,
-      yearLevel: student.yearLevel,
-      degreeProgram: student.degreeProgram,
-      college: student.college,
-    });
-
-    await nextQueue.save();
-
-    return res.status(200).json({
-      message: `Student moved to "${nextStep}". Queue number: ${newQueueNumber}`,
-    });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-};
 
 export const completeStep = async (req, res) => {
   const { studentId, currentStep} = req.body;
@@ -172,17 +221,16 @@ export const completeStep = async (req, res) => {
       return res.status(404).json({ error: `Queue for step "${currentStep}" not found.` });
     }
 
-    // Find the student in the current queue
-    const student = currentQueue.students.find((student) =>
-      student.studentId.equals(studentId)
-    );
-    if (!student) {
-      return res.status(404).json({ error: "Student not found in the current queue." });
-    }
+      // Find the student in the current queue
+      const student = currentQueue.students.find((student) =>
+        student.studentId.equals(studentId)
+      );
+      if (!student) {
+        return res.status(404).json({ error: "Student not found in the current queue." });
+      }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      studentId,
-      console.log(studentId),
+    const updatedUser =  await User.updateOne(
+      { _id: studentId },  
       {
         $set: {
           status: 'approved',

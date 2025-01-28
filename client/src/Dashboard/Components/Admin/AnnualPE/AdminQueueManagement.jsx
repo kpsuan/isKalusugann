@@ -14,7 +14,12 @@ const AdminQueueManagement = () => {
 
   useEffect(() => {
     fetchQueue();
-  }, []);
+
+    const intervalId = setInterval(fetchQueue, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [currentStep]);
+
 
   const fetchQueue = async () => {
     setLoading(true);
@@ -73,7 +78,7 @@ const AdminQueueManagement = () => {
       <div className="dashboardContainer my-flex">
         <Sidebar />
         <ToastContainer />
-        <div className="mainContent m-0 p-0">
+        <div className="mainContent m-0 p-0 bg-gray-80">
           <div className="flex-1 p-8">
             <div className="max-w-6xl mx-auto">
               {/* Header Section */}

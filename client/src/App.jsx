@@ -84,6 +84,7 @@ import AnnualProcess2 from './Dashboard/Components/Annual/AnnualProcess2';
 import AdminQueueManagement from './Dashboard/Components/Admin/AnnualPE/AdminQueueManagement';
 import DentalQueue from './Dashboard/Components/Admin/AnnualPE/DentalQueue';
 import DoctorQueue from './Dashboard/Components/Admin/AnnualPE/DoctorQueue';
+import ManageQueue from './Dashboard/Components/Admin/AnnualPE/ManageQueue';
 
 
 export default function App() {
@@ -185,6 +186,7 @@ export default function App() {
           <Route path="/admin-queue" element={<AdminQueueManagement />} />
           <Route path="/dental-queue" element={<DentalQueue />} />
           <Route path="/doctor-queue" element={<DoctorQueue />} />
+          <Route path="/manage-queue" element={<ManageQueue />} />
 
         </Route>
 

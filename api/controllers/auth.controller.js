@@ -54,6 +54,34 @@ export const attendance = async (req, res, next) => {
       return next(errorHandler(401, 'Wrong credentials'));
     }
 
+    // Generate JWT token and return the updated user details
+    const token = jwt.sign({ id: validUser._id, isAdmin: validUser.isAdmin }, process.env.JWT_SECRET);
+    const { password: hashedPassword, ...rest } = validUser._doc;
+    const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+
+    res.cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+       .status(200)
+       .json({ ...rest });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const attendanceOriginal = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const validUser = await User.findOne({ email });
+    if (!validUser) {
+      return next(errorHandler(404, 'User not found'));
+    }
+
+    // Check the password
+    const validPassword = await bcrypt.compare(password, validUser.password);
+    if (!validPassword) {
+      return next(errorHandler(401, 'Wrong credentials'));
+    }
+
     // Determine today's date
     const today = new Date().toDateString();
 
@@ -115,7 +143,6 @@ export const attendance = async (req, res, next) => {
     next(error);
   }
 };
-
 export const attendance2 = async (req, res, next) => {
   const { email, password } = req.body;
   try {

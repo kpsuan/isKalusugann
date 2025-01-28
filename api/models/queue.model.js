@@ -31,6 +31,8 @@ const queueSchema = new mongoose.Schema(
             type: String,
             default: '',
           },
+        isGeneral: { type: Boolean, default: false },    // High priority status
+        isDental: { type: Boolean, default: false },    // High priority status
         queueNumber: { type: Number, required: true }, // Position in the queue
         arrivedAt: { type: Date, default: Date.now },  // Time the student arrives
         priority: { type: Boolean, default: false }    // High priority status

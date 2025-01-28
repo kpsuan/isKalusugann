@@ -49,7 +49,7 @@ export default function Attendance() {
       dispatch(signInSuccess({ ...data, lastLoggedIn }));
 
       // Navigate to another page after successful login
-      navigate('/attendance2');
+      navigate('/annualpe-start');
     } catch (error) {
       dispatch(signInFailure(error)); // Dispatch login failure action
     }

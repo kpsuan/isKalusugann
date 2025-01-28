@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Card, Spinner  } from 'flowbite-react'; // Make sure you have the correct import
-import { Link } from 'react-router-dom'; // Make sure to use react-router for linking
+import { Link, useNavigate } from 'react-router-dom'; // Make sure to use react-router for linking
 import { LiaFileMedicalAltSolid } from "react-icons/lia";
 import { HiOutlineCalendar, HiOutlineUsers, HiOutlineClipboardCheck } from 'react-icons/hi';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ dayjs.extend(timezone);
 const ScheduledForToday = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
   const [showMore, setShowMore] = useState(false); // Show more feature state
   const [error, setError] = useState(null); // State to handle errors
   const [todayDate, setTodayDate] = useState(''); // State to store today's date
@@ -48,6 +49,7 @@ const ScheduledForToday = () => {
 
   return (
     <div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card href="/yesterdaypresent" target="_blank"  className="transition duration-300 ease-in-out transform hover:shadow-lg">
           <div className="flex items-center">
@@ -87,14 +89,33 @@ const ScheduledForToday = () => {
       </div>
       
       
-      <div className="block text-center ">
+      <div className="block text-center">
         <h2 className="text-lg p-2 font-semibold text-gray-800">
-           Today's Schedule:
+          Today's Schedule:
         </h2>
         <span className="text-blue-500 text-4xl mt-0 block font-light">
           {currentDate}
         </span>
+       
       </div>
+      <button 
+          onClick={() => navigate('/manage-queue')} 
+          className="inline-flex items-center px-6 py-2.5 mt-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md mx-auto gap-2"
+        >
+          <span>Manage Scheduled Today</span>
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14m-7-7 7 7-7 7"/>
+          </svg>
+        </button>
 
       {loading ? (
        <div className="flex justify-center items-center h-64">

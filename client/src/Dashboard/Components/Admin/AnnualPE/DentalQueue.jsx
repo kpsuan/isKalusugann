@@ -14,7 +14,11 @@ const DentalQueue = () => {
 
   useEffect(() => {
     fetchQueue();
-  }, []);
+
+    const intervalId = setInterval(fetchQueue, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [currentStep]);
 
   const fetchQueue = async () => {
     setLoading(true);

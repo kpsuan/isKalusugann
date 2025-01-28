@@ -176,6 +176,15 @@ const userSchema = new mongoose.Schema(
       default: Date.now 
     },
 
+    isGeneral: {
+      type: Boolean,
+      default: false,
+    },
+    isDental:{
+      type: Boolean,
+      default: false,
+    },
+
     resetPasswordToken: String,
     resetPasswordTokenExpiresAt: Date,
     

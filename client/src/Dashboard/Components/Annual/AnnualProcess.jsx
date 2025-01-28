@@ -22,7 +22,11 @@ const AnnualProcess = () => {
               yearLevel: currentUser.yearLevel, 
               college: currentUser.college, 
               degreeProgram: currentUser.degreeProgram, 
-              step: 'General PE', isPriority: false }),
+              step: 'General PE', 
+              isPriority: false,
+              isGeneral: false,
+              isDental: false,
+            }),
           });
           
           if (!response.ok) {
