@@ -79,6 +79,11 @@ import RequestForm from './Dashboard/Components/DocumentsUser/RequestForm';
 import Settings from './Dashboard/Settings';
 import AvailableSchedules from './Dashboard/Components/Annual/AvailableSchedules';
 import HelpCenter from './pages/HelpCenter';
+import AnnualProcess from './Dashboard/Components/Annual/AnnualProcess';
+import AnnualProcess2 from './Dashboard/Components/Annual/AnnualProcess2';
+import AdminQueueManagement from './Dashboard/Components/Admin/AnnualPE/AdminQueueManagement';
+import DentalQueue from './Dashboard/Components/Admin/AnnualPE/DentalQueue';
+import DoctorQueue from './Dashboard/Components/Admin/AnnualPE/DoctorQueue';
 
 
 export default function App() {
@@ -135,6 +140,8 @@ export default function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/availableSched/:userId" element={<AvailableSchedules />} />
+          <Route path="/annualpe-start" element={<AnnualProcess />} />
+          <Route path="/annualpe-process" element={<AnnualProcess2 />} />
 
 
 
@@ -175,6 +182,9 @@ export default function App() {
           <Route path="/overallabsent" element={<OverallAbsent />} />
           <Route path="/yesterdaypresent" element={<YesterdayPresent />} />
           <Route path="/appointmentAdmin" element={<AppointmentsHome />} />
+          <Route path="/admin-queue" element={<AdminQueueManagement />} />
+          <Route path="/dental-queue" element={<DentalQueue />} />
+          <Route path="/doctor-queue" element={<DoctorQueue />} />
 
         </Route>
 

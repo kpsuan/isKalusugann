@@ -116,6 +116,82 @@ export const attendance = async (req, res, next) => {
   }
 };
 
+export const attendance2 = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const validUser = await User.findOne({ email });
+    if (!validUser) {
+      return next(errorHandler(404, 'User not found'));
+    }
+
+    // Check the password
+    const validPassword = await bcrypt.compare(password, validUser.password);
+    if (!validPassword) {
+      return next(errorHandler(401, 'Wrong credentials'));
+    }
+
+    // Determine today's date
+    const today = new Date().toDateString();
+
+    // Check if the user already has a queue number for today
+    if (validUser.queueNumberDate === today) {
+      // User already has a queue number for today, return the existing details
+      const token = jwt.sign({ id: validUser._id, isAdmin: validUser.isAdmin }, process.env.JWT_SECRET);
+      const { password: hashedPassword, ...rest } = validUser._doc;
+      const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+
+      return res.cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+                 .status(200)
+                 .json({ ...rest }); // Return the existing queueNumber and other user details
+    }
+
+    // Use an atomic increment to safely assign a unique queue number
+    const usersWithQueueToday = await User.countDocuments({
+      queueNumberDate: today
+    });
+
+    const newQueueNumber = usersWithQueueToday + 1;
+
+    if (newQueueNumber > 20) {
+      return next(errorHandler(400, 'Queue limit reached for today'));
+    }
+
+    // Update the user with the new queue number atomically
+    const updatedUser = await User.findByIdAndUpdate(
+      validUser._id,
+      {
+        $set: {
+          isPresent: 'ARRIVED',
+          lastLoggedIn: new Date(),
+          queueNumber: newQueueNumber, // Assign the new queue number
+          queueNumberDate: today // Store the date for today's queue
+        },
+        $push: {
+          notifications: {
+            message: `Annual PE done.`,
+            type: 'success',
+            timestamp: new Date(),
+            link: '/status',
+            isRead: false
+          }
+        }
+      },
+      { new: true }
+    );
+
+    // Generate JWT token and return the updated user details
+    const token = jwt.sign({ id: updatedUser._id, isAdmin: updatedUser.isAdmin }, process.env.JWT_SECRET);
+    const { password: hashedPassword, ...rest } = updatedUser._doc;
+    const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+
+    res.cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+       .status(200)
+       .json({ ...rest });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 

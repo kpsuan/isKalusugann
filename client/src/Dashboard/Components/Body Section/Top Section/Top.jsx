@@ -219,8 +219,8 @@ export const Top = () => {
       }
   
       // Clear notifications locally
-      setNotifications([]);
-      setIsDropdownOpen(false);
+      setNotifications([]); // Update state if notifications are stored in a state
+      setIsDropdownOpen(false); // Close the dropdown if open
   
       toast.success('All notifications cleared successfully');
     } catch (error) {

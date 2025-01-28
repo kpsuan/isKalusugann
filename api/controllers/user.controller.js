@@ -2120,40 +2120,45 @@ export const scheduledToday = async (req, res, next) => {
 
 export const viewUsersScheduledToday = async (req, res, next) => {
   try {
-    // Get the current date (in UTC)
     const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    // Calculate the start and end of today's date in local timezone (PST)
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0)); // Start of the day in local time
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999)); // End of the day in local time
+    console.log('Query start time:', startOfDay);
+    console.log('Query end time:', endOfDay);
 
-    console.log('Start of the day (Local):', startOfDay);
-    console.log('End of the day (Local):', endOfDay);
+    const usersScheduledForToday = await User.find({
+      annualPE: 'InPerson',
+      schedule: {
+        $elemMatch: {
+          $gte: startOfDay,
+          $lte: endOfDay
+        }
+      }
+    })
+    .select({
+      firstName: 1,
+      middleName: 1,
+      lastName: 1,
+      profilePicture: 1,
+      yearLevel: 1,
+      college: 1,
+      degreeProgram: 1,
+      status: 1,
+      isPresent: 1,
+      schedule: 1
+    })
+    .sort({ lastName: 1, firstName: 1 })
+    .lean();
 
-    // Fetch users with `annualPE` = 'InPerson', non-empty schedule, and sort by lastName
-    const users = await User.find({
-      annualPE: 'InPerson', // Filter for users with `annualPE` set to 'InPerson'
-      schedule: { $ne: [] }, // Ensure schedule is not empty
-    }).sort({ lastName: 1 });
-
-    // Filter users scheduled for today
-    const usersScheduledForToday = users.filter(user =>
-      user.schedule.some(scheduleDateStr => {
-        // Parse each schedule string into a Date object
-        const scheduleDate = new Date(scheduleDateStr);
-        
-        // Check if the schedule date is within today's range
-        return scheduleDate >= startOfDay && scheduleDate <= endOfDay;
-      })
-    );
-
-    if (usersScheduledForToday.length === 0) {
-      console.log('No users scheduled for today');
-    }
-
+    console.log(`Found ${usersScheduledForToday.length} users in schedule`);
+    
     res.status(200).json(usersScheduledForToday);
   } catch (error) {
     console.error('Error fetching users scheduled for today:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 };

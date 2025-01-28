@@ -85,7 +85,6 @@ const FileSubmission = () => {
 
   const { currentUser } = useSelector((state) => state.user);
   const userHasChoice = currentUser?.annualPE;
-  
 
   useEffect(() => {
       // Helper function to get the clean file name
