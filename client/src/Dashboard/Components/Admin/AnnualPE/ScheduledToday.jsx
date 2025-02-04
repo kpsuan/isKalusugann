@@ -34,6 +34,11 @@ const ScheduledForToday = () => {
     };
   
     fetchUsersScheduledForToday();
+    // polling kada 5s
+    const intervalId = setInterval(() => {
+      fetchUsersScheduledForToday();
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
   
 

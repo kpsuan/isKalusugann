@@ -32,7 +32,8 @@ import {
   releaseUser,
   clearNotifications,
   sendAdminNotification,
-  sendAdminNotification2
+  sendAdminNotification2,
+  handleEmergency
 
 
 } from '../controllers/user.controller.js';
@@ -79,6 +80,7 @@ router.post('/updateUserReschedule/:userId', verifyToken, updateUserWithReschedu
 router.put('/:userId/notifications/clear', clearNotifications);
 router.put('/sendAdminNotification', verifyToken, sendAdminNotification);
 router.put('/sendAdminNotification2', verifyToken, sendAdminNotification2);
+router.post('/emergency-reschedule', verifyToken, handleEmergency);
 
 
 

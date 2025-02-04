@@ -7,9 +7,9 @@ import { updateUserStart, updateUserSuccess, updateUserFailure } from '../../../
 import { toast, ToastContainer } from 'react-toastify';
 
 import { Card, Timeline, Accordion, Tabs, Alert, Button, Modal, ModalBody, TextInput, Table, TableCell } from 'flowbite-react';
-import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
-import { HiArrowNarrowRight } from "react-icons/hi";
-import Divider from '@mui/material/Divider';
+import {HiUserCircle } from "react-icons/hi";
+import { AlertCircle, Calendar } from 'lucide-react';
+
 import { Banner } from "flowbite-react";
 import { HiX } from "react-icons/hi";
 import { MdAnnouncement } from "react-icons/md";
@@ -19,15 +19,12 @@ import { MdDashboard } from "react-icons/md";
 import { useDispatch } from 'react-redux';
 import { BsFillFileEarmarkArrowDownFill } from "react-icons/bs";
 import "./annual.css";
-import { BsFiletypePng } from 'react-icons/bs';
 
 import axios from 'axios';
-import { getStorage, ref, getMetadata } from 'firebase/storage';
-import { getAuth } from 'firebase/auth';
+
 
 import { Link, useNavigate } from 'react-router-dom';
 import GetDocsUser from "../DocumentsUser/GetDocsUser";
-import RescheduleStatus from "../Admin/AnnualPE/RescheduleStatus";
 
 import NoAnnualPe from "./NoAnnualPe";
 
@@ -74,8 +71,12 @@ const Status = () => {
       });
     
 
+    
+
     const { currentUser } = useSelector((state) => state.user);
     const userHasChoice = currentUser?.annualPE;
+    const cleanRemarks = currentUser.rescheduleRemarks?.replace(/<\/?p>/g, '');
+
 
     const [formData, setFormData] = useState({});
 
@@ -346,7 +347,7 @@ const Status = () => {
                         </div>
 
                         {/* Card for in-person PE, checking if user is not online and has not arrived */}
-                        {currentUser.annualPE !== "Online" && currentUser.isPresent !== "ABSENT" && currentUser.status !== "approved" && (
+                        {currentUser.annualPE !== "Online" && currentUser.isPresent !== "ABSENT" && currentUser.status !== "approved" && currentUser.rescheduleStatus !== "denied" && (
                             <Card className="flex-1 bg-gray-50 p-5 ml-4">
                                 <div className="flex flex-col items-start">
                                     <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
@@ -431,6 +432,91 @@ const Status = () => {
                                 <div className="flex flex-col items-start">
                                     <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
                                         {currentUser.firstName}, you did not arrive at your assigned date. Would you like to reschedule?
+                                    </h5>
+                                    <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
+                                        {currentUser.schedule
+                                            ? new Date(currentUser.schedule).toLocaleDateString('en-US', {
+                                                weekday: 'short',
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })
+                                            : "TBA"
+                                        }
+                                    </p>
+
+                                    {currentUser.rescheduleLimit >= 3 ? (
+                                        <p className="text-sm text-red-700 dark:text-gray-400 mt-2">Can no longer reschedule. Limit has been reached</p>
+                                    ) : (
+                                        <p className="text-sm text-red-700 dark:text-gray-400 mt-2">
+                                            Current reschedule request: {currentUser.rescheduleLimit}
+                                        </p>
+                                    )}
+
+                                    {!currentUser.rescheduledDate?.length ? (
+                                        <Button
+                                            className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted
+                                                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-600'
+                                                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
+                                            onClick={() => {
+                                                if (requestSubmitted) {
+                                                    setShowCancelRescheduleModal(true);  // If request is submitted, handle cancel
+                                                } else {
+                                                    setShowRescheduleModal(true);  // Otherwise, show reschedule modal
+                                                }
+                                            }}
+                                            disabled={currentUser.rescheduleLimit >= 3} // Disable if reschedule limit is reached or in progress
+                                        >
+                                            {requestSubmitted ? 'Cancel Request' : 'Request to be Rescheduled'}
+                                        </Button>
+                                    ) : (
+                                        <div className="flex flex-col pt-2 w-full">
+                                            <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
+                                            <div className="flex flex-row mt-2">
+                                                <select
+                                                    className="my-2 border rounded-lg w-3/4"
+                                                    onChange={(e) => handleDateSelection(e.target.value)}
+                                                >
+                                                    <option value="" className="p-2 text-lg">Select a date</option>
+                                                    {currentUser.rescheduledDate.length ? (
+                                                        currentUser.rescheduledDate.map((date, index) => (
+                                                            <option key={index} value={date} className="p-2 text-lg">
+                                                                {dateFormatter.format(new Date(date))}
+                                                            </option>
+                                                        ))
+                                                    ) : (
+                                                        <option disabled>No available dates</option>
+                                                    )}
+                                                </select>
+                                                <Button
+                                                    className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
+                                                    onClick={() => updateSchedule(formData.schedule)}
+                                                >
+                                                    Save
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        )}
+
+                        {currentUser.rescheduleStatus == "denied"  &&(
+                            <Card className="flex-1 bg-gray-50 p-5 ml-4">
+                                <div className="flex flex-col items-start">
+                                    {/* Header with alert */}
+                                    <div className="flex flex-col p-4 mb-4 text-red-800 border-t-4 border-red-300 bg-red-50 dark:bg-gray-800 dark:text-red-400">
+                                        <div className="text-2xl font-semibold mb-1">
+                                            {currentUser.firstName}, your reschedule request was denied
+                                        </div>
+                                    {cleanRemarks && (
+                                        <div className="mt-2 text-sm">
+                                        <span className="font-medium">Reason:</span> {cleanRemarks}
+                                        </div>
+                                    )}
+                                    </div>
+                                    <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
+                                       Your original schedule: 
                                     </h5>
                                     <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
                                         {currentUser.schedule

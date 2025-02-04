@@ -81,13 +81,12 @@ const FileSubmission = () => {
   const [uploadPercent3, setUploadPercent3] = useState(0);
   const [uploadError, setUploadError] = useState(false);
   const [formData, setFormData] = useState({});
-  const [showSubmitModal, setShowSubmitModal] = useState(false); // New state for reschedule modal
+  const [showSubmitModal, setShowSubmitModal] = useState(false); 
 
   const { currentUser } = useSelector((state) => state.user);
   const userHasChoice = currentUser?.annualPE;
 
   useEffect(() => {
-      // Helper function to get the clean file name
       const extractFileName = (url) => {
           const decodedUrl = decodeURIComponent(url);
           // Extract the file name and remove numbers
@@ -95,7 +94,6 @@ const FileSubmission = () => {
           return fileName.replace(/\d+/g, ''); // Remove numbers
       };
   
-      // Set file names if they exist in the currentUser object
       if (currentUser?.peForm) {
           setFileName1(extractFileName(currentUser.peForm));
           setFormData(prevData => ({ ...prevData, peForm: currentUser.peForm }));
@@ -227,7 +225,6 @@ const handleFileRemove = async (fileType) => {
           try {
               await deleteObject(fileRef);
               console.log('File deleted successfully');
-              // Remove the file reference from your form data
               setFormData((prevData) => ({
                   ...prevData,
                   [fileType]: null,
@@ -237,7 +234,6 @@ const handleFileRemove = async (fileType) => {
           }
       }
   
-      // Reset the corresponding file state and upload progress
       if (fileType === 'peForm') {
           setFile1(null);
           setFileName1('');
@@ -377,7 +373,6 @@ const handleFileRemove = async (fileType) => {
           </div>
         </div>
 
-        {/* Existing Modal code remains the same */}
         <Modal
           show={showSubmitModal}
           size="md"

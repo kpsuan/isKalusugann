@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { getStorage, ref, getMetadata, deleteObject } from 'firebase/storage';
 import { useSelector } from 'react-redux';
-import { BsFillFileEarmarkArrowDownFill } from 'react-icons/bs';
-import FileSettings from "../Annual/components/FileSettings";
-import { Card } from 'flowbite-react';
-import { Link, useNavigate } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  FileText, 
+  Download, 
+  Calendar, 
+  FileWarning,
+  Trash2,
+  Upload,
+  ExternalLink
+} from 'lucide-react';
 
 const GetDocsUser = () => {
   const { currentUser } = useSelector((state) => state.user);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   const [metadata, setMetadata] = useState({
     peForm: null,
@@ -19,8 +27,14 @@ const GetDocsUser = () => {
 
   const titleMap = {
     peForm: "Periodic Health Examination Form",
-    labResults: "Compressed Lab Results",
-    requestPE: "Request for PE",
+    labResults: "Laboratory Results",
+    requestPE: "Request for Physical Examination",
+  };
+
+  const iconMap = {
+    peForm: "📋",
+    labResults: "🔬",
+    requestPE: "📝",
   };
 
   const storage = getStorage();
@@ -91,54 +105,107 @@ const GetDocsUser = () => {
   const redirectToFileSubmissions = () => {
     navigate('/fileSubmissions'); // Redirect to the file submission page
   };
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+
 
   return (
-    <div className="flex flex-col">
-      {/* Display documents */}
-      {Object.entries(metadata).map(([key, doc]) => (
-        <div key={key} className="flex mb-4">
-          <div className="flex flex-col w-1/2">
-            <h1 className="text-lg font-medium mb-4">
-              {titleMap[key] || key} {/* Display custom title */}
-            </h1>
-            <Card className="p-5 bg-gray-50 transition duration-300 ease-in-out transform hover:shadow-lg cursor-pointer">
-              <div className="flex">
-                <div className="flex items-center w-full">
-                  <h5 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
-                    <BsFillFileEarmarkArrowDownFill />
-                  </h5>
-                  <div className="flex flex-col ml-4">
-                  {doc ? (
-                      <a href={currentUser[key]} target="_blank" rel="noopener noreferrer" className="flex-1">
-                        <p className="font-medium text-blue-500 dark:text-gray-400 hover:underline">
-                          {doc.name}
-                        </p>
-                      </a>
-                    ) : (
-                      <p
-                        className="font-medium text-red-500 dark:text-red-400 hover:underline cursor-pointer"
-                        onClick={redirectToFileSubmissions} // Redirect if no file
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-6xl mx-auto">
+        
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 w-3/4 gap-4">
+          {Object.entries(metadata).map(([key, doc], index) => (
+            <motion.div
+              key={key}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: index * 0.1 }}
+              onHoverStart={() => setHoveredCard(key)}
+              onHoverEnd={() => setHoveredCard(null)}
+              className="relative p-3"
+            >
+              <div className={`
+                bg-gray-50 rounded-xl shadow-sm p-6 
+                transform transition-all duration-300
+                ${hoveredCard === key ? 'shadow-xl scale-105' : ''}
+              `}>
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">{iconMap[key]}</span>
+                  <h2 className="text-lg font-semibold text-gray-800">{titleMap[key]}</h2>
+                </div>
+
+                {doc ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center text-gray-600">
+                      <FileText className="w-4 h-4 mr-2" />
+                      <span className="truncate">{doc.name}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-500 text-sm">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>{new Date(doc.updated).toLocaleDateString()}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-500 text-sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      <span>{doc.size} MB</span>
+                    </div>
+
+                    <div className="flex space-x-3 mt-6">
+                      <a
+                        href={currentUser[key]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                       >
-                        No file added. Please upload one.
-                      </p>
-                    )}
-                    <p className="font-normal text-sm text-gray-400 dark:text-gray-400">
-                      {doc ? `${doc.size} MB | ${new Date(doc.updated).toLocaleString()}` : ''}
-                    </p>
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View
+                      </a>
+
+                      {showDeleteConfirm === key ? (
+                        <button
+                          onClick={() => handleFileRemove(key)}
+                          className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          Confirm Delete
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleFileRemove(key)}
+                          className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {/* LongMenu for file settings */}
-                <div>
-                  <FileSettings
-                    fileType={key}  // Pass the file type (peForm, labResults, requestPE)
-                    handleFileRemove={handleFileRemove}  // Pass the handleFileRemove function
-                  />
-                </div>
+                ) : (
+                  <motion.div
+                    className="flex flex-col items-center py-8 text-gray-500"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <FileWarning className="w-12 h-12 mb-4" />
+                    <p className="text-center mb-4">No file uploaded yet</p>
+                    <button
+                      onClick={() => navigate('/fileSubmissions')}
+                      className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Now
+                    </button>
+                  </motion.div>
+                )}
               </div>
-            </Card>
-          </div>
+            </motion.div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 };

@@ -82,13 +82,11 @@ const AdminQueueManagement = () => {
           <div className="flex-1 p-8">
             <div className="max-w-6xl mx-auto">
               {/* Header Section */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  General Examination Queue
-                </h2>
-                <p className="text-gray-600">
-                  Step 1: Managing student medical examinations
-                </p>
+              <div className=" bg-gradient-to-r from-cyan-700 to-blue-500 rounded-lg border border-gray-200 p-10 w-full">
+                <div className="text-5xl font-bold  text-white mb-4">General Examination Queue</div>
+                <p className="font-light text-lg my-8 text-white">
+                Step 1: Students in queue for General Physical examination
+                </p> 
               </div>
 
               {/* Currently Serving Section */}

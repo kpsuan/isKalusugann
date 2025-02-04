@@ -1679,86 +1679,40 @@ export const getreschedUsers = async (req, res, next) => {
 
     // Count documents for various metrics
     const totalUsers = await User.countDocuments(query); // Count with filters
-    const totalInPersonUsers = totalUsers; // Since totalUsers already reflects the filtered count
-
-    // Count documents by college
-    const totalCAS = await User.countDocuments({ college: 'CAS', ...query });
-    const totalCFOS = await User.countDocuments({ college: 'CFOS', ...query });
-    const totalSOTECH = await User.countDocuments({ college: 'SOTECH', ...query });
-
-    // Count documents by status and college
-    const totalCASValidated = await User.countDocuments({ college: 'CAS', status: 'approved', ...query });
-    const totalCASChecked = await User.countDocuments({ college: 'CAS', status: 'NO ACTION', ...query });
-
-    const totalCFOSValidated = await User.countDocuments({ college: 'CFOS', status: 'approved', ...query });
-    const totalCFOSChecked = await User.countDocuments({ college: 'CFOS', status: 'NO ACTION', ...query });
-
-    const totalSOTECHValidated = await User.countDocuments({ college: 'SOTECH', status: 'approved', ...query });
-    const totalSOTECHChecked = await User.countDocuments({ college: 'SOTECH', status: 'NO ACTION', ...query });
-
-    // Degree program counts
-    const degreeCourses = [
-      "COMMUNITY DEVELOPMENT",
-      "History",
-      "COMMUNICATION AND MEDIA STUDIES",
-      "LITERATURE",
-      "POLITICAL SCIENCE",
-      "PSYCHOLOGY",
-      "SOCIOLOGY",
-      "APPLIED MATHEMATICS",
-      "BIOLOGY",
-      "CHEMISTRY",
-      "COMPUTER SCIENCE",
-      "ECONOMICS",
-      "PUBLIC HEALTH",
-      "STATISTICS",
-      "FISHERIES",
-      "CHEMICAL ENGINEERING",
-      "FOOD TECHNOLOGY"
-    ];
-
-    const degreeCourseCounts = {};
-    for (const course of degreeCourses) {
-      const total = await User.countDocuments({ degreeProgram: course, ...query });
-      const validated = await User.countDocuments({ degreeProgram: course, status: 'approved', ...query });
-      const checked = await User.countDocuments({ degreeProgram: course, status: 'NO ACTION', ...query });
-      degreeCourseCounts[course] = {
-        total,
-        validated,
-        checked
-      };
-    }
-
-    // Users created in the last month
-    const now = new Date();
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const lastMonthUsers = await User.countDocuments({
-      createdAt: { $gte: oneMonthAgo },
-      ...query
-    });
 
     // Send response
     res.status(200).json({
       users: usersWithoutPassword,
       totalUsers,
-      totalInPersonUsers,
-      totalCAS,
-      totalCFOS,
-      totalSOTECH,
-      totalCASValidated,
-      totalCASChecked,
-      totalCFOSValidated,
-      totalCFOSChecked,
-      totalSOTECHValidated,
-      totalSOTECHChecked,
-      degreeCourseCounts,
-      lastMonthUsers
     });
   } catch (error) {
     next(error);
   }
 };
 
+
+// List of Philippine holidays for 2025 from UP Calendar and PH Official Gazette
+const philippineHolidays2025 = [
+  '2025-01-01', // New Year's Day
+  '2025-01-29', // Chinese New Year
+  '2025-02-11', // Evelio Javier
+  '2025-02-25', // People Power
+  '2025-03-18', // Liberation of Panay
+  '2025-03-31', // Eidul Fitr
+  '2025-04-09', // Araw ng Kagitingan
+  '2025-04-17', // Maundy Thursday
+  '2025-04-18', // Good Friday
+  '2025-04-19', // Black Saturday
+  '2025-05-01', // Labor Day
+  '2025-06-06', // Eid'l Adha
+  '2025-06-12', // Independence Day
+  '2025-08-25', // National Heroes Day
+  '2025-11-30', // Bonifacio Day
+  '2025-12-25', // Christmas Day
+  '2025-12-30', // Rizal Day
+];
+
+const holidaySet = new Set(philippineHolidays2025);
 
 export const assignSchedule = async (req, res, next) => {
   try {
@@ -1775,7 +1729,13 @@ export const assignSchedule = async (req, res, next) => {
     const assignedDates = [];
 
     for (let i = 0; i <= days; i++) {
-      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+      const formattedDate = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+      if (
+        currentDate.getDay() !== 0 && // Exclude Sundays
+        currentDate.getDay() !== 6 && // Exclude Saturdays
+        !holidaySet.has(formattedDate) // Exclude holidays
+      ) {
         assignedDates.push(currentDate.toISOString());
       }
       currentDate.setDate(currentDate.getDate() + 1);
@@ -1788,7 +1748,7 @@ export const assignSchedule = async (req, res, next) => {
         yearLevel: sortDirection,
         college: 1,
         degreeProgram: 1,
-        lastName: 1
+        lastName: 1,
       })
       .lean(); // Use lean() for faster query
 
@@ -1799,7 +1759,7 @@ export const assignSchedule = async (req, res, next) => {
 
     for (const user of allUsers) {
       const assignedDate = assignedDates[assignedDatesIndex];
-      
+
       bulkOps.push({
         updateOne: {
           filter: { _id: user._id },
@@ -1807,15 +1767,17 @@ export const assignSchedule = async (req, res, next) => {
             $set: { schedule: new Date(assignedDate) },
             $push: {
               notifications: {
-                message: `Your schedule has been generated. Your assigned date is ${new Date(assignedDate).toLocaleDateString()}.`,
+                message: `Your schedule has been generated. Your assigned date is ${new Date(
+                assignedDate
+                ).toLocaleDateString()}.`,
                 type: 'info',
                 timestamp: new Date(),
                 link: '/status',
-                isRead: false
-              }
-            }
-          }
-        }
+                isRead: false,
+              },
+            },
+          },
+        },
       });
 
       counter++;
@@ -1838,24 +1800,26 @@ export const assignSchedule = async (req, res, next) => {
   }
 };
 
+
 export const rescheduleUser = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Check if the user is an admin and has permission to reschedule
-   
+    // Create holiday set inside the function
+    const holidaySet = new Set(
+      philippineHolidays2025.map(date => new Date(date).toDateString())
+    );
+
     const { userId } = req.params;
     const { startDate, endDate } = req.body;
 
-    // Fetch the user's current schedule
     const user = await User.findById(userId).select('-queueNumber -queueNumberDate');
 
     if (!user) {
       return next(errorHandler(404, 'User not found.'));
     }
 
-    // Calculate available dates (your existing logic)
     let currentDate = new Date(startDate);
     const endDateObj = new Date(endDate);
     const today = new Date();
@@ -1865,8 +1829,13 @@ export const rescheduleUser = async (req, res, next) => {
     const remainingSlotsArray = [];
 
     while (rescheduledDates.length < 3 && currentDate <= endDateObj) {
-      // Skip past dates and weekends
-      if (currentDate < today || currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+      // Skip past dates, weekends, and holidays
+      if (
+        currentDate < today || 
+        currentDate.getDay() === 0 || 
+        currentDate.getDay() === 6 ||
+        holidaySet.has(currentDate.toDateString())
+      ) {
         currentDate.setDate(currentDate.getDate() + 1);
         continue;
       }
@@ -1909,7 +1878,6 @@ export const rescheduleUser = async (req, res, next) => {
 
     // Atomically reserve slots for dates with limited availability
     for (const slot of remainingSlotsArray.filter(s => s.remainingSlots === 1)) {
-      // If the slot is available, reserve it
       const dateSlot = await DateSlot.findOne({ date: slot.date });
 
       if (dateSlot) {
@@ -1959,6 +1927,124 @@ export const rescheduleUser = async (req, res, next) => {
   }
 };
 
+export const handleEmergency = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (!req.user.isAdmin) {
+      return next(errorHandler(403, 'Only admins can reschedule due to emergencies.'));
+    }
+
+    const { emergencyDate, startDate, endDate } = req.body;
+
+    const emergencyDateObj = new Date(emergencyDate);
+    const startOfDay = new Date(emergencyDateObj);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(emergencyDateObj);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Fetch students scheduled on the emergency date
+    const affectedUsers = await User.find({ 
+      annualPE: 'InPerson',
+      schedule: { 
+        $gte: startOfDay, 
+        $lte: endOfDay 
+      }
+    }).lean();
+
+    if (affectedUsers.length === 0) {
+      return res.status(200).json({ message: 'No students scheduled on this date.' });
+    }
+
+    // Get all available dates (excluding weekends & PH holidays)
+    const holidaySet = new Set(philippineHolidays2025.map(date => new Date(date).toDateString())); // Ensure the holidays are stored as strings in the set.
+    let currentDate = new Date(startDate);
+    const availableDates = [];
+
+    while (currentDate <= new Date(endDate)) {
+      const formattedDate = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+      if (
+        currentDate.getDay() !== 0 && // Skip Sundays
+        currentDate.getDay() !== 6 && // Skip Saturdays
+        !holidaySet.has(currentDate.toDateString()) // Skip holidays
+      ) {
+        availableDates.push(new Date(currentDate)); // Store as Date object
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Reschedule users based on available slots
+    let remainingUsers = [...affectedUsers]; // Remaining users to reschedule
+
+    for (let date of availableDates) {
+      // Check the current slot availability 
+      const userCount = await User.countDocuments({ schedule: date });
+      const remainingSlots = 20 - userCount;
+
+      if (remainingSlots <= 0) {
+        continue; // Skip this date if no slots are available
+      }
+
+      // Move students who can fit into this date
+      const usersToReschedule = remainingUsers.slice(0, remainingSlots); // Take only as many as can fit
+      const bulkOps = usersToReschedule.map(user => ({
+        updateOne: {
+          filter: { _id: user._id },
+          update: {
+            $set: { schedule: date },
+            $push: {
+              notifications: {
+                message: `Your schedule has been moved to ${date.toLocaleDateString()}.`,
+                type: 'warning',
+                timestamp: new Date(),
+                link: '/status',
+                isRead: false
+              }
+            }
+          }
+        }
+      }));
+
+      if (bulkOps.length > 0) {
+        await User.bulkWrite(bulkOps, { ordered: false, session });
+      }
+
+      usersToReschedule.forEach(user => {
+        console.log(`User ${user._id} has been rescheduled to ${date.toLocaleDateString()}`);
+      });
+
+      remainingUsers = remainingUsers.slice(remainingSlots);
+
+      // Stop if all students are rescheduled
+      if (remainingUsers.length === 0) break;
+    }
+
+    // If there are any remaining users, they couldn't be rescheduled due to full slots
+    if (remainingUsers.length > 0) {
+      return res.status(400).json({
+        message: `${remainingUsers.length} students could not be rescheduled due to full slots.`
+      });
+    }
+
+    console.log(`Rescheduled ${affectedUsers.length} students successfully.`); // Log total rescheduled users
+
+    // 6️⃣ Finalize transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      message: `Rescheduled ${affectedUsers.length} students successfully.`,
+      rescheduledUsers: affectedUsers.length
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
 
 export const releaseUser = async (req, res) => {
   const { userId } = req.params;
@@ -1977,7 +2063,6 @@ export const releaseSlot = async (userId) => {
     // Delete all DateSlot documents where the user is listed in the reservedBy array
     const result = await DateSlot.deleteMany({ reservedBy: userId });
 
-    // If documents were deleted, return a success message
     if (result.deletedCount > 0) {
       console.log(`${result.deletedCount} slots released for user ${userId}`);
     } else {
@@ -1988,7 +2073,6 @@ export const releaseSlot = async (userId) => {
     throw new Error('Failed to release slots');
   }
 };
-
 
 
 
@@ -2008,7 +2092,6 @@ export const updateUserWithReschedule = async (req, res, next) => {
     if (rescheduleRemarks) user.rescheduleRemarks = rescheduleRemarks;
     if (rescheduledDate) user.rescheduledDate = rescheduledDate;
 
-   
     // Save the updated user data
     await user.save();
     res.status(200).json({ message: 'User updated successfully' });
@@ -2040,6 +2123,8 @@ export const deleteSchedule = async (req, res, next) => {
       rescheduleLimit: 0,
       isRescheduled: false,
       isPresent: "PENDING",
+      isDental: false,
+      isGeneral: false,
       lastLoggedIn: null, // Set lastLoggedIn to null
       queueNumberDate: null,
       queueNumber: null,

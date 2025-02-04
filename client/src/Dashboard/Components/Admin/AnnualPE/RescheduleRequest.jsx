@@ -60,8 +60,10 @@ const RescheduleRequest = () => {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    const timeout = setTimeout(() => fetchUsers(), 300);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
+  
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => 

@@ -43,20 +43,6 @@ import {
   HiUsers
 } from 'react-icons/hi';
 
-const StatCard = ({ title, value, icon: Icon, colorClass, bgClass, onClick }) => (
-  <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
-    <div className="flex items-center">
-      <div className={`p-4 ${bgClass} rounded-lg`}>
-        <Icon className={`w-6 h-6 ${colorClass}`} />
-      </div>
-      <div className="ml-4">
-        <p className="text-gray-500 text-sm">{title}</p>
-        <h3 className="text-2xl font-bold">{value}</h3>
-      </div>
-    </div>
-  </Card>
-);
-
 const CollegeCard = ({ college, total, validated, checked, onClick }) => (
   <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={onClick}>
     <div className="flex items-center justify-between mb-4">
@@ -252,7 +238,6 @@ const InPerson = () => {
             setSavedEndDate(endDate);
           } else {
             console.error("Invalid date fetched:", response.data);
-            toast.error("Failed to fetch valid start and end dates.");
           }
         }
       } catch (error) {
@@ -549,43 +534,96 @@ const InPerson = () => {
           </div>
         </div>
         {showPopup && (
-          <Modal className="p-24  inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-xl shadow-xl" show={showPopup} onClose={() => setShowPopup(false)}>
-            <Modal.Header>Set Schedule</Modal.Header>
-            <Modal.Body>
-            <motion.div
+          <Modal 
+          show={showPopup} 
+          onClose={() => setShowPopup(false)}
+          size="xl"
+          className="p-24 inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-xl shadow-xl"
+        >
+          <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-8 w-8 text-white" />
+                <h3 className="text-2xl font-semibold text-white">Set Schedule</h3>
+              </div>
+              <p className="text-blue-100 mt-2">Select your preferred date range</p>
+              <p className="text-gray-200 mt-2 text-sm">Note: PH Holidays are already excluded</p>
+
+            </div>
+    
+            {/* Body */}
+            <div className="p-6">
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-            >
-              <div className="flex flex-col p-5">
-                <div className="flex flex-1 mb-4">
-                  <div className="flex flex-col flex-1">
-                    <p>Start Date:</p>
-                    <DatePicker
-                      selected={startDate}
-                      onChange={(date) => setStartDate(date)}
-                      className="mt-2 p-2 border border-gray-300 rounded"
-                      dateFormat="MMMM d, yyyy"
-                    />
+                className="space-y-6  min-h-[200px] flex flex-col"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Start Date */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Start Date
+                    </label>
+                    <div className="relative">
+                      <DatePicker
+                        selected={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        dateFormat="MMMM d, yyyy"
+                        popperPlacement="bottom-start"
+                        popperModifiers={[
+                          {
+                            name: "offset",
+                            options: {
+                              offset: [0, 8]
+                            }
+                          }
+                        ]}
+                        placeholderText="Select start date"
+                      />
+                      <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
-                  <div className="flex flex-col flex-1 ml-4">
-                    <p>End Date:</p>
-                    <DatePicker
-                      selected={endDate}
-                      onChange={(date) => setEndDate(date)}
-                      className="mt-2 p-2 border border-gray-300 rounded"
-                      dateFormat="MMMM d, yyyy"
-                    />
+    
+                  {/* End Date */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      End Date
+                    </label>
+                    <div className="relative">
+                      <DatePicker
+                        selected={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        dateFormat="MMMM d, yyyy"
+                        placeholderText="Select end date"
+                      />
+                      <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
-                <Button className="bg-blue-600 p-3 hover:bg-blue-700" onClick={handleSaveDates} >
-                  Save Dates
-                </Button>
-              </div>
               </motion.div>
-            </Modal.Body>
-            
-          </Modal>
+            </div>
+    
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+              <Button
+                color="gray"
+                onClick={() => setShowPopup(false)}
+                className="px-4 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveDates}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                Save Schedule
+              </Button>
+            </div>
+          </div>
+        </Modal>
         )}
         {showEmailModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

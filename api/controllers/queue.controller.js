@@ -116,7 +116,7 @@ export const getQueueStudents = async (req, res) => {
 
 
 
-  export const moveToNextStep = async (req, res) => {
+export const moveToNextStep = async (req, res) => {
     const { studentId, currentStep, nextStep } = req.body;
   
     try {
@@ -300,6 +300,39 @@ export const makeStudentPriority = async (req, res) => {
     await queue.save();
 
     return res.status(200).json({ message: 'Student made priority', queueNumber: student.queueNumber });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const getQueueSummary = async (req, res) => {
+  const today = new Date().toDateString(); // Get today's date as a string
+
+  try {
+    // Find all queue records for today
+    const queues = await Queue.find({ date: today });
+
+    if (!queues.length) {
+      return res.status(404).json({ error: 'No queue found for today.' });
+    }
+
+    // Compute the total number of students queued
+    let totalUsers = 0;
+    const stepCounts = {
+      "General PE": 0,
+      "Dental": 0,
+      "Doctor": 0
+    };
+
+    queues.forEach(queue => {
+      totalUsers += queue.students.length; // Count all students in this step
+
+      if (stepCounts.hasOwnProperty(queue.step)) {
+        stepCounts[queue.step] += queue.students.length;
+      }
+    });
+
+    return res.json({ totalUsers, stepCounts });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

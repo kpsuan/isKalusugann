@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Home, FileText, Calendar, Bell, User, Settings, HelpCircle, ChevronDown } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import logo from '../../../assets/logo1.png'
+import { useNavigate } from 'react-router-dom';
 
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAnnualPEOpen, setIsAnnualPEOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
-
+  const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
   const toggleCollapse = () => {
@@ -194,7 +195,8 @@ const Sidebar = () => {
               <p className="text-xs text-gray-600 mb-3">
                 Having trouble? Contact us for assistance with the UPV-HSU Portal.
               </p>
-              <button className="w-full bg-blue-500 text-white text-sm rounded-lg py-2 hover:bg-blue-600 transition-colors">
+              <button onClick={() => navigate('/help-center')}
+              className="w-full bg-blue-500 text-white text-sm rounded-lg py-2 hover:bg-blue-600 transition-colors">
                 Go to help center
               </button>
             </div>

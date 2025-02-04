@@ -30,7 +30,6 @@ const DoctorQueue = () => {
       setCurrentStudent(response.data.students[0] || null);
     } catch (error) {
       console.error('Error fetching queue data:', error);
-      toast.error('Failed to load queue data.');
     } finally {
       setLoading(false);
     }
@@ -60,8 +59,10 @@ const DoctorQueue = () => {
       const response = await axios.post('/api/queue/complete-step', {
         studentId,
         currentStep,
-       });
+      });
+  
       toast.success(response.data.message);
+      setLoading(false);
       fetchQueue();
     } catch (error) {
       console.error('Error completing step:', error);
@@ -70,6 +71,7 @@ const DoctorQueue = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="dashboard my-flex">
@@ -80,13 +82,11 @@ const DoctorQueue = () => {
           <div className="flex-1 p-8">
             <div className="max-w-6xl mx-auto">
               {/* Header Section */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Doctor's Examination Queue
-                </h2>
-                <p className="text-gray-600">
-                  Step 3: Managing student medical examinations
-                </p>
+              <div className=" bg-gradient-to-r from-cyan-700 to-blue-500 rounded-lg border border-gray-200 p-10 w-full">
+                <div className="text-5xl font-bold  text-white mb-4">Doctors Consultation Queue</div>
+                <p className="font-light text-lg my-8 text-white">
+                Step 3: Students in queue for Doctor consultation.
+                </p> 
               </div>
 
               {/* Currently Serving Section */}

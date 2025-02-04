@@ -85,6 +85,7 @@ import AdminQueueManagement from './Dashboard/Components/Admin/AnnualPE/AdminQue
 import DentalQueue from './Dashboard/Components/Admin/AnnualPE/DentalQueue';
 import DoctorQueue from './Dashboard/Components/Admin/AnnualPE/DoctorQueue';
 import ManageQueue from './Dashboard/Components/Admin/AnnualPE/ManageQueue';
+import EmergencyReschedule from './Dashboard/Components/Annual/EmergencyReschedule';
 
 
 export default function App() {
@@ -162,10 +163,8 @@ export default function App() {
           <Route path="/show-online" element={<UsersOnline />} />
           <Route path="/user-status/:userId" element={<UpdateStatus />} />
           <Route path="/manageRequests" element={<ManageRequests />} />
-
-
+          <Route path="/handle-emergency" element={<EmergencyReschedule />} />
           <Route path="/resched-status/:userId" element={<RescheduleStatus />} />
-
           <Route path="/certificate/:userId" element={<Certificate />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/scheduledToday" element={<ScheduledToday />} />

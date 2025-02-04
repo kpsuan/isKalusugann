@@ -13,10 +13,10 @@ const Features = () => {
   const features = [
     {
       icon: GrSchedule,
-      title: currentUser?.isAdmin ? 'PE Management' : 'PE Schedule',
+      title: currentUser?.isAdmin ? 'PE Management' : 'Annual Physical Examination',
       description: currentUser?.isAdmin
         ? 'Manage Annual PE Examinations'
-        : 'View PE Examination Schedule',
+        : 'View Annual PE Status',
       link: currentUser?.isAdmin ? '/adminPE' : '/annualhome',
       gradient: 'from-teal-100 to-teal-200',
       iconBg: 'bg-teal-500',
@@ -24,11 +24,11 @@ const Features = () => {
     },
     {
       icon: LiaFileMedicalAltSolid,
-      title: currentUser?.isAdmin ? 'Medical Records' : 'Medical Forms',
+      title: currentUser?.isAdmin ? 'Manage Document Requests' : 'Request Documents',
       description: currentUser?.isAdmin
-        ? 'Manage Submitted Medical Documents for Annual PE'
-        : 'Submit Medical Forms',
-      link: currentUser?.isAdmin ? '/manage-online' : '/status',
+        ? 'Manage request for documents such as laboratory examinations'
+        : 'Submit and track request',
+      link: currentUser?.isAdmin ? '/manageRequests' : '/requestDocs',
       gradient: 'from-cyan-100 to-cyan-200',
       iconBg: 'bg-cyan-500',
       iconColor: 'text-white'

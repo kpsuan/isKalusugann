@@ -154,10 +154,9 @@ useEffect(() => {
             <p className="font-light text-lg my-8 text-white">
              List of students who were not able to attend to their 
              <span className="font-bold "> Assigned Annual Physical Examinations schedule </span>
-            </p>
-            
-            
+            </p> 
           </div>
+          
           <div className="bg-white border border-gray-200 p-5">
             <p className="font-bold my-4">Total Users: {totalUsers}</p>
             <div className="flex justify-start">

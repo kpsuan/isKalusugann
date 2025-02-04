@@ -31,7 +31,6 @@ const DentalQueue = () => {
       setCurrentStudent(response.data.students[0] || null);
     } catch (error) {
       console.error('Error fetching queue data:', error);
-      toast.error('Failed to load queue data.');
     } finally {
       setLoading(false);
     }
@@ -81,15 +80,12 @@ const DentalQueue = () => {
           <div className="flex-1 p-8">
             <div className="max-w-6xl mx-auto">
               {/* Header Section */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Dental Examination Queue
-                </h2>
-                <p className="text-gray-600">
-                  Step 2: Managing student medical examinations
-                </p>
+              <div className=" bg-gradient-to-r from-cyan-700 to-blue-500 rounded-lg border border-gray-200 p-10 w-full">
+                <div className="text-5xl font-bold  text-white mb-4">Dental Examination Queue</div>
+                <p className="font-light text-lg my-8 text-white">
+                Step 2: Students in queue for Dental examination
+                </p> 
               </div>
-
               {/* Currently Serving Section */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">

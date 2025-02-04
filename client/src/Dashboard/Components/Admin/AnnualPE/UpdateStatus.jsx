@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../SideBar Section/Sidebar";
 import { useSelector } from 'react-redux';
-import { Select, Button, Badge, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
+import { Select, Button, Badge, Modal, ModalBody, TextInput, FileInput, Card } from 'flowbite-react';
 import Alert from '@mui/material/Alert';
+
+import {
+	APPROVED_EMAIL_TEMPLATE,
+  DENIED_EMAIL_TEMPLATE
+} from "../../../../../../api/utils/emailTemplate";
+
 
 import "../../Annual/annual.css";
 import ReactQuill from 'react-quill';
@@ -127,10 +133,18 @@ const UserProfile = () => {
       }
   
       // Step 2: Send email notification to the user
+      const emailTemplate = formData.status === 'approved' 
+        ? APPROVED_EMAIL_TEMPLATE
+            .replace('{firstName}', user.firstName)
+            .replace('{medcert}', formData.medcert)
+        : DENIED_EMAIL_TEMPLATE
+            .replace('{firstName}', user.firstName)
+            .replace('{comment}', formData.comment.replace(/<[^>]*>/g, ''));
+
       const emailResponse = await axios.post('/api/email/emailUser', {
         email: user.email,
-        subject: 'Your Annual PE Status Update',
-        text: `Dear ${user.firstName},\n\nYour annual PE status is ${user.status}. Here is your comment: ${user.comment}\n\n Your generated medical certificate can be viewed in the system or alternatively here: ${user.medcert} \n\n\nBest regards,\nIsKalusugan`,
+        subject: `Annual PE Status: ${formData.status.toUpperCase()}`,
+        html: emailTemplate
       });
   
       if (emailResponse.status === 200) {
@@ -192,7 +206,20 @@ const UserProfile = () => {
                         {`${user.firstName} ${user.middleName || ""} ${user.lastName}`}
                       </h2>
                       <p className="text-gray-600">Student Number: {user.username}</p>
-                      {getStatusBadge(formData.status || "NO ACTION")}
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-600">Status:</span>
+                        <Badge
+                          color={
+                            formData.status === 'approved' ? 'success' :
+                            formData.status === 'denied' ? 'failure' :
+                            'warning'
+                          }
+                          size="md"
+                          className="font-semibold"
+                        >
+                          {formData.status || "NO ACTION"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -252,8 +279,8 @@ const UserProfile = () => {
                           ) : (
                               <div className="w-3/4 ">
                                   <p className="w-1/2 text-sm mb-1 border border-red-500 px-2 py-2 inline-block text-red-500">Empty</p>
-                                  <Link className="ml-2 px-3 py-2 bg-green-500 text-white" to={''} target="_blank" rel="noopener noreferrer">
-                                      Add
+                                  <Link className="ml-2 px-3 py-2 bg-red-500 text-white" to={''} target="_blank" rel="noopener noreferrer">
+                                      NO SUBMISSION
                                   </Link>
                               </div>
                           )}
@@ -262,80 +289,112 @@ const UserProfile = () => {
 
                 </div>
 
-                <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-                  <p className="font-semibold text-lg text-teal-500">Approve or Deny the request</p>
-                  <div className="flex flex-col gap-4 mb-4">
-                    <div className="flex flex-row gap-2">
-                      <p className="text-center py-3">Select Status:</p>
+                 <form onSubmit={handleSubmit} className="space-y-6">
+                <Card>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Review & Action</h2>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Update Status
+                      </label>
                       <Select
                         id="status"
                         value={formData.status || "NO ACTION"}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="py-2 px-4 focus:outline-none focus:border-blue-500"
+                        className="w-full"
                       >
                         <option value="NO ACTION">NO ACTION</option>
                         <option value="denied">DENIED</option>
                         <option value="approved">APPROVED</option>
                       </Select>
                     </div>
-                  </div>
-                  <div className="mb-4 rounded-lg bg-green-500 border border-gray-200 p-4 w-1/3 hover:bg-green-600 text-white">
-                    <Link
-                      className="ml-2 px-3 py-1 text-black hover:underline text-white"
-                      to={`/certificate/${user._id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Generate Medical Certificate
-                    </Link>
-                  </div>
 
-                  <div className="flex flex-col gap-2">
-                    <p className="text-start py-3">Attach Generated Medcert:</p>
-                    <div className="flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3 w-3/4">
-                      <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
-                      <Button
-                          color="gray"
-                          onClick={handleUploadImage}
-                          disabled={imageUploadProgress}
-                        >
-                          {imageUploadProgress ? (
-                            <div className="w-6 h-6">
-                              <CircularProgressbar
-                                value={imageUploadProgress}
-                                text={`${imageUploadProgress}%`}
-                              />
-                            </div>
-                          ) : (
-                            <HiOutlineUpload className="mr-2 h-5 w-5" />
-                          )}
-                          Upload
-                        </Button>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Medical Certificate
+                      </label>
+                      <Link
+                        to={`/certificate/${user._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block w-full px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors text-center"
+                      >
+                        Generate Certificate
+                      </Link>
                     </div>
+                  </div>
 
-                    {imageUploadError && <Alert color="failure">{imageUploadError}</Alert>}
+                  {/* Medcert Upload Section */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload Generated Medical Certificate
+                    </label>
+                    <div className="flex gap-4 items-center p-4 border-2 border-dashed border-teal-500 rounded-lg bg-teal-50">
+                      <div className="flex-1">
+                        <FileInput
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setFile(e.target.files[0])}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button
+                        color="teal"
+                        onClick={handleUploadImage}
+                        disabled={imageUploadProgress}
+                        className="whitespace-nowrap"
+                      >
+                        {imageUploadProgress ? (
+                          <div className="w-6 h-6">
+                            <CircularProgressbar
+                              value={imageUploadProgress}
+                              text={`${imageUploadProgress}%`}
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <HiOutlineUpload className="mr-2 h-5 w-5" />
+                            Upload
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {imageUploadError && (
+                      <Alert color="failure" className="mt-2">{imageUploadError}</Alert>
+                    )}
                     {formData.medcert && (
-                      <img src={formData.medcert} alt="upload" className="w-full h-full object-fit" />
+                      <div className="mt-4 p-2 border rounded-lg">
+                        <img
+                          src={formData.medcert}
+                          alt="uploaded certificate"
+                          className="max-h-48 object-contain mx-auto"
+                        />
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <p className="text-start py-3">Add Remarks:</p>
-                    <ReactQuill
-                      theme="snow"
-                      id="comment"
-                      value={formData.comment || ""}
-                      placeholder="Write something..."
-                      className="h-72 mb-12"
-                      onChange={(value) => setFormData({ ...formData, comment: value })}
-                    />
+                  {/* Comments Section */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Remarks
+                    </label>
+                    <div className="border rounded-lg">
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.comment || ""}
+                        onChange={(value) => setFormData({ ...formData, comment: value })}
+                        className="h-48"
+                        placeholder="Add your comments here..."
+                      />
+                    </div>
                   </div>
 
                   <Button type="submit" className="text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
                     Update Status
                   </Button>
-                  
-                </form>
+                </Card>
+              </form>
               </div>
             ) : (
               <div>User not found.</div>

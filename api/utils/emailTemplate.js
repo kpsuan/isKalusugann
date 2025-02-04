@@ -155,3 +155,95 @@ export const ANNUALPE_SCHEDULE_TEMPLATE = `
 </body>
 </html>
 `;
+
+export const APPROVED_EMAIL_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annual PE Status Approved</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
+    <h1 style="color: white; margin: 0;">Annual PE Status: APPROVED</h1>
+  </div>
+  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>Dear {firstName},</p>
+    <p>Your Annual Physical Examination documents have been verified and approved.</p>
+    
+    <div style="margin: 20px 0; padding: 15px; background-color: #e9f7ef; border-left: 4px solid #4CAF50; border-radius: 4px;">
+      <p style="margin: 0;"><strong>Your Medical Certificate: </strong></p>
+      <p style="color: #4CAF50; text-decoration: none; word-break: break-all;">
+        {medcert}
+      </p>
+    </div>
+
+    <p>You can view your medical certificate by:</p>
+    <ul style="margin-top: 10px;">
+      <li>Clicking the link above</li>
+      <li>Logging into your account in our system</li>
+      <li>Visiting the HSU to claim a physical copy</li>
+    </ul>
+    
+    <div style="margin: 30px 0; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+      <p style="margin: 0;"><strong>Important Reminders: </strong></p>
+      <ul style="margin-top: 10px;">
+        <li>Keep your medical certificate for enrollment processes</li>
+        <li>The HSU will not be liable for lost physical medical certificates</li>
+        <li>Requesting a new physical medical certificate may take time</li>
+      </ul>
+    </div>
+
+    <p>If you have any questions or concerns, please don't hesitate to contact HSU.</p>
+    
+    <p>Best regards,<br>IsKalusugan</p>
+  </div>
+  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
+    <p>This is an automated message, please do not reply to this email.</p>
+  </div>
+</body>
+</html>
+`;
+
+export const DENIED_EMAIL_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annual PE Status: Action Required</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(to right, #dc3545, #c82333); padding: 20px; text-align: center;">
+    <h1 style="color: white; margin: 0;">Annual PE Status: NOT APPROVED</h1>
+  </div>
+  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>Dear {firstName},</p>
+    <p>Your Annual Physical Examination documents require attention.</p>
+    
+    <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
+      <p style="margin: 0;"><strong>Reason for Non-Approval: </strong></p>
+      <p style="color: #721c24;">
+        {comment}
+      </p>
+    </div>
+
+    <p>Next Steps:</p>
+    <ul style="margin-top: 10px;">
+      <li>Review the feedback provided above</li>
+      <li>Make the necessary corrections or updates</li>
+      <li>Resubmit your documents through the system</li>
+      <li>Contact HSU if you need clarification</li>
+    </ul>
+
+    <p>If you have any questions or need assistance, please contact HSU immediately.</p>
+    
+    <p>Best regards,<br>IsKalusugan</p>
+  </div>
+  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
+    <p>This is an automated message, please do not reply to this email.</p>
+  </div>
+</body>
+</html>
+`;

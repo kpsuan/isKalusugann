@@ -3,33 +3,29 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from '../../SideBar Section/Sidebar';
 import { HiOutlineCalendar, HiOutlineUsers, HiOutlineClipboardCheck, HiRefresh } from 'react-icons/hi';
+import axios from 'axios';
 
 const ManageQueue = () => {
-  const [loading, setLoading] = useState(false);
   const [queueCounts, setQueueCounts] = useState({
     generalPE: 0,
     dental: 0,
-    doctor: 0
+    doctor: 0,
+    totalUsers: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchQueueCounts = async () => {
     try {
       setRefreshing(true);
-      
-      // Fetch counts for each queue type
-      const [generalPE, dental, doctor] = await Promise.all([
-        fetch('/api/queue?step=generalPE').then(res => res.json()),
-        fetch('/api/queue?step=dental').then(res => res.json()),
-        fetch('/api/queue?step=doctor').then(res => res.json())
-      ]);
+      const response = await axios.get('/api/queue/get-queue-summary');
+      const data = response.data;
 
       setQueueCounts({
-        generalPE: generalPE.students?.length || 0,
-        dental: dental.students?.length || 0,
-        doctor: doctor.students?.length || 0
+        generalPE: data.stepCounts["General PE"] || 0,
+        dental: data.stepCounts["Dental"] || 0,
+        doctor: data.stepCounts["Doctor"] || 0,
+        totalUsers: data.totalUsers || 0,
       });
-
     } catch (error) {
       toast.error('Failed to fetch queue counts: ' + error.message);
     } finally {
@@ -38,11 +34,10 @@ const ManageQueue = () => {
   };
 
   useEffect(() => {
-    fetchQueueCounts();
-    // auto-refresh every 30 seconds
-    const interval = setInterval(fetchQueueCounts, 30000);
-    return () => clearInterval(interval);
-  }, []);
+      fetchQueueCounts();
+      const interval = setInterval(fetchQueueCounts, 30000);
+      return () => clearInterval(interval);
+    }, []);
 
   const QueueCard = ({ title, description, count, icon: Icon, href, color }) => (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
@@ -86,19 +81,17 @@ const ManageQueue = () => {
         <ToastContainer />
         <div className="mainContent m-0 p-0 bg-gray-80">
           <div className="p-8">
-            <div className="mb-8 pb-14 flex flex-col bg-gradient-to-r from-green-700 to-cyan-500 rounded-lg border border-gray-200 p-10 w-full md:flex-row md:items-center md:justify-between">
-                <div>
-                    <div className="text-5xl font-bold  text-white mb-4">Queue Management </div>
-                    <p className="font-light my-4 text-white">
-                    Monitor and manage student queues for various examinations </p>
-                </div>
-               
+            <div className="mb-8 bg-gradient-to-r from-cyan-700 to-blue-500 rounded-lg border border-gray-200 p-10 w-full flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-5xl font-bold  text-white mb-4">Queue Management</h1>
+                <p className="text-white font-light text-lg my-8 mt-1">Monitor and manage student queues for various examinations</p>
+              </div>
               
               <div className="mt-4 md:mt-0 flex space-x-4">
                 <button
                   onClick={fetchQueueCounts}
                   disabled={refreshing}
-                  className="flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-slate-300 transition-colors duration-200 disabled:opacity-50"
+                  className="flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-slate-100 transition-colors duration-200 disabled:opacity-50"
                 >
                   <HiRefresh className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                   Refresh
@@ -145,10 +138,7 @@ const ManageQueue = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Queue Status</div>
-                  <div className="text-2xl font-bold text-green-600">Active</div>
-                </div>
+                
               </div>
             </div>
           </div>

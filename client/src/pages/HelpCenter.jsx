@@ -66,11 +66,7 @@ const HelpCenter = ({ currentUser }) => {
       icon: <FaQuestionCircle />, 
       title: 'Frequent Questions' 
     },
-    { 
-      id: 'ai-assist', 
-      icon: <FaRobot />, 
-      title: 'AI Assistant' 
-    }
+    
   ];
 
   const filteredQuestions = frequentQuestions.filter(faq => 
