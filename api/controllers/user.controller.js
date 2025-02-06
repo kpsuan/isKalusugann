@@ -1,6 +1,6 @@
 import User from '../models/user.model.js';
 import mongoose from "mongoose";
-
+import Emergency from '../models/emergencyDate.model.js';
 import { errorHandler } from '../utils/error.js';
 import bcryptjs from 'bcryptjs';
 import DateSlot from '../models/dateSlot.js';
@@ -1750,9 +1750,9 @@ export const assignSchedule = async (req, res, next) => {
         degreeProgram: 1,
         lastName: 1,
       })
-      .lean(); // Use lean() for faster query
+      .lean(); 
 
-    // Prepare bulk operations
+    //  bulk operations
     const bulkOps = [];
     let counter = 0;
     let assignedDatesIndex = 0;
@@ -1810,6 +1810,12 @@ export const rescheduleUser = async (req, res, next) => {
     const holidaySet = new Set(
       philippineHolidays2025.map(date => new Date(date).toDateString())
     );
+
+    // Fetch all emergency dates and add them to the set
+    const emergencyDates = await Emergency.find({});
+    emergencyDates.forEach(ed => {
+      holidaySet.add(new Date(ed.date).toDateString());
+    });
 
     const { userId } = req.params;
     const { startDate, endDate } = req.body;
@@ -1936,7 +1942,15 @@ export const handleEmergency = async (req, res, next) => {
       return next(errorHandler(403, 'Only admins can reschedule due to emergencies.'));
     }
 
-    const { emergencyDate, startDate, endDate } = req.body;
+    const { emergencyDate, startDate, endDate, reason } = req.body;
+
+     // Save emergency date to database
+     await Emergency.create([{
+      date: new Date(emergencyDate),
+      reason: reason || 'Emergency Rescheduling',
+      createdBy: req.user._id
+    }], { session });
+
 
     const emergencyDateObj = new Date(emergencyDate);
     const startOfDay = new Date(emergencyDateObj);
@@ -2106,10 +2120,20 @@ export const updateUserWithReschedule = async (req, res, next) => {
 
 
 
-
+// First create a function to delete EmergencyDate collection
+export const deleteAllEmergencyDates = async (req, res, next) => {
+  try {
+    await Emergency.deleteMany({});
+    res.status(200).json({ message: 'All emergency dates deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const deleteSchedule = async (req, res, next) => {
   try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     // Delete all schedules and statuses by setting the `schedule` and `status` fields to null for all users
     await User.updateMany({}, { $set: { 
       schedule: "", 
@@ -2130,10 +2154,18 @@ export const deleteSchedule = async (req, res, next) => {
       queueNumber: null,
       notifications: []
 
-    } });
+    } },  { session });
+
+    // Delete all emergency dates
+    await Emergency.deleteMany({}, { session });
+
+     // Delete all date slots
+    await DateSlot.deleteMany({}, { session });
 
     res.status(200).json({ message: 'Schedules and statuses cleared successfully' });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.error('Error clearing schedules and statuses:', error);
     res.status(500).json({ error: 'Internal server error' });
   }

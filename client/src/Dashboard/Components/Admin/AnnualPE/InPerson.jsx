@@ -35,12 +35,7 @@ import { motion } from 'framer-motion';
 import { 
   HiOutlineDocumentText, 
   HiOutlineAcademicCap,
-  HiOutlineUserGroup,
-  HiOutlineClock,
-  HiOutlineCheckCircle,
-  HiOutlineXCircle,
-  HiOutlineViewGrid,
-  HiUsers
+
 } from 'react-icons/hi';
 
 const CollegeCard = ({ college, total, validated, checked, onClick }) => (
@@ -97,7 +92,8 @@ const ScheduleHeader = ({
   onSetSchedule,
   onGenerateSchedule,
   onClearSchedules,
-  onReschedule 
+  onReschedule, 
+  onRescheduleAll
 }) => {
   return (
     <Card className="w-full bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 border-none shadow-lg">
@@ -184,13 +180,24 @@ const ScheduleHeader = ({
               
             </div>
           )}
-          <Button
-                onClick={onReschedule}
-                className="bg-cyan-700 hover:bg-cyan-800 text-white border-none"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Handle Reschedules
+           <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                    onClick={onReschedule}
+                    className="bg-cyan-700 hover:bg-cyan-800 text-white border-none"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Handle Reschedules
               </Button>
+              <Button
+                    onClick={onRescheduleAll}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-white border-none"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Set Unavailable Reschedule Date
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </Card>
@@ -425,6 +432,10 @@ const InPerson = () => {
   const handleRescheduleClick = () => {
     navigate('/reschedule', { state: { startDate: savedStartDate, endDate: savedEndDate } });
   };
+
+  const handleRescheduleAllClick = () => {
+    navigate('/handle-emergency');
+  };
   
   const handleClearSchedules = async () => {
     setLoading(true);
@@ -468,6 +479,7 @@ const InPerson = () => {
           onGenerateSchedule={handleGenerateSchedule}
           onClearSchedules={handleClearSchedules}
           onReschedule={handleRescheduleClick}
+          onRescheduleAll={handleRescheduleAllClick}
     />
           <div className="p-8 bg-gray-50">
           <Tabs aria-label="Tabs for schedules" style="default" className="my-4 ">
