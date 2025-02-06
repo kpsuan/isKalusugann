@@ -27,7 +27,6 @@ const ManageQueue = () => {
         totalUsers: data.totalUsers || 0,
       });
     } catch (error) {
-      toast.error('Failed to fetch queue counts: ' + error.message);
     } finally {
       setRefreshing(false);
     }

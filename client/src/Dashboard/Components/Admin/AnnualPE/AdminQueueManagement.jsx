@@ -32,7 +32,6 @@ const AdminQueueManagement = () => {
       setCurrentStudent(response.data.students[0] || null);
     } catch (error) {
       console.error('Error fetching queue data:', error);
-      toast.error('Failed to load queue data.');
     } finally {
       setLoading(false);
     }
