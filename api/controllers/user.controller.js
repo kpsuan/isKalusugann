@@ -2131,41 +2131,39 @@ export const deleteAllEmergencyDates = async (req, res, next) => {
 };
 
 export const deleteSchedule = async (req, res, next) => {
+  
   try {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    // Delete all schedules and statuses by setting the `schedule` and `status` fields to null for all users
-    await User.updateMany({}, { $set: { 
-      schedule: "", 
-      status: "NO ACTION", 
-      reschedule: "", 
-      comment: "",  
-      medcert: "",
-      rescheduleStatus: "",
-      rescheduleRemarks: "",
-      rescheduledDate: [], 
-      rescheduleLimit: 0,
-      isRescheduled: false,
-      isPresent: "PENDING",
-      isDental: false,
-      isGeneral: false,
-      lastLoggedIn: null, // Set lastLoggedIn to null
-      queueNumberDate: null,
-      queueNumber: null,
-      notifications: []
+    await User.updateMany({ annualPE: 'InPerson' }, 
+      { $set: { 
+          schedule: "", 
+          status: "NO ACTION", 
+          reschedule: "", 
+          comment: "",  
+          medcert: "",
+          rescheduleStatus: "",
+          rescheduleRemarks: "",
+          rescheduledDate: [], 
+          rescheduleLimit: 0,
+          isRescheduled: false,
+          isPresent: "PENDING",
+          isDental: false,
+          isGeneral: false,
+          lastLoggedIn: null, // Set lastLoggedIn to null
+          queueNumberDate: null,
+          queueNumber: null,
+          notifications: []
 
-    } },  { session });
+    } }, );
 
     // Delete all emergency dates
-    await Emergency.deleteMany({}, { session });
+    await Emergency.deleteMany({}, );
 
      // Delete all date slots
-    await DateSlot.deleteMany({}, { session });
+    await DateSlot.deleteMany({},);
 
     res.status(200).json({ message: 'Schedules and statuses cleared successfully' });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+   
     console.error('Error clearing schedules and statuses:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
