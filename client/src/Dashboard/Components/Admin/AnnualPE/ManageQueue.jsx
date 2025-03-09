@@ -133,7 +133,7 @@ const ManageQueue = () => {
                 <div>
                   <div className="text-sm font-medium text-gray-500">Total Students in Queue</div>
                   <div className="text-2xl font-bold text-gray-800">
-                    {Object.values(queueCounts).reduce((a, b) => a + b, 0)}
+                    {queueCounts.totalUsers}
                   </div>
                 </div>
                 

@@ -33,7 +33,14 @@ import {
   clearNotifications,
   sendAdminNotification,
   sendAdminNotification2,
-  handleEmergency
+  handleEmergency,
+  getAdmin,
+  getUsersApprovedByDoctor,
+  getUsersApprovedByDentist,
+  getUsersForOverallApproval,
+  getMonthlyStats,
+  getAll,
+  deleteGraduatingUsers
 
 
 } from '../controllers/user.controller.js';
@@ -44,13 +51,20 @@ const router = express.Router();
 router.get('/', test);
 router.post('/update/:id', verifyToken, updateUser);
 router.delete('/delete/:id', verifyToken, deleteUser);
+router.delete('/delete-graduating', verifyToken, deleteGraduatingUsers);
+
 router.post('/updateReschedule/:id', verifyToken,  updateUserRescheduleDate);
 router.get('/:userId/notifications', verifyToken, updateNotifications);
 router.put('/:userId/notifications/:notificationId', markNotificationAsRead);
+router.put('/notifications/clear/:id', clearNotifications);
 
 router.get('/getusers', verifyToken, getUsers);
-router.get('/getstats', getStats);
+router.get('/getall', verifyToken, getAll);
 
+router.get('/getadmins', verifyToken, getAdmin);
+
+router.get('/getstats', getStats);
+router.get('/getmonthlystats', getMonthlyStats);
 router.get('/getinperson', verifyToken, getInperson);
 router.get('/reschedUsers', verifyToken, getreschedUsers);
 router.get('/no-docs', verifyToken, getUsersNoDocs);
@@ -59,6 +73,10 @@ router.get('/inc-docs', verifyToken, getUsersIncDocs);
 router.get('/overallpresent', verifyToken, getUsersOverallPresent);
 router.get('/overallabsent', verifyToken, getUsersOverallAbsent);
 router.get('/yesterdaypresent', verifyToken, getUsersPresentYesterday);
+
+router.get('/approved-doctor', verifyToken, getUsersApprovedByDoctor);
+router.get('/approved-dentist', verifyToken, getUsersApprovedByDentist);
+router.get('/overall-approval', verifyToken, getUsersForOverallApproval);
 
 
 router.put('/updateStatus/:id', verifyToken, updateStatus);
@@ -77,7 +95,7 @@ router.get('/getUsersByCollegeInPerson/:collegeName', verifyToken, getUsersByCol
 router.post('/reschedule/:userId', verifyToken, rescheduleUser);
 router.get('/getsubmmitedUsers', verifyToken, getusersub);
 router.post('/updateUserReschedule/:userId', verifyToken, updateUserWithReschedule);
-router.put('/:userId/notifications/clear', clearNotifications);
+
 router.put('/sendAdminNotification', verifyToken, sendAdminNotification);
 router.put('/sendAdminNotification2', verifyToken, sendAdminNotification2);
 router.post('/emergency-reschedule', verifyToken, handleEmergency);

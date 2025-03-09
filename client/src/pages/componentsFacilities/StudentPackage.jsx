@@ -1,14 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const labTests = [
-  { type: "CBC", faculty: "35.00" },
-  { type: "URINALYSIS", faculty: "25.00" },
-  { type: "FECALYSIS", faculty: "15.00" },
-  { type: "CHEST PA", faculty: "105.00" },
-];
-
+ 
 const StudentPackage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [labTests, setTests] = useState([  { type: "CBC", faculty: "35.00" },
+    { type: "URINALYSIS", faculty: "25.00" },
+    { type: "FECALYSIS", faculty: "15.00" },
+    { type: "CHEST PA", faculty: "105.00" },
+  ]);
+  
+   useEffect(() => {
+      fetchLabServices();
+    }, []);
+    
+    const fetchLabServices = async () => {
+      try {
+        const response = await fetch("/api/lab/getlabservices");
+        const data = await response.json();
+        if (data.length > 0) {
+          setTests(data);
+        }
+      } catch (error) {
+        console.error("Error fetching lab services:", error);
+      }
+    };
+  
 
   const filteredTests = labTests.filter((test) =>
     test.type.toLowerCase().includes(searchQuery.toLowerCase())

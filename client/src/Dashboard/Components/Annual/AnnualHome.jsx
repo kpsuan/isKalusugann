@@ -56,11 +56,7 @@ const AnnualHome = () => {
       fetchSavedDates();
   }, []);
   
-    useEffect(() => {
-      console.log("Received preEnlistStart:", preEnlistStart);
-      console.log("Received preEnlistEnd:", preEnlistEnd);
-    }, [preEnlistStart, preEnlistEnd]);
-    // Define the pre-enlistment period
+   
 
     const formattedpreEnlistStart = preEnlistStart.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -79,13 +75,13 @@ const AnnualHome = () => {
       const now = new Date();
   
       console.log('Current date and time:', now.toString()); // For debugging
-      console.log('Pre-enlist start:', preEnlistStart.toString()); // For debugging
-      console.log('Pre-enlist end:', preEnlistEnd.toString()); // For debugging
+      console.log('Pre-enlist start:', formattedpreEnlistStart); // For debugging
+      console.log('Pre-enlist end:', formattedpreEnlistEnd); // For debugging
   
-      if (now < preEnlistStart || now > preEnlistEnd) {
+      if (now < formattedpreEnlistStart || now > formattedpreEnlistEnd) {
         setIsPreEnlistEnabled(false);
       }
-    }, [preEnlistStart, preEnlistEnd]);
+    }, [formattedpreEnlistStart, formattedpreEnlistEnd]);
   
     const handlePreEnlistClick = () => {
       const now = new Date();
@@ -228,7 +224,8 @@ const AnnualHome = () => {
           </div>
       </div>
       {/* Modal for error */}
-      <Modal show={showModal} onClose={() => setShowModal(false)}>
+
+      <Modal className="w-full fixed inset-0 bg-black bg-opacity-50 pt-28 z-50" show={showModal} onClose={() => setShowModal(false)}>
         <Modal.Header>Pre-enlistment Error</Modal.Header>
         <Modal.Body>
           <p className="text-gray-700">

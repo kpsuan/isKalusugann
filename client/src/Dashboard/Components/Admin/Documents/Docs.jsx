@@ -85,14 +85,15 @@ const UploadDocs = () => {
                 toast.success("Document uploaded successfully!")
                 setTimeout(() => {
                     window.location.reload();
-                  }, 2000);            }
+                  }, 1000);       
+            }
         } catch (error) {
             toast.error("Unable to upload document!")
         }
     };
 
     return (
-        
+
         <div className="max-w-2xl  p-6 bg-white shadow-md rounded-lg">
         <ToastContainer className="z-50" />
             <div className="mb-6">

@@ -79,8 +79,7 @@ const Settings = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          password: formData.password,
-          newPassword: formData.newPassword
+          password: formData.newPassword,
         }),
       });
       
@@ -99,8 +98,6 @@ const Settings = () => {
       setUpdateSuccess(true);
       setFormData({
         password: '',
-        newPassword: '',
-        confirmPassword: ''
       });
     } catch (error) {
       dispatch(updateUserFailure(error));

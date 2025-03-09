@@ -11,6 +11,9 @@ import { Calendar, Clock, Users } from 'lucide-react';
 import AvailableDates from './AvailableDates'
 import Alert from '@mui/material/Alert';
 import axios from "axios";
+import {
+	RESCHEDULE_SCHEDULE_TEMPLATE, RESCHEDULE_DENIED_TEMPLATE
+} from "../../../../../../api/utils/emailTemplate";
 
 const RescheduleStatus = () => {
   const dispatch = useDispatch();
@@ -31,6 +34,7 @@ const RescheduleStatus = () => {
   const [endDate, setEndDate] = useState('');
   const [scrollTop, setScrollTop] = useState(false);
 
+  
   // Fetch startDate and endDate from API
   useEffect(() => {
     const fetchDates = async () => {
@@ -150,7 +154,38 @@ const RescheduleStatus = () => {
             return;
         }
 
-        if (formData.rescheduleStatus !== 'denied') {
+        let emailContent = '';
+        let subject = '';
+
+        if (formData.rescheduleStatus === 'approved') {
+          const formattedDates2 = dataToSubmit.rescheduledDate
+              .map(date => new Date(date).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+              }))
+              .join(', ');
+      
+          emailContent = RESCHEDULE_SCHEDULE_TEMPLATE
+              .replace('{firstName}', user.firstName)
+              .replace('{schedule}', formattedDates2); // Use formatted dates
+      
+          subject = 'Reschedule Dates Now Available';
+        } else {
+            emailContent = RESCHEDULE_DENIED_TEMPLATE
+                .replace('{firstName}', user.firstName)
+                .replace('{rescheduleRemarks}', formData.rescheduleRemarks);
+
+            subject = 'Reschedule Request Denied';
+        }
+
+        await axios.post('/api/email/emailUser', {
+            email: user.email,
+            subject,
+            html: emailContent 
+        });
+
+        if (formData.rescheduleStatus === 'approved') {
             const rescheduleRes = await fetch(`/api/user/updateUserReschedule/${userId}`, {
                 method: 'POST',
                 headers: {
@@ -165,7 +200,23 @@ const RescheduleStatus = () => {
                 setPublishError('Failed to update reschedule.');
                 return;
             }
-        } else {
+        } if (formData.rescheduleStatus === 'denied') {
+          const rescheduleRes = await fetch(`/api/user/update/${user._id}`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({reschedule: "" }),
+          });
+          await handleReleaseSlot(userId); 
+          const rescheduleData = await rescheduleRes.json();
+          
+          if (!rescheduleRes.ok) {
+              console.error('Failed to update reschedule:', rescheduleData.message);
+              setPublishError('Failed to update reschedule.');
+              return;
+          }
+      } else {
         await handleReleaseSlot(userId); 
       } 
 
@@ -181,6 +232,13 @@ const RescheduleStatus = () => {
         setPublishError('An error occurred while updating.');
     }
 };
+
+useEffect(() => {
+  if (userId) {
+      handleReleaseSlot(userId);
+  }
+}, [userId]);
+
 
 const handleReleaseSlot = async (userId) => {
   try {

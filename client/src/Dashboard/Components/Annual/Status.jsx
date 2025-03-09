@@ -160,7 +160,33 @@ const Status = () => {
       }
     };
   
-      
+    const updateUserStatus = async (status) => {
+        try {
+            const res = await fetch(`/api/user/updateReschedule/${currentUser._id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ isPresent: status }),
+            });
+    
+            const data = await res.json();
+            console.log("API Response:", data);
+    
+            if (data.success === false) {
+              dispatch(updateUserFailure(data));
+              return;
+            }
+            dispatch(updateUserSuccess(data));
+            setUpdateSuccess(true);
+            set
+          } catch (error) {
+            dispatch(updateUserFailure(error));
+          }
+    };
+    
+    
+    
     
     
       
@@ -325,6 +351,7 @@ const Status = () => {
                                 <p className="my-auto text-lg bg-gradient-to-r from-green-500 to-green-400 text-white px-3 py-3 rounded-md">
                                     PE Mode: <span className="font-semibold">{userHasChoice}</span>
                                 </p>
+                                
                                 <Button
                                     className={`my-auto font-semibold text-white p-2 rounded-md transition duration-300 ease-in-out transform hover:scale-105 ${
                                         userHasChoice === "Online"
@@ -344,6 +371,26 @@ const Status = () => {
                                     {userHasChoice === "Online" ? 'Submit Documents' : (userHasChoice ? 'Modify Choice' : 'Pre-enlist')}
                                 </Button>
                             </div>
+                            {currentUser?.annualPE === "InPerson" && (
+                            <p 
+                                className={`my-auto w-1/2 mt-3 text-lg text-white px-3 py-3 rounded-md 
+                                    ${currentUser?.isPresent === "ARRIVED" ? "bg-gradient-to-r from-blue-500 to-blue-400" : 
+                                    currentUser?.isPresent === "ABSENT" ? "bg-gradient-to-r from-red-500 to-red-400" : 
+                                    "bg-gray-400"}`}
+                                >
+                                Status: <span className="font-semibold">
+                                    {currentUser?.isPresent === "ARRIVED" 
+                                        ? "Arrived at HSU" 
+                                        : currentUser?.isPresent === "ABSENT" 
+                                            ? "ABSENT" 
+                                            : "Pending"}
+                                </span>
+                            </p>
+                                                
+                        )}
+
+
+
                         </div>
 
                         {/* Card for in-person PE, checking if user is not online and has not arrived */}
@@ -427,13 +474,13 @@ const Status = () => {
                             </Card>
                         )}
 
-                        {currentUser.isPresent === "ABSENT" && (
-                            <Card className="flex-1 bg-gray-50 p-5 ml-4">
-                                <div className="flex flex-col items-start">
-                                    <h5 className="text-lg font-light tracking-tight text-gray-900 dark:text-white">
+                            {currentUser.isPresent === "ABSENT" && currentUser.annualPE === "InPerson" && (
+                                <Card className="flex-1 bg-gray-50 p-5 ml-4 bg-red-50">
+                                <div className="flex flex-col items-start ">
+                                    <h5 className="text-lg font-semibold tracking-tight text-red-600 dark:text-white">
                                         {currentUser.firstName}, you did not arrive at your assigned date. Would you like to reschedule?
                                     </h5>
-                                    <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2">
+                                    <p className="text-2xl text-gray-700 dark:text-gray-400 mt-2"> 
                                         {currentUser.schedule
                                             ? new Date(currentUser.schedule).toLocaleDateString('en-US', {
                                                 weekday: 'short',
@@ -453,50 +500,67 @@ const Status = () => {
                                         </p>
                                     )}
 
-                                    {!currentUser.rescheduledDate?.length ? (
-                                        <Button
-                                            className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted
-                                                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-600'
-                                                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
-                                            onClick={() => {
-                                                if (requestSubmitted) {
-                                                    setShowCancelRescheduleModal(true);  // If request is submitted, handle cancel
-                                                } else {
-                                                    setShowRescheduleModal(true);  // Otherwise, show reschedule modal
-                                                }
-                                            }}
-                                            disabled={currentUser.rescheduleLimit >= 3} // Disable if reschedule limit is reached or in progress
-                                        >
-                                            {requestSubmitted ? 'Cancel Request' : 'Request to be Rescheduled'}
-                                        </Button>
-                                    ) : (
-                                        <div className="flex flex-col pt-2 w-full">
-                                            <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
-                                            <div className="flex flex-row mt-2">
-                                                <select
-                                                    className="my-2 border rounded-lg w-3/4"
-                                                    onChange={(e) => handleDateSelection(e.target.value)}
-                                                >
-                                                    <option value="" className="p-2 text-lg">Select a date</option>
-                                                    {currentUser.rescheduledDate.length ? (
-                                                        currentUser.rescheduledDate.map((date, index) => (
-                                                            <option key={index} value={date} className="p-2 text-lg">
-                                                                {dateFormatter.format(new Date(date))}
-                                                            </option>
-                                                        ))
-                                                    ) : (
-                                                        <option disabled>No available dates</option>
-                                                    )}
-                                                </select>
-                                                <Button
-                                                    className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
-                                                    onClick={() => updateSchedule(formData.schedule)}
-                                                >
-                                                    Save
-                                                </Button>
+                                    <div className="flex flex-wrap gap-x-2 mt-4">
+                                        {!currentUser.rescheduledDate?.length ? (
+                                            <Button
+                                                className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 ${requestSubmitted
+                                                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-600'
+                                                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
+                                                onClick={() => {
+                                                    if (requestSubmitted) {
+                                                        setShowCancelRescheduleModal(true);  // If request is submitted, handle cancel
+                                                    } else {
+                                                        setShowRescheduleModal(true);  // Otherwise, show reschedule modal
+                                                    }
+                                                }}
+                                                disabled={currentUser.rescheduleLimit >= 3} // Disable if reschedule limit is reached or in progress
+                                            >
+                                                {requestSubmitted ? 'Cancel Request' : 'Request to be Rescheduled'}
+                                            </Button>
+                                        ) : (
+                                            <div className="flex flex-col pt-2 w-full">
+                                                <h5 className="text-lg font-medium text-green-600">Available Reschedule Dates:</h5>
+                                                <div className="flex flex-row mt-2">
+                                                    <select
+                                                        className="my-2 border rounded-lg w-3/4"
+                                                        onChange={(e) => handleDateSelection(e.target.value)}
+                                                    >
+                                                        <option value="" className="p-2 text-lg">Select a date</option>
+                                                        {currentUser.rescheduledDate.length ? (
+                                                            currentUser.rescheduledDate.map((date, index) => (
+                                                                <option key={index} value={date} className="p-2 text-lg">
+                                                                    {dateFormatter.format(new Date(date))}
+                                                                </option>
+                                                            ))
+                                                        ) : (
+                                                            <option disabled>No available dates</option>
+                                                        )}
+                                                    </select>
+                                                    <Button
+                                                        className="w-1/4 h-12 text-white ml-2 mt-1 bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-5 py-1 text-sm text-center"
+                                                        onClick={async () => {
+                                                            await updateSchedule(formData.schedule); // Ensure schedule is updated first
+                                                            await updateUserStatus("PENDING"); // Then update user status
+                                                        }}
+                                                    >
+                                                        Save
+                                                    </Button>
+
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+
+                                        <Button
+                                        className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 mt-4 
+                                        'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-600'} hover:shadow-lg`}
+                                        onClick={() => {
+                                                navigate('/annualPE')    
+                                        }}
+                                            
+                                        >
+                                        Submit Documents Online instead
+                                        </Button>
+                                    </div>
                                 </div>
                             </Card>
                         )}

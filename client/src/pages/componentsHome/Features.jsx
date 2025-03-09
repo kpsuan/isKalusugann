@@ -79,7 +79,7 @@ const Features = () => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="text-md text-white mb-8"
             >
-              Streamline your Physical Education management with cutting-edge digital solutions.
+              Streamline your Physical Education management with digital solutions.
             </motion.p>
 
           </div>

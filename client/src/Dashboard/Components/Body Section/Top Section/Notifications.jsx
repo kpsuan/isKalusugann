@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, Clock, Info } from 'lucide-react';
+import { Bell, Check, Clock, Info, X } from 'lucide-react';
 import Sidebar from '../../SideBar Section/Sidebar';
+import { toast, ToastContainer } from 'react-toastify';
+import { FaTrash } from "react-icons/fa";
 
 const Notifications = () => {
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -31,6 +34,34 @@ const Notifications = () => {
 
     fetchNotifications();
   }, [currentUser?._id]);
+
+  const handleClearAllNotifications = async () => {
+    if (!currentUser || !currentUser._id) {
+      toast.error('Unable to clear notifications. User ID is missing.');
+      return;
+    }
+  
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/user/notifications/clear/${currentUser._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (!res.ok) {
+        throw new Error(`Failed to clear notifications: ${res.statusText}`);
+      }
+  
+      setNotifications([]);
+      toast.success('All notifications cleared');
+      setShowConfirmModal(false);
+    } catch (error) {
+      console.error('Error clearing notifications:', error.message);
+      toast.error('Failed to clear notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const timeAgo = (timestamp) => {
     const now = new Date();
@@ -94,10 +125,66 @@ const Notifications = () => {
     }
   };
 
+  // Confirmation Modal Component
+  const ConfirmationModal = () => {
+    if (!showConfirmModal) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+          </div>
+          
+          <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+          
+          <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="sm:flex sm:items-start">
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 sm:mx-0 sm:h-10 sm:w-10">
+                  <FaTrash className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                    Clear All Notifications
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Are you sure you want to clear all notifications? This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={handleClearAllNotifications}
+                disabled={loading}
+              >
+                {loading ? 'Clearing...' : 'Clear All'}
+              </button>
+              <button
+                type="button"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar />
-      
+      <ToastContainer className={"z-50"} />
+      {/* Render the confirmation modal */}
+      <ConfirmationModal />
       <main className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
           {/* Header */}
@@ -111,6 +198,15 @@ const Notifications = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
+                  <button
+                    className="text-red-600 hover:bg-red-100 p-2 rounded-md transition duration-200 flex items-center gap-1 text-sm"
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={loading || notifications.length === 0}
+                    title="Clear all notifications"
+                  >
+                  <FaTrash className="text-sm" />
+                  <span>Clear All</span>
+                  </button>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
                     <Bell className="w-4 h-4 mr-1" />
                     {notifications.filter(n => !n.isRead).length} Unread

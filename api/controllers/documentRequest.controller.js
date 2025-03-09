@@ -1,8 +1,10 @@
 import DocumentRequest from "../models/documentRequest.model.js";
+import DocDocumentRequest from "../models/docDocumentRequest.model.js";
+
 import { errorHandler } from "../utils/error.js";
 import User from '../models/user.model.js';
 import mongoose from 'mongoose';
-
+import PDFDocument from 'pdfkit';
 
 const generateTrackingNumber = () => {
   const timestamp = Date.now() 
@@ -66,6 +68,63 @@ export const createRequest = async (req, res, next) => {
   }
 };
 
+export const createRequestDoc = async (req, res, next) => {
+  try {
+    const dateRequested = new Date();
+    const requestData = {
+      generalInformation: {
+        studentNumber: req.body.studentNumber,
+        firstName: req.body.firstName,
+        middleName: req.body.middleName,
+        lastName: req.body.lastName,
+        yearLastAttended: req.body.yearLastAttended,
+        birthday: req.body.birthday,
+        email: req.body.email,
+        contactNumber: req.body.contactNumber,
+        age: req.body.age,
+        sex: req.body.sex,
+      },
+      education: {
+        degreeLevel: req.body.degreeLevel,
+        yearLevel: req.body.yearLevel,
+        college: req.body.college,
+        degreeProgram: req.body.degreeProgram,
+      },
+      documentRequest: {
+        cbc: req.body.documentRequest.cbc || false,
+        plateletCount: req.body.documentRequest.plateletCount || false,
+        urinalysis: req.body.documentRequest.urinalysis || false,
+        fecalysis: req.body.documentRequest.fecalysis || false,
+        xRay: req.body.documentRequest.xRay || false,
+        ecg12Leads: req.body.documentRequest.ecg12Leads || false,
+        drugTest: req.body.documentRequest.drugTest || false,
+        others: req.body.documentRequest.others || '',
+      },
+      trackingNumber: generateTrackingNumber(),
+      dateRequested: dateRequested,
+      dateUpdated: dateRequested,
+      status: req.body.status || '',  // Adding the status field
+      comment: req.body.comment || '',  // Adding the comment field
+      signedRequestForm: req.body.signedRequestForm || '',  // Adding the signedRequestForm field
+      purpose: req.body.purpose || '',  // Adding the signedRequestForm field
+      userId: req.user.id,
+      requestingPhysician: req.body.requestingPhysician,
+    };
+
+    // Create a new document request
+    const newRequest = new DocDocumentRequest(requestData);
+
+    // Save the document request to the database
+    const savedRequest = await newRequest.save();
+
+    // Return the saved request as the response
+    res.status(201).json(savedRequest);
+  } catch (error) {
+    // If there's an error, pass it to the error handler
+    next(error);
+  }
+};
+
 export const getRequestHistory = async (req, res, next) => {
   try {
     // Fetch all document requests, sorted by dateRequested in descending order
@@ -77,7 +136,18 @@ export const getRequestHistory = async (req, res, next) => {
   }
 };
 
-  export const getRequestHistory2 = async (req, res, next) => {
+export const getRequestHistoryDoctor = async (req, res, next) => {
+  try {
+    // Fetch all document requests, sorted by dateRequested in descending order
+    const requests = await DocDocumentRequest.find().sort({ dateRequested: -1 });
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching request history:', error);
+    next(error);
+  }
+};
+
+export const getRequestHistory2 = async (req, res, next) => {
     try {
       const requests = await DocumentRequest.find({ userId: req.query.userId });
   
@@ -91,6 +161,8 @@ export const getRequestHistory = async (req, res, next) => {
             status: doc.status || 'pending', // Default status to 'pending' if not set
             date: doc.dateRequested.toISOString().split('T')[0], // Format date
             signedRequestForm: doc.signedRequestForm,
+            requestingPhysician: doc.requestingPhysician,
+
           }));
   
         return types;
@@ -109,6 +181,56 @@ export const getRequestHistory = async (req, res, next) => {
   
       // Find the document request
       const request = await DocumentRequest.findById(requestId);
+      if (!request) {
+        return res.status(404).json({ message: 'Request not found' });
+      }
+  
+      // Update the request details
+      request.status = status || request.status;
+      request.comment = comment || request.comment;
+      request.dateUpdated = new Date();
+      request.signedRequestForm = signedRequestForm || request.signedRequestForm;
+  
+      // Save the updated request
+      const updatedRequest = await request.save();
+  
+      // Convert `userId` from `DocumentRequest` to ObjectId
+      const userId = new mongoose.Types.ObjectId(request.userId);
+  
+      // Add a notification for the user
+      const notification = {
+        message: status === 'approved'
+          ? 'Requested documents are now approved. You may view them.'
+          : 'Requested documents are denied.',
+        type: 'info',
+        timestamp: new Date(),
+        link: '/requestDocs',
+        isRead: false,
+      };
+  
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $push: { notifications: notification } },
+        { new: true } // Return the updated document
+      );
+  
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Respond with the updated request
+      res.status(200).json(updatedRequest);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  export const updateRequestStatusDoc = async (req, res, next) => {
+    try {
+      const { requestId, status, comment, signedRequestForm } = req.body;
+  
+      // Find the document request
+      const request = await DocDocumentRequest.findById(requestId);
       if (!request) {
         return res.status(404).json({ message: 'Request not found' });
       }
@@ -191,6 +313,7 @@ export const getRequestDetails = async (req, res) => {
       status: formattedStatus,
       signedRequestForm: request.signedRequestForm,
       dateRequested: formattedDateRequested,
+      requestingPhysician:  request.requestingPhysician,
       dateUpdated: formattedDateUpdated,
       documentRequest: filteredDocumentRequest, // Only return the true fields
       timeline: [
@@ -204,3 +327,6 @@ export const getRequestDetails = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+
+

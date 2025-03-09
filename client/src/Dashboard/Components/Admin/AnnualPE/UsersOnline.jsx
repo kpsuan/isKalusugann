@@ -241,6 +241,8 @@ const UsersOnline = () => {
                 <Table.HeadCell>Name</Table.HeadCell>
                 <Table.HeadCell>Documents</Table.HeadCell>
                 <Table.HeadCell>Status</Table.HeadCell>
+                <Table.HeadCell>Dentist</Table.HeadCell>
+                <Table.HeadCell>Doctor</Table.HeadCell>
                 <Table.HeadCell>Remarks</Table.HeadCell>
               </Table.Head>
               {/* Table body */}
@@ -310,11 +312,25 @@ const UsersOnline = () => {
                             </Table.Cell>
                     {/* Status */}
                     <Table.Cell className="text-center px-2">
-                      <div style={{ backgroundColor: user.status === 'approved' ? 'green' : user.status === 'denied' ? 'red' : '#888888' }} className="px-2 py-3 w-32 rounded">
+                      <div style={{ backgroundColor: user.status === 'approved' ? 'green' : user.status === 'denied' ? 'red' : '#888888' }} className="px-3 py-3 inline-block rounded-full text-xs font-semibold ">
                         <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
                           <span>{user.status || "NO ACTION"}</span>
                         </Link>
                       </div>
+                    </Table.Cell>
+                    <Table.Cell className="text-center px-2">
+                                    <div style={{ backgroundColor: user.dentistStatus === 'approved' ? 'green' : user.dentistStatus === 'denied' ? 'red' : user.dentistStatus === null ? '#888888' : '#888888' }} className="px-3 py-3 inline-block rounded-full text-xs font-semibold ">
+                                        <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                                            <span>{user.dentistStatus || "NO ACTION"}</span>
+                                        </Link>
+                                    </div>
+                            </Table.Cell>
+                    <Table.Cell className="text-center px-2">
+                        <div style={{ backgroundColor: user.doctorStatus === 'approved' ? 'green' : user.doctorStatus === 'denied' ? 'red' : user.doctorStatus === null ? '#888888' : '#888888' }} className="px-3 py-3 inline-block rounded-full text-xs font-semibold ">
+                            <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                                <span>{user.doctorStatus || "NO ACTION"}</span>
+                            </Link>
+                        </div>
                     </Table.Cell>
                     {/* Remarks */}
                     <Table.Cell>

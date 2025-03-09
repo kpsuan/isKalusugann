@@ -93,6 +93,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    medcertUser: {
+      type: String,
+      default: '',
+    },
     labResults: {
       type: String,
       default: '',
@@ -109,7 +113,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    role: {
+      type: String,
+      default: '',
+    },
     status: {
+      type: String,
+      default: 'NO ACTION',
+    },
+    dentistStatus: {
+      type: String,
+      default: 'NO ACTION',
+    },
+    doctorStatus: {
       type: String,
       default: 'NO ACTION',
     },
@@ -176,6 +192,11 @@ const userSchema = new mongoose.Schema(
       default: Date.now 
     },
 
+    isGraduating: {
+      type: Boolean,
+      default: false,
+    },
+
     isGeneral: {
       type: Boolean,
       default: false,
@@ -183,6 +204,26 @@ const userSchema = new mongoose.Schema(
     isDental:{
       type: Boolean,
       default: false,
+    },
+    approvedByDentist:{
+      type: String,
+      default: null,
+    },
+    approvedByDoctor:{
+      type: String,
+      default: null,
+    },
+    approvedByDentistLicense:{
+      type: String,
+      default: null,
+    },
+    approvedByDoctorLicense:{
+      type: String,
+      default: null,
+    },
+    licenseNumber: {
+      type: String,
+      default: null,
     },
 
     resetPasswordToken: String,

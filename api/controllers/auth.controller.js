@@ -6,10 +6,10 @@ import jwt from 'jsonwebtoken';
 import { emailUser } from './emailuser.controller.js';
 
 export const signup = async (req, res, next) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, firstName, lastName, role, isAdmin, isSuperAdmin, licenseNumber, isGraduating, college, degreeProgram, yearLevel } = req.body;
   const slug =req.body.email.split(' ').join('').toLowerCase().replace(/up|edu|ph/g, '').replace(/[^a-zA-Z0-9-]/g, '-');
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const newUser = new User({ username, email, slug, password: hashedPassword });
+  const newUser = new User({ username, email, slug, password: hashedPassword, firstName, lastName, role, isAdmin, isSuperAdmin, licenseNumber, isGraduating, college, degreeProgram, yearLevel });
   try {
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
@@ -17,6 +17,76 @@ export const signup = async (req, res, next) => {
     next(error);
   }
 };
+
+export const importStudents = async (req, res, next) => {
+  const { students } = req.body;
+  
+  if (!students || !Array.isArray(students) || students.length === 0) {
+    return res.status(400).json({ success: false, message: 'No valid student data provided' });
+  }
+
+  try {
+    const results = {
+      total: students.length,
+      successful: 0,
+      failed: 0,
+      errors: []
+    };
+
+    // Process each student
+    for (const student of students) {
+      try {
+        // Generate slug like in the signup function
+        const slug = student.email?.split(' ').join('').toLowerCase().replace(/up|edu|ph/g, '').replace(/[^a-zA-Z0-9-]/g, '-');
+        
+        // Hash password
+        const hashedPassword = bcrypt.hashSync(student.password, 10);
+        
+        // Create new user object
+        const newUser = new User({
+          username: student.username,
+          email: student.email,
+          slug,
+          password: hashedPassword,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          middleName: student.middleName || '',
+          isAdmin: student.isAdmin || false,
+          isSuperAdmin: student.isSuperAdmin || false,
+          licenseNumber: student.licenseNumber || '',
+          isGraduating: student.isGraduating || false,
+          college: student.college,
+          degreeProgram: student.degreeProgram,
+          yearLevel: student.yearLevel
+        });
+        
+        // Save the user
+        await newUser.save();
+        results.successful++;
+        
+      } catch (error) {
+        results.failed++;
+        // Add meaningful error message with the problematic record
+        results.errors.push({
+          email: student.email || 'Unknown',
+          error: error.message || 'Unknown error',
+          code: error.code // MongoDB error code (e.g., 11000 for duplicate)
+        });
+      }
+    }
+    
+    // Return results
+    res.status(200).json({
+      success: true,
+      message: `Imported ${results.successful} of ${results.total} students`,
+      results
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const signin = async (req, res, next) => {
   const { email, password } = req.body;
@@ -38,6 +108,7 @@ export const signin = async (req, res, next) => {
     next(error);
   }
 };
+
 
 export const attendance = async (req, res, next) => {
   const { email, password } = req.body;

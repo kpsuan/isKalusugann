@@ -107,6 +107,12 @@ const Online = () => {
   const [totalDenied, setTotalDenied] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
 
+  const [totalApprovedDoctor, setTotalApprovedDoctor] = useState(0);
+  const [totalApprovedDentist, setTotalApprovedDentis] = useState(0);
+  const [totalPendingApproval, setTotalPendingApproval] = useState(0);
+
+
+
   const degreeCourses = [
     "COMMUNITY DEVELOPMENT",
     "History",
@@ -171,6 +177,10 @@ const Online = () => {
           setTotalApproved(data.totalApproved); // Check existence
           setTotalDenied(data.totalDenied); // Check existence
           setTotalPending(data.totalPending); // Check existence
+          setTotalApprovedDoctor(data.totalApprovedDoctor);
+          setTotalApprovedDentis(data.totalApprovedDentist);
+          setTotalPendingApproval(data.totalPendingApproval);
+
         }
       } catch (error) {
         console.log(error.message);
@@ -308,6 +318,39 @@ const Online = () => {
                         colorClass="text-red-600"
                         bgClass="bg-red-100"
                         onClick={() => window.open('/noDocs', '_blank')}
+                      />
+                    </div>
+                  </Card>
+                </div>
+
+                  {/* Documents Status */}
+                  <div className="mb-8">
+                  <Card>
+                    <h2 className="text-xl font-semibold mb-4">Approval Status</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <StatCard
+                        title="Approved by Doctor"
+                        value={totalApprovedDoctor}
+                        icon={HiOutlineDocumentText}
+                        colorClass="text-green-600"
+                        bgClass="bg-green-100"
+                        onClick={() => window.open('/approved-doctor', '_blank')}
+                      />
+                      <StatCard
+                        title="Approved by Dentist"
+                        value={totalApprovedDentist}
+                        icon={HiOutlineDocumentText}
+                        colorClass="text-yellow-600"
+                        bgClass="bg-yellow-100"
+                        onClick={() => window.open('/approved-dentist', '_blank')}
+                      />
+                      <StatCard
+                        title="For Overall Approval"
+                        value={totalPendingApproval}
+                        icon={HiOutlineXCircle}
+                        colorClass="text-red-600"
+                        bgClass="bg-red-100"
+                        onClick={() => window.open('/approved-overall', '_blank')}
                       />
                     </div>
                   </Card>

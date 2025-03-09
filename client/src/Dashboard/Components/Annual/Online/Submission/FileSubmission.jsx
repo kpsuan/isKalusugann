@@ -73,12 +73,18 @@ const FileSubmission = () => {
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   const [file3, setFile3] = useState(null);
+  const [file4, setFile4] = useState(null);
+
   const [fileName1, setFileName1] = useState("");
   const [fileName2, setFileName2] = useState("");
   const [fileName3, setFileName3] = useState("");
+  const [fileName4, setFileName4] = useState("");
+
   const [uploadPercent1, setUploadPercent1] = useState(0);
   const [uploadPercent2, setUploadPercent2] = useState(0);
   const [uploadPercent3, setUploadPercent3] = useState(0);
+  const [uploadPercent4, setUploadPercent4] = useState(0);
+
   const [uploadError, setUploadError] = useState(false);
   const [formData, setFormData] = useState({});
   const [showSubmitModal, setShowSubmitModal] = useState(false); 
@@ -106,6 +112,11 @@ const FileSubmission = () => {
           setFileName3(extractFileName(currentUser.requestPE));
           setFormData(prevData => ({ ...prevData, requestPE: currentUser.requestPE }));
       }
+
+      if (currentUser?.medcertUser) {
+        setFileName3(extractFileName(currentUser.requestPE));
+        setFormData(prevData => ({ ...prevData, requestPE: currentUser.requestPE }));
+    }
   }, [currentUser]);
   
   
@@ -122,6 +133,10 @@ const FileSubmission = () => {
       if (file3) handleFileUpload(file3, 'requestPE');
   }, [file3]);
 
+  useEffect(() => {
+    if (file4) handleFileUpload(file4, 'medcertUser');
+}, [file4]);
+
   const handleFileUpload = async (file, fileType) => {
   const storage = getStorage(app);
   const fileName = new Date().getTime() + file.name;
@@ -135,6 +150,8 @@ const FileSubmission = () => {
           if (fileType === 'peForm') setUploadPercent1(Math.round(progress));
           if (fileType === 'labResults') setUploadPercent2(Math.round(progress));
           if (fileType === 'requestPE') setUploadPercent3(Math.round(progress));
+          if (fileType === 'medcertUser') setUploadPercent4(Math.round(progress));
+
       },
       (error) => {
           setUploadError(true);
@@ -219,6 +236,8 @@ const handleFileRemove = async (fileType) => {
           fileRef = ref(storage, formData.labResults);
       } else if (fileType === 'requestPE' && formData.requestPE) {
           fileRef = ref(storage, formData.requestPE);
+      } else if (fileType === 'medcertUser' && formData.medcertUser) {
+        fileRef = ref(storage, formData.medcertUser);
       }
   
       if (fileRef) {
@@ -249,6 +268,11 @@ const handleFileRemove = async (fileType) => {
           setFileName3('');
           setUploadPercent3(0);
       }
+      if (fileType === 'medcertUser') {
+        setFile4(null);
+        setFileName4('');
+        setUploadPercent4(0);
+    }
   };
 
   return (
@@ -329,6 +353,27 @@ const handleFileRemove = async (fileType) => {
                   handleFileRemove={() => handleFileRemove('requestPE')}
                   uploadError={uploadError}
                 />
+
+                <FileUploadSection 
+                  title="Upload medical certificate from your Doctor"
+                  fileType="medcertUser"
+                  fileName={fileName4}
+                  uploadPercent={uploadPercent4}
+                  handleFileChange={(e) => {
+                    const selectedFile = e.target.files[0];
+                    if (selectedFile.size > 10 * 1024 * 1024) {
+                      setUploadError(true);
+                      setFile4(null);
+                      return;
+                    }
+                    setFileName4(selectedFile.name);
+                    setFile4(selectedFile);
+                  }}
+                  handleFileRemove={() => handleFileRemove('medcertUser')}
+                  uploadError={uploadError}
+                />
+
+
                 <Button 
                   className="w-full text-lg p-4 bg-cyan-500 hover:bg-cyan-600 transition-colors"
                   onClick={() => setShowSubmitModal(true)}
@@ -365,7 +410,7 @@ const handleFileRemove = async (fileType) => {
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 text-green-500">•</span>
-                    All three documents are required for submission
+                    All four documents are required for verification and validation from HSU. Failure to submit one may affect your Annual PE Status
                   </li>
                 </ul>
               </div>

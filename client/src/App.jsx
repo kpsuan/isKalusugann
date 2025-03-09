@@ -86,6 +86,15 @@ import DentalQueue from './Dashboard/Components/Admin/AnnualPE/DentalQueue';
 import DoctorQueue from './Dashboard/Components/Admin/AnnualPE/DoctorQueue';
 import ManageQueue from './Dashboard/Components/Admin/AnnualPE/ManageQueue';
 import EmergencyReschedule from './Dashboard/Components/Annual/EmergencyReschedule';
+import Personnel from './Dashboard/Components/Admin/Personnel/Personnel';
+import RequestFormDoc from './Dashboard/Components/DocumentsUser/RequestFormDoc';
+import DocRequest from './Dashboard/Components/Admin/Documents/DocRequest';
+import ApprovedDoctor from './Dashboard/Components/Admin/AnnualPE/ApprovedDoctor';
+import ApprovedDentist from './Dashboard/Components/Admin/AnnualPE/ApprovedDentist';
+import ApprovedOverall from './Dashboard/Components/Admin/AnnualPE/ApprovalOverall';
+import UnavailableDatesManager from './Dashboard/Components/Admin/AnnualPE/UnavailableDatesManager';
+import UnavailableDatesPage from './Dashboard/Components/Admin/AnnualPE/UnavailableDatesAdmin';
+import ManageStudents from './Dashboard/Components/Admin/Personnel/ManageStudents';
 
 
 export default function App() {
@@ -123,6 +132,9 @@ export default function App() {
           <Route path="/appointment" element={<Appointments />} />
           <Route path="/appointmentDetails" element={<ScheduleAppointment />} />
           <Route path="/announcement" element={<Announcement />} />
+          <Route path="/personnel" element={<Personnel />} />
+          <Route path="/manage-students" element={<ManageStudents />} />
+
           <Route path="/news" element={<News />} />
           <Route path="/dash-post" element={<DashPost />} />
           <Route path="/get-documents" element={<GetDocs />} />
@@ -137,10 +149,14 @@ export default function App() {
           <Route path="/fileSubmissions" element={<FileSubmission />} />
           <Route path="/post/:postSlug" element={<Post />} />
           <Route path="/completeDocs" element={<CompleteDocuments />} />
+          <Route path="/approved-doctor" element={<ApprovedDoctor />} />
+          <Route path="/approved-dentist" element={<ApprovedDentist />} />
+          <Route path="/approved-overall" element={<ApprovedOverall />} />
           <Route path="/noDocs" element={<NoDocsSubmitted />} />
           <Route path="/incDocs" element={<IncDocuments />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
+
           <Route path="/availableSched/:userId" element={<AvailableSchedules />} />
           <Route path="/annualpe-start" element={<AnnualProcess />} />
           <Route path="/annualpe-process" element={<AnnualProcess2 />} />
@@ -186,6 +202,12 @@ export default function App() {
           <Route path="/dental-queue" element={<DentalQueue />} />
           <Route path="/doctor-queue" element={<DoctorQueue />} />
           <Route path="/manage-queue" element={<ManageQueue />} />
+          <Route path="/requestDocsDoc" element={<RequestFormDoc />} />
+          <Route path="/getDocRequest" element={<DocRequest />} />
+
+          <Route path="/setunavailable" element={<UnavailableDatesPage />} />
+
+          
 
         </Route>
 

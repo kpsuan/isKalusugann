@@ -24,7 +24,7 @@ import "../../Annual/annual.css";
 import axios from 'axios';
 
 
-import {Link, useNavigate} from 'react-router-dom'
+import {Link, useNavigate, useLocation} from 'react-router-dom'
 import UserInPerson from "./UserInPerson";
 import ScheduledForDate from "./ScheduledOn";
 import ScheduledForToday from "./ScheduledToday";
@@ -93,6 +93,8 @@ const ScheduleHeader = ({
   onGenerateSchedule,
   onClearSchedules,
   onReschedule, 
+  onEmailSchedule,
+  onUnavailableDate,
   onRescheduleAll
 }) => {
   return (
@@ -168,6 +170,13 @@ const ScheduleHeader = ({
                   {loading ? 'Generating...' : 'Generate Schedule'}
                 </Button>
                 <Button
+                    onClick={onEmailSchedule}
+                    className="bg-pink-500 hover:bg-pink-800 text-white border-none"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Email Schedules
+                </Button>
+                <Button
                   onClick={onClearSchedules}
                   className="bg-red-500 hover:bg-red-600 text-white border-none"
                   disabled={loading}
@@ -175,6 +184,7 @@ const ScheduleHeader = ({
                   <Trash2 className="h-4 w-4 mr-2" />
                   {loading ? 'Clearing...' : 'Clear Schedules'}
                 </Button>
+                
               </div>
               
               
@@ -182,6 +192,7 @@ const ScheduleHeader = ({
           )}
            <div className="space-y-4">
             <div className="flex flex-wrap gap-3">
+            
               <Button
                     onClick={onReschedule}
                     className="bg-cyan-700 hover:bg-cyan-800 text-white border-none"
@@ -189,6 +200,7 @@ const ScheduleHeader = ({
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Handle Reschedules
               </Button>
+
               <Button
                     onClick={onRescheduleAll}
                     className="bg-yellow-400 hover:bg-yellow-500 text-white border-none"
@@ -226,6 +238,8 @@ const InPerson = () => {
   const [savedEndDate, setSavedEndDate] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+
+  const location = useLocation();
 
 
   const [startDate, setStartDate] = useState(new Date());
@@ -290,9 +304,15 @@ const InPerson = () => {
 
 
   const handleSetSched = () => {
-    setShowPopup(!showPopup);
-    console.log("Popup visibility toggled:", !showPopup);
+    setShowPopup(true);
+    console.log("Popup visibility toggled:", true);
   };
+
+  useEffect(() => {
+    if (location.state?.openPopup) {
+      handleSetSched(); 
+    }
+  }, [location.state]);
   
   
   const degreeCourses = [
@@ -381,7 +401,6 @@ const InPerson = () => {
   
      
       toast.success('Schedule generated!');
-      setShowEmailModal(true);
     } catch (error) {
       console.error('Error generating schedule', error);
       toast.error('Error generating schedule. Please try again.');
@@ -389,6 +408,11 @@ const InPerson = () => {
       setLoading(false);
     }
   };
+
+  const handleSendEmail = async () =>{
+    setShowEmailModal(true);
+
+  }
   
   const handleEmailSchedule = async () => {
     setLoading(true);
@@ -436,6 +460,11 @@ const InPerson = () => {
   const handleRescheduleAllClick = () => {
     navigate('/handle-emergency');
   };
+
+
+  const handleSetUnavailableDates = () => {
+    navigate('/setunavailable');
+  };
   
   const handleClearSchedules = async () => {
     setLoading(true);
@@ -477,6 +506,7 @@ const InPerson = () => {
           currentUser={currentUser}
           onSetSchedule={handleSetSched}
           onGenerateSchedule={handleGenerateSchedule}
+          onEmailSchedule={handleSendEmail}
           onClearSchedules={handleClearSchedules}
           onReschedule={handleRescheduleClick}
           onRescheduleAll={handleRescheduleAllClick}
@@ -561,6 +591,12 @@ const InPerson = () => {
               </div>
               <p className="text-blue-100 mt-2">Select your preferred date range</p>
               <p className="text-gray-200 mt-2 text-sm">Note: PH Holidays are already excluded</p>
+              <Button
+              onClick={handleSetUnavailableDates}
+                    className="bg-red-600 mt-4 hover:bg-red-800 text-white"
+                  >
+                    Set Unavailable Dates
+              </Button>
 
             </div>
     

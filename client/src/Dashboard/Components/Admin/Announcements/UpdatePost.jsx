@@ -1,207 +1,355 @@
-import Sidebar from "../../SideBar Section/Sidebar";
-import Top from "../../Profile/Components/Header";
-import "../../Annual/annual.css";
+import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-
-import {
-    getDownloadURL,
-    getStorage,
-    ref,
-    uploadBytesResumable,
-} from 'firebase/storage';
-
-import {app} from '../../../../firebase';
+import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
+import { app } from '../../../../firebase';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Select, Alert, Button, Modal, ModalBody, TextInput, FileInput } from 'flowbite-react';
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from "react";
-import {CircularProgressbar} from "react-circular-progressbar";
-import "react-circular-progressbar/dist/styles.css";
-import { useNavigate, useParams } from "react-router-dom";
-
+import { CircularProgressbar } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+import Sidebar from '../../SideBar Section/Sidebar';
+import Top from '../../Profile/Components/Header';
+import "../../Annual/annual.css";
 
 const UpdatePost = () => {
-    const [file, setFile] = useState([null]);
-    const [imageUploadProgress, setImageUploadProgress] = useState(null);
-    const [imageUploadError, setImageUploadError] = useState(null);
-    const [formData, setFormData] = useState({});
-    const [publishError, setPublishError] = useState(null);
-    const {postId} = useParams();
-
-    const navigate = useNavigate();
-    const {currentUser} = useSelector((state) => state.user);
-
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const res = await fetch(`/api/post/getposts?postId=${postId}`);
-                const data = await res.json();
-    
-                // Log the API response to check if _id is present
-                console.log('API Response:', data);
-    
-                if (!res.ok) {
-                    console.log('Error from server:', data.message);
-                    setPublishError(data.message);
-                    return;
-                }
-    
-                if (res.ok && data.posts && data.posts.length > 0) {
-                    console.log('Fetched post data:', data.posts[0]); // Log the fetched post data
-                    setFormData(data.posts[0]); // Set the form data including _id
-                    setPublishError(null);
-                } else {
-                    setPublishError('Post not found');
-                }
-            } catch (error) {
-                console.log('Fetch error:', error.message);
-                setPublishError('Error fetching post');
-            }
-        };
-    
-        fetchPost();
-    }, [postId]);
-    
-    
-
-
-    const handleUploadImage = async () => {
+  const [file, setFile] = useState(null);
+  const [imageUploadProgress, setImageUploadProgress] = useState(null);
+  const [imageUploadError, setImageUploadError] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [publishError, setPublishError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { postId } = useParams();
+  const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
+  useEffect(() => {
+    const fetchPost = async () => {
         try {
-            if(!file){
-                setImageUploadError('Please select an image to upload');
-                return;
-            }
-            const storage = getStorage(app);
-            const fileName = new Date().getTime() + file.name;
-            const storageRef = ref(storage, fileName);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            uploadTask.on(
-                'state_changed',
-                (snapshot) => {
-                    const progress = 
-                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setImageUploadProgress(progress.toFixed(0));
-                },
-                (error) => {
-                    setImageUploadError('Image upload failed');
-                    setImageUploadProgress(null);
-                },
-
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                        setImageUploadError(null);
-                        setImageUploadProgress(null);
-                        setFormData({ ...formData, image: downloadURL });
-                    });
-                }
-            );
-
-        } catch (error) {
-            setImageUploadError('Image upload failed');
-            setImageUploadProgress(null);
-            console.log(error);
-    }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        console.log('Form data on submit:', formData); // Debugging output
-        if (!formData._id) {
-            setPublishError('Post ID is missing');
-            return;
-        }
-        try {
-            const res = await fetch(`/api/post/updatepost/${formData._id}/${currentUser._id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
+            console.log('Fetching post with ID:', postId);
+            const res = await fetch(`/api/post/getposts?postId=${postId}`);
             const data = await res.json();
+
+            console.log('API Response:', data);
+
             if (!res.ok) {
+                console.log('Error from server:', data.message);
                 setPublishError(data.message);
                 return;
             }
-    
-            if (res.ok) {
+
+            if (res.ok && data.posts && data.posts.length > 0) {
+                const postData = data.posts[0];
+                console.log('Fetched post data:', postData);
+                
+                // Ensure _id is explicitly preserved in formData
+                setFormData({
+                    ...postData,
+                    _id: postData._id || postId // Fallback to URL param if needed
+                });
+                
+                console.log('Setting _id in formData:', postData._id || postId);
                 setPublishError(null);
-                navigate(`/post/${data.slug}`);
+            } else {
+                setPublishError('Post not found');
             }
         } catch (error) {
-            console.log('Error during update:', error.message);
-            setPublishError('Something went wrong');
+            console.log('Fetch error:', error.message);
+            setPublishError('Error fetching post');
         }
     };
+
+    fetchPost();
+}, [postId]);
+
+
+  const handleUploadImage = async () => {
+    try {
+      if (!file) {
+        setImageUploadError('Please select an image to upload');
+        return;
+      }
+      const storage = getStorage(app);
+      const fileName = new Date().getTime() + file.name;
+      const storageRef = ref(storage, fileName);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setImageUploadProgress(progress.toFixed(0));
+        },
+        (error) => {
+          setImageUploadError('Image upload failed');
+          setImageUploadProgress(null);
+        },
+
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setImageUploadError(null);
+            setImageUploadProgress(null);
+            setFormData({ ...formData, image: downloadURL });
+          });
+        }
+      );
+    } catch (error) {
+      setImageUploadError('Image upload failed');
+      setImageUploadProgress(null);
+      console.log(error);
+    }
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
+    
+    const idToUse = formData._id || postId;
+    
+    if (!idToUse) {
+        console.error('No post ID available for update');
+        setPublishError('Post ID is missing');
+        return;
+    }
+    
+    setIsLoading(true);
+    try {        
+        const res = await fetch(`/api/post/updatepost/${idToUse}/${currentUser._id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+        
+        const data = await res.json();
+        console.log('Update response:', data);
+        
+        if (!res.ok) {
+            setPublishError(data.message);
+            setIsLoading(false);
+            return;
+        }
 
-    return (
-        <div className="dashboard my-flex">
-          <div className="dashboardContainer my-flex">
-            <Sidebar />
-            <div className="mainContent">
-            <Top />
-            <div className="p-3 max-w-3xl mx-auto min-h-screen"> 
-                <h1 className="text-center text-3xl my-7 font-semibold">Update Announcement</h1>
-                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-4 sm:flex-row justify-between">
-                        <TextInput type='text' placeholder='Title' required id ='title' 
-                        className = 'flex-1' onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
+        if (res.ok) {
+            setPublishError(null);
+            navigate(`/post/${data.slug}`);
+        }
+    } catch (error) {
+        console.log('Error during update:', error.message);
+        setPublishError('Something went wrong');
+        setIsLoading(false);
+    }
+};
+  
+  return (
+    <div className="dashboard my-flex">
+      <div className="dashboardContainer my-flex">
+        <Sidebar />
+        <div className="mainContent m-0 p-0">
+          <div className="flex-1 transition-all duration-500 ease-in-out">
+            {/* Header Section with Gradient */}
+            <div className="bg-gradient-to-r from-blue-700 to-cyan-500 p-10 animate-gradient-x">
+              <div className="max-w-4xl mx-auto ">
+                <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
+                  Update Announcement
+                </h1>
+                <p className="text-white/80 text-lg font-light animate-slide-up mb-8">
+                  Modify your important updates for everyone
+                </p>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="max-w-4xl mx-auto px-6 -mt-8">
+              <div className="bg-white rounded-xl shadow-xl p-8 transition-transform duration-300 hover:shadow-2xl">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Title and Category Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter title..."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-blue-400"
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         value={formData.title}
-                        />
+                        required
+                      />
+                    </div>
 
-                        <Select 
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category
+                      </label>
+                      <select
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-blue-400"
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        value={formData.category}> 
-                            <option value="uncategorized">Select a category</option>
-                            <option value="general">General</option>
-                            <option value="scheduling">Scheduling</option>
-                            <option value="emergency">Emergency</option>
-                        </Select>
+                        value={formData.category}
+                      >
+                        <option value="uncategorized">Select category</option>
+                        <option value="general">General</option>
+                        <option value="scheduling">Scheduling</option>
+                        <option value="emergency">Emergency</option>
+                      </select>
                     </div>
-                    <div className="flex gap-4 items-center justify-between border-4
-                        border-teal-500 border-dotted p-3">
-                            <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
-                            <Button 
-                                type ='button' 
-                                size='sm' 
-                                className="text-lg  outline-black text-black px-14 py-4 rounded-md"
-                                
-                                onClick={handleUploadImage}
-                                disabled={imageUploadProgress}
-                                >
-                                    {imageUploadProgress ? (
-                                        <div className="w-16 h-16">
-                                            <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} 
-                                            />
-                                        </div>
-                                    ) : ('Upload image'
-                                    )}
-                                 </Button>
+                  </div>
+
+                  {/* Image Upload Section */}
+                  <div className="bg-gray-50 p-6 rounded-xl border-2 border-dashed border-gray-300 transition-all duration-300 hover:border-blue-400">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      <div className="flex-1 w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setFile(e.target.files[0])}
+                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-300"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleUploadImage}
+                        disabled={imageUploadProgress !== null}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 disabled:bg-blue-300 transform hover:scale-105"
+                      >
+                        {imageUploadProgress ? (
+                          <div className="w-12 h-12 transition-all duration-300">
+                            <CircularProgressbar
+                              value={imageUploadProgress}
+                              text={`${imageUploadProgress || 0}%`}
+                              styles={{
+                                path: { stroke: '#fff' },
+                                text: { fill: '#fff', fontSize: '24px' }
+                              }}
+                            />
+                          </div>
+                        ) : 'Upload Image'}
+                      </button>
                     </div>
 
-                    {imageUploadError && <Alert color="failure">{imageUploadError}</Alert>}
-                    {formData.image && (
-                        <img src={formData.image} alt="upload" className="w-full h-full object-fit"/>
+                    {imageUploadError && (
+                      <p className="mt-2 text-sm text-red-600 animate-fade-in">{imageUploadError}</p>
                     )}
 
-                    <ReactQuill 
-                        theme="snow"  
-                        value={formData.content}
-                        placeholder="Write something..." 
-                        className="h-72 mb-12"
-                        required
-                        onChange={(value) => setFormData({ ...formData, content: value})}/> 
+                    {formData.image && (
+                    <div className="mt-4 animate-fade-in">
+                        <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="max-h-64 rounded-lg mx-auto object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                    </div>
+                    )
+                   }
+
+
+                  </div>
+
+                 
+                  {/* Rich Text Editor */}
+                  <div className="transition-all duration-300">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Content
+                    </label>
+                    <div className="bg-white border border-gray-300 rounded-lg hover:border-blue-400 transition-all duration-300">
+                      <ReactQuill
+                        theme="snow"
+                        placeholder="Write your announcement..."
+                        className="h-72"
+                        value={formData.content || ''}
+                        onChange={(value) => setFormData({ ...formData, content: value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="w-1/4 py-4 bg-gray-200 text-gray-800 text-lg font-semibold rounded-lg hover:bg-gray-300 transition-all duration-300 transform hover:scale-105"
+                    >
+                      Cancel
+                    </button>
                     
-                    <Button type="submit" className="text-3xl bg-green-500 text-white hover:bg-green-600 py-2 rounded-md">
-                    Update Announcement </Button>
-                    {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-3/4 py-4 bg-blue-500 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg disabled:bg-blue-400"
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Updating...
+                        </span>
+                      ) : 'Update Announcement'}
+                    </button>
+                  </div>
+
+                  {publishError && (
+                    <div className="animate-fade-in">
+                      <p className="text-sm text-red-600 text-center">{publishError}</p>
+                    </div>
+                  )}
                 </form>
+              </div>
             </div>
           </div>
         </div>
+      </div>
     </div>
-    );
-}
-export default UpdatePost
+  );
+};
+
+export default UpdatePost;
+
+// Add these custom animations to your CSS if not already included
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes gradient-x {
+    0%, 100% {
+      background-size: 200% 200%;
+      background-position: left center;
+    }
+    50% {
+      background-size: 200% 200%;
+      background-position: right center;
+    }
+  }
+  
+  .animate-gradient-x {
+    animation: gradient-x 15s ease infinite;
+  }
+  
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+  
+  @keyframes slide-up {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out;
+  }
+`;
+document.head.appendChild(style);

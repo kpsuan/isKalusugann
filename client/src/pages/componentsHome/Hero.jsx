@@ -45,7 +45,7 @@ export default function Hero() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalScheduled: 0,
-    totalOnline: 0
+    totalDocumentRequests: 0
   });
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
 
@@ -146,7 +146,7 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Empowering Our Community Through Innovative and Compassionate Healthcare
+          Making healthcare accessible for All UPV Constituents
           </motion.p>
 
           <motion.div
@@ -180,12 +180,12 @@ export default function Hero() {
           <StatCard 
             icon={HiOutlineCalendar}
             value={stats.totalScheduled}
-            label="Appointments Scheduled"
+            label="Annual PE Scheduled"
             delay={0}
           />
           <StatCard 
             icon={HiOutlineDocument}
-            value={stats.totalOnline}
+            value={stats.totalDocumentRequests}
             label="Documents Processed"
             delay={0.2}
           />

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const documentRequestSchema = new mongoose.Schema({
   generalInformation: {
-    studentNumber: { type: String, required: true },
+    studentNumber: { type: String},
     firstName: { type: String, required: true },
     middleName: { type: String, required: false },
     lastName: { type: String, required: true },
@@ -14,10 +14,10 @@ const documentRequestSchema = new mongoose.Schema({
     sex: { type: String, required: false }
   },
   education: {
-    degreeLevel: { type: String, required: true },
-    yearLevel: { type: String, required: true },
-    college: { type: String, required: true },
-    degreeProgram: { type: String, required: true }
+    degreeLevel: { type: String, required: false },
+    yearLevel: { type: String, required: false },
+    college: { type: String, required: false },
+    degreeProgram: { type: String, required: false }
   },
   documentRequest: {
     cbc: { type: Boolean, default: false },
@@ -35,6 +35,7 @@ const documentRequestSchema = new mongoose.Schema({
   status: { type: String, required: false },  // Add status field
   comment: { type: String, default: '' },  // Add comment field
   signedRequestForm: { type: String, default: '' },  // Add signedRequestForm field
+  requestingPhysician: { type: String, default: '', required: false },
   purpose: { type: String, default: '' },  // Add signedRequestForm field
   userId: {
     type: String,

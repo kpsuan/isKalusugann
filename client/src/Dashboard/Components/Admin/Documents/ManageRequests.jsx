@@ -359,6 +359,10 @@ const handleEmailUser = async (request) => {
                     <p className="font-medium">{request.generalInformation?.contactNumber || 'N/A'}</p>
                   </div>
                   <div>
+                    <p className="text-sm text-gray-500">Email:</p>
+                    <p className="font-medium">{request.generalInformation?.email || 'N/A'}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-gray-500">Comment:</p>
                     <p className="font-medium">{request.comment || 'N/A'}</p>
                   </div>

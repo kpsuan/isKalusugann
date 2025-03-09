@@ -290,6 +290,8 @@ const CollegeStudents = () => {
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Name</th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Documents</th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dentist</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Remarks</th>
                     </tr>
                   </thead>
@@ -346,6 +348,17 @@ const CollegeStudents = () => {
                             <StatusBadge status={user.status || "NO ACTION" } />
                           </Link>
                         </td>
+                        <td className="px-6 py-4">
+                          <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                            <StatusBadge status={user.dentistStatus || "NO ACTION" } />
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                            <StatusBadge status={user.doctorStatus || "NO ACTION" } />
+                          </Link>
+                        </td>
+                        
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {user.comment?.replace(/<\/?p>/g, '') || 'No remarks'}
                         </td>

@@ -23,18 +23,21 @@ const GetDocsUser = () => {
     peForm: null,
     labResults: null,
     requestPE: null,
+    medcertUser: null,
   });
 
   const titleMap = {
     peForm: "Periodic Health Examination Form",
     labResults: "Laboratory Results",
     requestPE: "Request for Physical Examination",
+    medcertUser: "Medical Certificate from your Doctor"
   };
 
   const iconMap = {
     peForm: "📋",
     labResults: "🔬",
     requestPE: "📝",
+    medcertUse: "📝",
   };
 
   const storage = getStorage();
@@ -71,11 +74,13 @@ const GetDocsUser = () => {
 
   useEffect(() => {
     if (currentUser) {
-      const { peForm, labResults, requestPE } = currentUser;
+      const { peForm, labResults, requestPE, medcertUser } = currentUser;
 
       if (peForm) fetchMetadata(peForm, 'peForm');
       if (labResults) fetchMetadata(labResults, 'labResults');
       if (requestPE) fetchMetadata(requestPE, 'requestPE');
+      if (medcertUser) fetchMetadata(medcertUser, 'medcertUser');
+
     }
   }, [currentUser]);
 

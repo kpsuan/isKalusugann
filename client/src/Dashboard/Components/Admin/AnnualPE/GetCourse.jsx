@@ -138,6 +138,8 @@ const CourseStudents = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dentist</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
                           </tr>
                         </thead>
@@ -196,6 +198,18 @@ const CourseStudents = () => {
                                 <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
                                     <span className={`${getStatusColor(user.status)} px-3 py-1 rounded-full text-white text-sm`}>
                                       {user.status || "NO ACTION"}</span>
+                                </Link>
+                              </td>
+                              <td className="px-6 py-4">
+                                <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                                    <span className={`${getStatusColor(user.dentistStatus)} px-3 py-1 rounded-full text-white text-sm`}>
+                                      {user.dentistStatus || "NO ACTION"}</span>
+                                </Link>
+                              </td>
+                              <td className="px-6 py-4">
+                                <Link className="text-white hover:underline" to={`/user-status/${user._id}`}>
+                                    <span className={`${getStatusColor(user.doctorStatus)} px-3 py-1 rounded-full text-white text-sm`}>
+                                      {user.doctorStatus || "NO ACTION"}</span>
                                 </Link>
                               </td>
                               <td className="px-6 py-4">

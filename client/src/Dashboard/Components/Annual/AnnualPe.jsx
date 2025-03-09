@@ -69,8 +69,7 @@ const MainPE = () => {
           <Top title={headerTitle} />
           <div className="titlePE my-flex">
             <h4>
-              <b>Preenlistment Period </b>{" "}
-              <span className="lighter-font">(January 12-20, 2024)</span>
+              <b>Annual PE Selection </b>{" "}
             </h4>
             <h2>
               {" "}
@@ -79,7 +78,7 @@ const MainPE = () => {
               </span>
             </h2>
 
-            <div className="choicePE">
+            <div className="choicePE h-full">
               <div
                 className={`choice1 cursor-pointer transition-transform duration-300 ease-in-out transform ${
                   mode === 'Online' ? 'bg-[#89f0fa] scale-105' : 'bg-white hover:scale-105'

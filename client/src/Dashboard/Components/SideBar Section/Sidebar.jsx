@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAnnualPEOpen, setIsAnnualPEOpen] = useState(false);
+  const [isPersonnelOpen, setIsPersonnelOpen] = useState(false);
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
@@ -53,59 +54,127 @@ const Sidebar = () => {
             {!isCollapsed && <span className="ml-3">Home</span>}
           </a>
 
-        <div className="relative">
-          {/* Documents */}
-          <button
-          onClick={() => setIsDocsOpen(!isDocsOpen)}
-              className="w-full flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <FileText className="w-5 h-5" />
-              {!isCollapsed && (
-                <>
-                  <span className="ml-3">Documents</span>
-                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isDocsOpen ? 'rotate-180' : ''}`} />
-                </>
+          {/* Personnel */}
+          
+          {currentUser.isSuperAdmin && (
+            <div className="relative">
+              <button
+                onClick={() => setIsPersonnelOpen(!isPersonnelOpen)}
+                className="w-full flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <User className="w-5 h-5" />
+                {!isCollapsed && (
+                  <>
+                    <span className="ml-3">Personnel</span>
+                    <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isPersonnelOpen ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+              
+              {!isCollapsed && isPersonnelOpen && (
+                <><div className="pl-11 mt-1 space-y-2">
+                  <a
+                    href={'/personnel'}
+                    className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                  >
+                    {'Manage Staff'}
+                  </a>
+
+
+                </div><div className="pl-11 mt-1 space-y-2">
+                    <a
+                      href={'/manage-students'}
+                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      {'Manage Students'}
+                    </a>
+
+
+                  </div></>
               )}
-            </button>
 
-            {!isCollapsed && isDocsOpen && (
-              <div className="pl-11 mt-1 space-y-2">
-                <a
-                  href={currentUser.isAdmin ? '/documents' : '/docsuser'}
-                  className="block py-2 text-sm text-gray-600 hover:text-blue-600"
-                >
-                  {currentUser.isAdmin ? 'Documents' : 'Download Forms'}
-                </a>
+            </div>
+          )}
 
-                {!currentUser.isAdmin && (
+
+          
+          <div className="relative">
+            {/* Documents */}
+            <button
+            onClick={() => setIsDocsOpen(!isDocsOpen)}
+                className="w-full flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <FileText className="w-5 h-5" />
+                {!isCollapsed && (
                   <>
-                    <a
-                      href="/requestDocs"
-                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
-                    >
-                     Request Document
-                    </a>
-                    <a
-                      href="/trackRequest"
-                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
-                    >
-                      Track Request
-                    </a>
+                    <span className="ml-3">Documents</span>
+                    <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${isDocsOpen ? 'rotate-180' : ''}`} />
                   </>
                 )}
-                {currentUser.isAdmin && (
-                  <>
-                    <a
-                      href="/manageRequests"
-                      className="block py-2 text-sm text-gray-600 hover:text-blue-600"
-                    >
-                     Manage Requests
-                    </a>
-                    
-                  </>
-                )}
-              </div>
-            )}
+              </button>
+
+              {!isCollapsed && isDocsOpen && (
+                <div className="pl-11 mt-1 space-y-2">
+                  <a
+                    href={currentUser.isAdmin ? '/documents' : '/docsuser'}
+                    className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                  >
+                    {currentUser.isAdmin ? 'Documents' : 'Download Forms'}
+                  </a>
+
+                  {!currentUser.isAdmin && (
+                    <>
+                      <a
+                        href="/requestDocs"
+                        className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                      Request Document
+                      </a>
+                      <a
+                        href="/trackRequest"
+                        className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                        Track Request
+                      </a>
+                    </>
+                  )}
+                  {currentUser.isAdmin && (
+                    <>
+                      <a
+                        href="/manageRequests"
+                        className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                      Manage Requests
+                      </a>
+                      
+                    </>
+                  )}
+                  
+                  {currentUser.role === 'Doctor' && currentUser.isAdmin && (
+                    <>
+                      <a
+                        href="/requestDocs"
+                        className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                        Add a Request
+                      </a>
+                    </>
+                  )}
+                  
+                  {currentUser.role === 'Doctor' && currentUser.isAdmin && (
+                    <>
+                      <a
+                        href="/getDocRequest"
+                        className="block py-2 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                      Your Requests
+                      </a>
+                    </>
+                  )}
+
+
+                </div>
+              )}
 
           </div>
 
@@ -171,6 +240,7 @@ const Sidebar = () => {
           </a>
         </nav>
 
+       
         {/* Settings Section */}
         <div className="mt-8">
           <div className="text-sm font-semibold text-gray-600 mb-4">

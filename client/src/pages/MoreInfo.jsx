@@ -76,33 +76,14 @@ const handleChange = (e) => {
     if (type === 'radio') {
       // For radio buttons, set the value directly to the state
       setFormData({ ...formData, gender: value });
+    } if (id === "graduating") {
+      setFormData({ ...formData, isGraduating: value==="yes" });
     } else {
       // For other input fields, update the state normally
       setFormData({ ...formData, [id]: value });
     }
   };
 
-   // Change handlers for the dropdowns
-   const handleDegreeLevelChange = (e) => {
-    // Update formData with the selected degree level
-    setFormData({ ...formData, degreeLevel: e.target.value });
-  };
-
-  const handleYearLevelChange = (e) => {
-    // Update formData with the selected year level
-    setFormData({ ...formData, yearLevel: e.target.value });
-  };
-
-  const handleCollegeChange = (e) => {
-    // Update formData with the selected college
-    setFormData({ ...formData, college: e.target.value });
-  };
-
-  const handleDegreeProgramChange = (e) => {
-    // Update formData with the selected degree program
-    setFormData({ ...formData, degreeProgram: e.target.value });
-  };
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -402,6 +383,24 @@ const handleChange = (e) => {
                               </select>
                             </div>
                           )}
+                        </div>
+
+                        <div className="flex flex-row gap-2">
+                          <div className="mt-1 w-1/2">
+                            <label className="block text-sm font-medium text-gray-700 pb-2">
+                              Graduating this Term?: 
+                            </label>
+                            <select
+                              id="graduating"
+                              onChange={handleChange}
+                              value={formData.isGraduating ? "yes" : "no"} // Ensures string value for UI
+                              className="block h-10 w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+
+                            >
+                              <option value="yes">YES</option>
+                              <option value="no">NO</option>
+                            </select>
+                          </div>
                         </div>
                         <button className='mt-10 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-lg font-semibold p-3 rounded-lg uppercase hover:from-green-600 hover:to-cyan-600 disabled:opacity-80'>
                           {loading ? 'Loading...' : 'Update'}

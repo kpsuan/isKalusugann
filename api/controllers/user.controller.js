@@ -9,6 +9,8 @@ import fs from 'fs';
 import path from 'path';
 
 import moment from 'moment';
+import DocumentRequest from '../models/documentRequest.model.js';
+import Settings from '../models/settings.model.js';
 
 
 export const test = (req, res) => {
@@ -103,12 +105,21 @@ export const updateUser = async (req, res, next) => {
         yearLevel: req.body.yearLevel,
         college: req.body.college,
         degreeProgram: req.body.degreeProgram,
+        isGraduating: req.body.isGraduating,
         profilePicture: req.body.profilePicture,
         annualPE: req.body.annualPE,
         peForm: req.body.peForm,
         labResults: req.body.labResults,
         requestPE: req.body.requestPE,
+        medcertUser: req.body.medcertUser,
         status: req.body.status,
+        dentistStatus: req.body.dentistStatus,
+        doctorStatus: req.body.doctorStatus,
+        approvedByDentist: req.body.approvedByDentist,
+        approvedByDoctor: req.body.approvedByDoctor,
+        approvedByDentistLicense: req.body.approvedByDentistLicense,
+        approvedByDoctorLicense: req.body.approvedByDoctorLicense,
+        licenseNumber: req.body.licenseNumber,
         comment: req.body.comment,
         medcert: req.body.medcert,
         schedule: req.body.schedule,
@@ -231,30 +242,37 @@ export const updateNotifications = async (req, res) => {
 
 
 export const clearNotifications = async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params; 
+  console.log("Clearing notifications for user:", id);
 
-  if (!userId) {
+  if (!id) {
     return res.status(400).json({ message: 'User ID is required' });
   }
 
   try {
-    const user = await User.findById(userId);
+    const result = await User.findByIdAndUpdate(
+      id,
+      { $unset: { notifications: "" } },
+      { new: true }
+    );
 
-    if (!user) {
+    await User.findByIdAndUpdate(
+      id,
+      { $set: { notifications: [] } },
+      { new: true }
+    );
+
+    if (!result) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Clear the notifications array
-    user.notifications = [];
-    await user.save();
-
+    console.log("Notifications cleared successfully");
     res.status(200).json({ message: 'All notifications cleared successfully' });
   } catch (error) {
     console.error('Error clearing notifications:', error.message);
     res.status(500).json({ message: 'Server error. Failed to clear notifications.' });
   }
 };
-
 
 
 
@@ -334,6 +352,8 @@ export const updateUserRescheduleDate = async (req, res, next) => {
         labResults: req.body.labResults,
         requestPE: req.body.requestPE,
         status: req.body.status,
+        dentistStatus: req.body.dentistStatus,
+        doctorStatus: req.body.doctorStatus,
         comment: req.body.comment,
         medcert: req.body.medcert,
         schedule: req.body.schedule,
@@ -342,6 +362,7 @@ export const updateUserRescheduleDate = async (req, res, next) => {
         rescheduledDate: [],
         rescheduleRemarks: "",
         isRescheduled: true,
+        isPresent: req.body.isPresent,
         lastUpdated: nowLocalUTCPlus8,
       },
     };
@@ -450,8 +471,8 @@ export const updateUserRescheduleDate2 = async (req, res) => {
 // delete user
 
 export const deleteUser = async (req, res, next) => {
-  if (req.user.id !== req.params.id) {
-    return next(errorHandler(401, 'You can delete only your account!'));
+  if (!req.user.isAdmin && req.user.id !== req.params.id) {
+    return next(errorHandler(403, 'You are not allowed to delete this account!'));
   }
   try {
     await User.findByIdAndDelete(req.params.id);
@@ -459,11 +480,75 @@ export const deleteUser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-
 }
+
+export const deleteGraduatingUsers = async (req, res, next) => {
+  try {
+    const result = await User.deleteMany({ isGraduating: true });
+    res.status(200).json({ message: "All graduating users have been deleted.", deletedCount: result.deletedCount });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const getMonthlyStats = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const monthlyStats = [];
+
+    // Fetch all users with schedules once
+    const users = await User.find({
+      schedule: { $exists: true, $ne: [] }
+    });
+
+    for (let month = 0; month < 12; month++) {
+      const startOfMonth = new Date(currentYear, month, 1);
+      const endOfMonth = new Date(currentYear, month + 1, 0);
+      
+      let validScheduleCount = 0;
+      const processedDates = new Map(); // Track counts per day
+
+      users.forEach(user => {
+        user.schedule.forEach(scheduleStr => {
+          const scheduleDate = new Date(scheduleStr);
+          
+          if (scheduleDate >= startOfMonth && scheduleDate <= endOfMonth) {
+            const dateKey = scheduleDate.toISOString().split('T')[0];
+            const dayOfWeek = scheduleDate.getDay();
+            
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+              const currentCount = processedDates.get(dateKey) || 0;
+              if (currentCount < 20) {
+                processedDates.set(dateKey, currentCount + 1);
+                validScheduleCount++;
+              }
+            }
+          }
+        });
+      });
+
+      monthlyStats.push({
+        month: startOfMonth.toLocaleString('default', { month: 'short' }),
+        scheduled: validScheduleCount
+      });
+    }
+
+    res.status(200).json(monthlyStats);
+  } catch (error) {
+    console.error('Error fetching monthly statistics:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 export const getStats = async (req, res, next) => {
   try {
+
+    let query = { annualPE: 'Online' };
+    let query2 = { annualPE: 'InPerson' };
+
     const totalUsers = await User.countDocuments({});
     const totalEmployees = await User.countDocuments({ isAdmin: true });
     const totalStudents = await User.countDocuments({ $or: [{ isAdmin: false }, { isAdmin: { $exists: false } }] });
@@ -471,6 +556,31 @@ export const getStats = async (req, res, next) => {
     const totalScheduled = await User.countDocuments({ annualPE: "InPerson" });
     const totalOnline = await User.countDocuments({ annualPE: "Online" });
 
+    const totalApproved = await User.countDocuments({ status: 'approved'});
+    const totalDenied = await User.countDocuments({ status: 'denied'});
+    const totalPending = await User.countDocuments({ status: 'NO ACTION'});
+
+    const totalApprovedDoctor = await User.countDocuments({ doctorStatus: 'approved', ...query });
+    const totalApprovedDentist = await User.countDocuments({ dentistStatus: 'approved', ...query });
+    const totalPendingApproval = await User.countDocuments({doctorStatus: 'approved', dentistStatus: 'approved', 
+      status: { $ne: "approved" }, // Exclude users with 'approved' status
+      ...query,});
+
+    // Count documents by college
+    const totalCAS = await User.countDocuments({ college: 'CAS', ...query });
+    const totalCFOS = await User.countDocuments({ college: 'CFOS', ...query });
+    const totalSOTECH = await User.countDocuments({ college: 'SOTECH', ...query });
+
+    const totalCASScheduled = await User.countDocuments({ college: 'CAS', ...query2 });
+    const totalCFOSScheduled = await User.countDocuments({ college: 'CFOS', ...query2 });
+    const totalSOTECHScheduled = await User.countDocuments({ college: 'SOTECH', ...query2 });
+
+    const totalApprovedDocs = await DocumentRequest.countDocuments({ status: 'approved'});
+    const totalDeniedDocs = await DocumentRequest.countDocuments({ status: 'denied'});
+    const totalPendingDocs = await DocumentRequest.countDocuments({ status: ''});
+
+    const totalDocumentRequests = await DocumentRequest.countDocuments({});
+    const completionRate = (totalApprovedDocs / totalDocumentRequests) * 100;
 
     // Return statistics as a JSON response
     res.status(200).json({
@@ -479,7 +589,24 @@ export const getStats = async (req, res, next) => {
       totalStudents,
       totalReschedules,
       totalScheduled,
-      totalOnline
+      totalOnline,
+      totalApproved,
+      totalDenied,
+      totalPending,
+      totalPendingApproval,
+      totalApprovedDentist,
+      totalApprovedDoctor,
+      totalCAS,
+      totalCFOS,
+      totalSOTECH,
+      totalCASScheduled,
+      totalCFOSScheduled,
+      totalSOTECHScheduled,
+      totalApprovedDocs,
+      totalDeniedDocs,
+      totalPendingDocs,
+      completionRate,
+      totalDocumentRequests,
     });
 
     console.log(totalUsers, totalEmployees, totalStudents, totalReschedules, totalScheduled, totalOnline);
@@ -526,7 +653,8 @@ export const getUsers = async (req, res, next) => {
           query.$and = [
               { peForm: { $exists: true, $ne: "" } }, // Field exists and is not equal to empty string
               { labResults: { $exists: true, $ne: "" } }, // Field exists and is not equal to empty string
-              { requestPE: { $exists: true, $ne: "" } } // Field exists and is not equal to empty string
+              { requestPE: { $exists: true, $ne: "" } }, // Field exists and is not equal to empty string
+              { medcertUser: { $exists: true, $ne: "" } }
           ];
       } else if (req.query.documentStatus === 'incomplete') {
         // Users with at least one document submitted but not all
@@ -535,14 +663,16 @@ export const getUsers = async (req, res, next) => {
                 $or: [
                     { peForm: { $exists: true, $ne: "" } }, // At least one field is not empty
                     { labResults: { $exists: true, $ne: "" } },
-                    { requestPE: { $exists: true, $ne: "" } }
+                    { requestPE: { $exists: true, $ne: "" } },
+                    { medcertUser: { $exists: true, $ne: "" } }
                 ]
             },
             {
                 $or: [
                     { peForm: "" }, // At least one field is still empty
                     { labResults: "" },
-                    { requestPE: "" }
+                    { requestPE: "" },
+                    { medcertUser: "" }
                 ]
             }
         ];
@@ -552,14 +682,18 @@ export const getUsers = async (req, res, next) => {
               { peForm: { $exists: false } }, // Field does not exist
               { labResults: { $exists: false } }, // Field does not exist
               { requestPE: { $exists: false } }, // Field does not exist
+              { medcertUser: { $exists: false } }, // Field does not exist
+
               { peForm: "" }, // Field is empty
               { labResults: "" }, // Field is empty
-              { requestPE: "" } // Field is empty
+              { requestPE: "" }, // Field is empty
+              { medcertUser: "" }
+              
           ];
       }
     } else {
       // Direct checks if documentStatus is not provided
-      const { peForm, labResults, requestPE } = req.query;
+      const { peForm, labResults, requestPE, medcertUser} = req.query;
     
       if (peForm === 'check') {
           query.peForm = { $ne: "" }; // Check if peForm is not empty
@@ -572,6 +706,9 @@ export const getUsers = async (req, res, next) => {
       if (requestPE === 'check') {
           query.requestPE = { $ne: "" }; // Check if requestPE is not empty
       }
+      if (medcertUser === 'check') {
+        query.medcertUser = { $ne: "" }; // Check if medcertUser is not empty
+    }
     }
     
     const startIndex = parseInt(req.query.startIndex) || 0;
@@ -604,7 +741,9 @@ export const getUsers = async (req, res, next) => {
       $and: [
         { peForm: { $exists: true, $ne: "" } },
         { labResults: { $exists: true, $ne: "" } },
-        { requestPE: { $exists: true, $ne: "" } }
+        { requestPE: { $exists: true, $ne: "" } },
+        { medcertUser: { $exists: true, $ne: "" } }
+
       ]
     });
 
@@ -615,14 +754,16 @@ export const getUsers = async (req, res, next) => {
           $or: [
             { peForm: { $exists: true, $ne: "" } },
             { labResults: { $exists: true, $ne: "" } },
-            { requestPE: { $exists: true, $ne: "" } }
+            { requestPE: { $exists: true, $ne: "" } },
+            { medcertUser: { $exists: true, $ne: "" } }
           ]
         },
         {
           $or: [
             { peForm: "" },
             { labResults: "" },
-            { requestPE: "" }
+            { requestPE: "" },
+            { medcertUser: "" },
           ]
         }
       ]
@@ -634,15 +775,24 @@ export const getUsers = async (req, res, next) => {
         { peForm: { $exists: false } },
         { labResults: { $exists: false } },
         { requestPE: { $exists: false } },
+        { medcertUser: { $exists: false } },
+
         { peForm: "" },
         { labResults: "" },
-        { requestPE: "" }
+        { requestPE: "" },
+        { medcertUser: "" }
       ]
     });
 
     const totalApproved = await User.countDocuments({ status: 'approved', ...query });
     const totalDenied = await User.countDocuments({ status: 'denied', ...query });
     const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
+    const totalApprovedDoctor = await User.countDocuments({ doctorStatus: 'approved', ...query });
+    const totalApprovedDentist = await User.countDocuments({ dentistStatus: 'approved', ...query });
+    const totalPendingApproval = await User.countDocuments({doctorStatus: 'approved', dentistStatus: 'approved', 
+      status: { $ne: "approved" }, // Exclude users with 'approved' status
+      ...query,});
 
     // Count documents by college
     const totalCAS = await User.countDocuments({ college: 'CAS', ...query });
@@ -712,6 +862,9 @@ export const getUsers = async (req, res, next) => {
       totalStudents,
       totalReschedules,
       totalApproved,
+      totalApprovedDoctor,
+      totalApprovedDentist,
+      totalPendingApproval,
       totalDenied,
       totalPending,
       totalInPersonUsers,
@@ -735,6 +888,268 @@ export const getUsers = async (req, res, next) => {
   }
 };
 
+export const getAdmin = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can see all users!'));
+  }
+  
+  try {
+    // Base query
+    let query = { isAdmin: 'true' };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+    
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+
+    // Fetch users with pagination, sorting, and filtering
+    const users = await User.find(query)
+      .sort({
+        lastName: 1
+      })
+      .skip(startIndex)
+      .limit(limit);
+
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
+
+    const totalUsers = await User.countDocuments(query); // Count with filters
+   
+
+    // Users created in the last month
+    const now = new Date();
+    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const lastMonthUsers = await User.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+      ...query
+    });
+
+   
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers,
+     
+      lastMonthUsers
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsersApprovedByDoctor = async (req, res, next) => {
+
+  
+  try {
+    // Base query
+    const query = {
+      annualPE: 'Online',
+      doctorStatus: 'approved',
+    };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
+    }
+
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+    // Pagination and sorting parameters
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sortDirection = req.query.order === 'asc' ? 1 : -1;
+
+    // Fetch users with pagination, sorting, and filtering
+    const users = await User.find(query)
+      .sort({
+        yearLevel: sortDirection,
+        college: 1,
+        degreeProgram: 1,
+        lastName: 1
+      })
+      .skip(startIndex)
+      .limit(limit);
+
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
+
+    // Count documents for various metrics
+    const totalUsers = await User.countDocuments(query); // Count with filters
+    
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
+   
+   
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers,
+      totalApproved,
+      totalDenied,
+      totalPending,
+      
+      
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsersApprovedByDentist = async (req, res, next) => {
+
+  
+  try {
+    // Base query
+    const query = {
+      annualPE: 'Online',
+      dentistStatus: 'approved',
+    };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+      ];
+    }
+
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
+    }
+
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+    // Pagination and sorting parameters
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sortDirection = req.query.order === 'asc' ? 1 : -1;
+
+    // Fetch users with pagination, sorting, and filtering
+    const users = await User.find(query)
+      .sort({
+        yearLevel: sortDirection,
+        college: 1,
+        degreeProgram: 1,
+        lastName: 1
+      })
+      .skip(startIndex)
+      .limit(limit);
+
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
+
+    // Count documents for various metrics
+    const totalUsers = await User.countDocuments(query); // Count with filters
+    
+    const totalApproved = await User.countDocuments({ status: 'approved', ...query });
+    const totalDenied = await User.countDocuments({ status: 'denied', ...query });
+    const totalPending = await User.countDocuments({ status: 'NO ACTION', ...query });
+
+   
+   
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers,
+      totalApproved,
+      totalDenied,
+      totalPending,
+      
+      
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsersForOverallApproval = async (req, res, next) => {
+  try {
+    // Ensure both doctorStatus and dentistStatus are approved
+    const query = {
+      annualPE: "Online",
+      doctorStatus: "approved",
+      dentistStatus: "approved",
+      status: { $ne: "approved" }, 
+    };
+
+    // Apply search filter if provided
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: new RegExp(searchQuery, "i") },
+        { lastName: new RegExp(searchQuery, "i") },
+        { middleName: new RegExp(searchQuery, "i") },
+      ];
+    }
+
+    // Apply additional filters (degreeProgram and status)
+    if (req.query.degreeProgram) query.degreeProgram = req.query.degreeProgram;
+    if (req.query.status) query.status = req.query.status;
+
+    // Pagination & sorting parameters
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sortDirection = req.query.order === "asc" ? 1 : -1;
+
+    // Fetch users based on filters, sorting, and pagination
+    const users = await User.find(query)
+      .sort({
+        yearLevel: sortDirection,
+        college: 1,
+        degreeProgram: 1,
+        lastName: 1,
+      })
+      .skip(startIndex)
+      .limit(limit)
+      .select("-password"); // Exclude password field
+
+    // Count documents for total users and statuses
+    const totalUsers = await User.countDocuments(query); // Count based on filters
+    const totalApproved = await User.countDocuments({ status: "approved", ...query });
+    const totalDenied = await User.countDocuments({ status: "denied", ...query });
+    const totalPending = await User.countDocuments({ status: "NO ACTION", ...query });
+
+    // Send response
+    res.status(200).json({
+      users,
+      totalUsers,
+      totalApproved,
+      totalDenied,
+      totalPending,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 export const getUsersWithCompleteDocs = async (req, res, next) => {
@@ -747,6 +1162,8 @@ export const getUsersWithCompleteDocs = async (req, res, next) => {
       peForm: { $exists: true, $ne: "" },
       labResults: { $exists: true, $ne: "" },
       requestPE: { $exists: true, $ne: "" },
+      medcertUser: { $exists: true, $ne: "" },
+
     };
 
     if (req.query.searchQuery) {
@@ -821,10 +1238,15 @@ export const getUsersNoDocs = async (req, res, next) => {
       peForm: { $exists: false } , // Field does not exist
       labResults: { $exists: false } , // Field does not exist
       requestPE: { $exists: false } , // Field does not exist
+      medcertUser: { $exists: false } , // Field does not exist
+
       peForm: "" , // Field is empty
       labResults: "" , // Field is empty
-      requestPE: ""  // Field is empty
+      requestPE: "",  // Field is empty
+      medcertUser: ""  // Field is empty
+
     };
+
 
     if (req.query.searchQuery) {
       const searchQuery = req.query.searchQuery.trim();
@@ -917,14 +1339,18 @@ export const getUsersIncDocs = async (req, res, next) => {
           $or: [
             { peForm: { $exists: true, $ne: "" } }, // At least one field is not empty
             { labResults: { $exists: true, $ne: "" } },
-            { requestPE: { $exists: true, $ne: "" } }
+            { requestPE: { $exists: true, $ne: "" } },
+            { medcertUser: { $exists: true, $ne: "" } }
+
           ]
         },
         {
           $or: [
             { peForm: "" }, // At least one field is still empty
             { labResults: "" },
-            { requestPE: "" }
+            { requestPE: "" },
+            { medcertUser: "" }
+
           ]
         }
       ]
@@ -1017,7 +1443,9 @@ export const getusersub = async (req, res, next) => {
       $or: [
         { peForm: { $exists: true } },
         { labResults: { $exists: true } },
-        { medcert: { $exists: true } }
+        { medcert: { $exists: true } },
+        { medcertUser: { $exists: true } }
+
       ]
     });
 
@@ -1636,6 +2064,7 @@ export const getInperson = async (req, res, next) => {
 };
 
 
+
 export const getreschedUsers = async (req, res, next) => {
   if (!req.user.isAdmin) {
     return next(errorHandler(403, 'Only admins can see all users!'));
@@ -1728,13 +2157,22 @@ export const assignSchedule = async (req, res, next) => {
     let currentDate = new Date(startDate);
     const assignedDates = [];
 
+    // Get settings including custom unavailable dates
+    const settings = await Settings.getSettings();
+    
+    // Create a combined set of all unavailable dates
+    const unavailableDatesSet = new Set([
+      ...philippineHolidays2025,
+      ...(settings.unavailableDates || [])
+    ]);
+
     for (let i = 0; i <= days; i++) {
       const formattedDate = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
 
       if (
         currentDate.getDay() !== 0 && // Exclude Sundays
         currentDate.getDay() !== 6 && // Exclude Saturdays
-        !holidaySet.has(formattedDate) // Exclude holidays
+        !unavailableDatesSet.has(formattedDate) // Exclude holidays and user-selected dates
       ) {
         assignedDates.push(currentDate.toISOString());
       }
@@ -1793,8 +2231,22 @@ export const assignSchedule = async (req, res, next) => {
     if (bulkOps.length > 0) {
       await User.bulkWrite(bulkOps, { ordered: false });
     }
-
-    res.status(200).json({ message: 'Assigned dates to all users successfully' });
+    // Save the schedule generation information
+    settings.lastScheduleGeneration = {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      unavailableDates: Array.from(unavailableDatesSet),
+      generatedAt: new Date()
+    };
+    await settings.save();
+    res.status(200).json({ 
+      message: 'Assigned dates to all users successfully',
+      stats: {
+        totalUsers: allUsers.length,
+        availableDates: assignedDates.length,
+        unavailableDates: Array.from(unavailableDatesSet)
+      }
+    });    
   } catch (error) {
     next(error);
   }
@@ -1807,14 +2259,21 @@ export const rescheduleUser = async (req, res, next) => {
 
   try {
     // Create holiday set inside the function
-    const holidaySet = new Set(
-      philippineHolidays2025.map(date => new Date(date).toDateString())
-    );
+
+    // Get settings including custom unavailable dates
+    const settings = await Settings.getSettings();
+    
+    // Create a combined set of all unavailable dates
+    const unavailableDatesSet = new Set([
+      ...philippineHolidays2025.map(date => new Date(date).toDateString()), // Ensure correct format
+      ...(settings.unavailableDates || []).map(date => new Date(date).toDateString()) // Convert settings dates
+    ]);
+
 
     // Fetch all emergency dates and add them to the set
     const emergencyDates = await Emergency.find({});
     emergencyDates.forEach(ed => {
-      holidaySet.add(new Date(ed.date).toDateString());
+      unavailableDatesSet.add(new Date(ed.date).toDateString());
     });
 
     const { userId } = req.params;
@@ -1840,7 +2299,7 @@ export const rescheduleUser = async (req, res, next) => {
         currentDate < today || 
         currentDate.getDay() === 0 || 
         currentDate.getDay() === 6 ||
-        holidaySet.has(currentDate.toDateString())
+        unavailableDatesSet.has(currentDate.toDateString())
       ) {
         currentDate.setDate(currentDate.getDate() + 1);
         continue;
@@ -1972,7 +2431,22 @@ export const handleEmergency = async (req, res, next) => {
     }
 
     // Get all available dates (excluding weekends & PH holidays)
-    const holidaySet = new Set(philippineHolidays2025.map(date => new Date(date).toDateString())); // Ensure the holidays are stored as strings in the set.
+
+    const settings = await Settings.getSettings();
+    
+    // Create a combined set of all unavailable dates
+    const unavailableDatesSet = new Set([
+      ...philippineHolidays2025.map(date => new Date(date).toDateString()), // Ensure correct format
+      ...(settings.unavailableDates || []).map(date => new Date(date).toDateString()) // Convert settings dates
+    ]);
+
+
+    // Fetch all emergency dates and add them to the set
+    const emergencyDates = await Emergency.find({});
+    emergencyDates.forEach(ed => {
+      unavailableDatesSet.add(new Date(ed.date).toDateString());
+    });
+
     let currentDate = new Date(startDate);
     const availableDates = [];
 
@@ -1982,7 +2456,7 @@ export const handleEmergency = async (req, res, next) => {
       if (
         currentDate.getDay() !== 0 && // Skip Sundays
         currentDate.getDay() !== 6 && // Skip Saturdays
-        !holidaySet.has(currentDate.toDateString()) // Skip holidays
+        !unavailableDatesSet.has(currentDate.toDateString()) // Skip holidays
       ) {
         availableDates.push(new Date(currentDate)); // Store as Date object
       }
@@ -2044,13 +2518,15 @@ export const handleEmergency = async (req, res, next) => {
 
     console.log(`Rescheduled ${affectedUsers.length} students successfully.`); // Log total rescheduled users
 
-    // 6️⃣ Finalize transaction
+    // Finalize transaction
     await session.commitTransaction();
     session.endSession();
 
+   
+    const updatedUsers = await User.find({ _id: { $in: affectedUsers.map(user => user._id) } }).lean();
     res.status(200).json({
       message: `Rescheduled ${affectedUsers.length} students successfully.`,
-      rescheduledUsers: affectedUsers.length
+      updatedUsers,  // Send the updated users
     });
 
   } catch (error) {
@@ -2131,12 +2607,15 @@ export const deleteAllEmergencyDates = async (req, res, next) => {
 };
 
 export const deleteSchedule = async (req, res, next) => {
-  
   try {
-    await User.updateMany({ annualPE: 'InPerson' }, 
+    // Clear user schedules and related fields
+    await User.updateMany(
+      { annualPE: 'InPerson' }, 
       { $set: { 
           schedule: "", 
           status: "NO ACTION", 
+          doctorStatus: "NO ACTION", 
+          dentistStatus: "NO ACTION", 
           reschedule: "", 
           comment: "",  
           medcert: "",
@@ -2148,23 +2627,47 @@ export const deleteSchedule = async (req, res, next) => {
           isPresent: "PENDING",
           isDental: false,
           isGeneral: false,
-          lastLoggedIn: null, // Set lastLoggedIn to null
+          lastLoggedIn: null,
           queueNumberDate: null,
           queueNumber: null,
           notifications: []
-
-    } }, );
+        } 
+      }
+    );
 
     // Delete all emergency dates
-    await Emergency.deleteMany({}, );
+    await Emergency.deleteMany({});
 
-     // Delete all date slots
-    await DateSlot.deleteMany({},);
+    // Delete all date slots
+    await DateSlot.deleteMany({});
+    
+    // Clear unavailable dates in Settings
+    // Keep a backup of the current settings first for history/audit purposes
+    const currentSettings = await Settings.findOne({ key: 'system' });
+    if (currentSettings) {
+      // Store the current configuration in lastScheduleGeneration
+      await Settings.updateOne(
+        { key: 'system' },
+        { 
+          $set: {
+            lastScheduleGeneration: {
+              startDate: currentSettings.startDate,
+              endDate: currentSettings.endDate,
+              unavailableDates: currentSettings.unavailableDates,
+              generatedAt: new Date()
+            },
+            // Clear the current unavailable dates
+            unavailableDates: []
+          }
+        }
+      );
+    }
 
-    res.status(200).json({ message: 'Schedules and statuses cleared successfully' });
+    res.status(200).json({ 
+      message: 'Schedules, statuses, and unavailable dates cleared successfully' 
+    });
   } catch (error) {
-   
-    console.error('Error clearing schedules and statuses:', error);
+    console.error('Error clearing schedules, statuses, and unavailable dates:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -2275,5 +2778,139 @@ export const viewUsersScheduledToday = async (req, res, next) => {
       error: 'Internal server error',
       details: error.message 
     });
+  }
+};
+
+export const getAll = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can see all users!'));
+  }
+  
+  try {
+    // Base query
+    let query = { isAdmin: false, isSuperAdmin: false };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+    
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
+    }
+    if (req.query.college) {
+      query.college = req.query.college;
+    }
+
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+    if (req.query.isGraduating) {
+      query.isGraduating = req.query.isGraduating;
+    }
+    // Pagination and sorting parameters
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = req.query.limit === 'all' ? 0 : parseInt(req.query.limit) || 9; 
+    const sortDirection = req.query.order === 'asc' ? 1 : -1;
+
+    // Execute queries in parallel using Promise.all
+    const [users, aggregationResults] = await Promise.all([
+      // Query 1: Get paginated user data
+      User.find(query)
+        .sort({
+          yearLevel: sortDirection,
+          college: 1,
+          degreeProgram: 1,
+          lastName: 1
+        })
+        .skip(startIndex)
+        .limit(limit)
+        .lean(), // Use lean() for better performance when you don't need Mongoose document methods
+      
+      // Query 2: Use aggregation for all counts in a single database operation
+      User.aggregate([
+        { $match: query },
+        {
+          $facet: {
+            // Total counts
+            'totalCounts': [
+              {
+                $group: {
+                  _id: null,
+                  totalUsers: { $sum: 1 },
+                  totalApproved: { 
+                    $sum: { $cond: [{ $eq: ["$status", "approved"] }, 1, 0] }
+                  },
+                  totalGraduating: {
+                    $sum: { $cond: [{ $eq: ["$isGraduating", true] }, 1, 0] }
+                  },
+                  totalActive: {                    
+                  $sum: { $cond: [{ $eq: ["$isGraduating", false] }, 1, 0] }
+                  },
+                  totalDenied: { 
+                    $sum: { $cond: [{ $eq: ["$status", "denied"] }, 1, 0] }
+                  },
+                  totalPending: { 
+                    $sum: { $cond: [{ $eq: ["$status", "NO ACTION"] }, 1, 0] }
+                  },
+                  lastMonthUsers: {
+                    $sum: {
+                      $cond: [
+                        { $gte: ["$createdAt", new Date(new Date().setMonth(new Date().getMonth() - 1))] },
+                        1,
+                        0
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+          }
+        }
+      ])
+    ]);
+
+    // Process aggregation results
+    const totalCountsResult = aggregationResults[0].totalCounts[0] || {
+      totalUsers: 0,
+      totalApproved: 0, 
+      totalDenied: 0,
+      totalActive: 0,
+      totalPending: 0,
+      lastMonthUsers: 0,
+      totalGraduating: 0,
+    };
+  
+
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map(user => {
+      const { password, ...rest } = user;
+      return rest;
+    });
+
+
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers: totalCountsResult.totalUsers,
+      totalInPersonUsers: totalCountsResult.totalUsers,
+      totalApproved: totalCountsResult.totalApproved,
+      totalDenied: totalCountsResult.totalDenied,
+      totalPending: totalCountsResult.totalPending,
+      totalActive: totalCountsResult.totalActive,
+      totalGraduating: totalCountsResult.totalGraduating
+     
+    });
+  } catch (error) {
+    next(error);
   }
 };

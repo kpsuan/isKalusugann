@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUserStart, updateUserSuccess, updateUserFailure } from '../../../redux/user/userSlice';
+import TermsModal from './TermsModal';
+
 
 const NoAnnualPe = () => {
     const [mode, setMode] = useState("");
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [formData, setFormData] = useState({});
@@ -14,12 +18,11 @@ const NoAnnualPe = () => {
     const [endDate, setEndDate] = useState('');
 
     const dateFormatter = new Intl.DateTimeFormat('en-US', {
-        weekday: 'short',  // 'Mon'
-        month: 'short',     // 'Aug'
-        day: '2-digit',    // '23'
-        year: 'numeric'    // '2024'
-      });
-    
+        weekday: 'short',
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric'
+    });
 
     useEffect(() => {
         const fetchDates = async () => {
@@ -50,9 +53,22 @@ const NoAnnualPe = () => {
         setMode(selectedMode);
         setFormData({ ...formData, annualPE: selectedMode });
     };
+
+    const handleTermsClick = (e) => {
+        e.preventDefault();
+        setIsModalOpen(true);
+    };
+
+    const handleTermsAccept = () => {
+        setTermsAccepted(true);
+        setIsModalOpen(false);
+    };
     
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!termsAccepted) {
+            return;
+        }
         try {
             dispatch(updateUserStart());
             const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -117,24 +133,47 @@ const NoAnnualPe = () => {
                     </button>
                 </div>
 
+                <div className="flex items-center">
+                    <input 
+                        id="terms-checkbox" 
+                        type="checkbox" 
+                        checked={termsAccepted}
+                        onChange={() => {
+                            if (!termsAccepted) {
+                                setIsModalOpen(true);
+                            } else {
+                                setTermsAccepted(false);
+                            }
+                        }}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500"
+                    /> 
+                    <label htmlFor="terms-checkbox" className="ms-2 text-sm font-medium text-gray-900">
+                        I agree with the <a href="#" onClick={handleTermsClick} className="text-blue-600 hover:underline">terms and conditions</a>.
+                    </label>
+                </div>
+
                 <button
                     onClick={handleSubmit}
-                    disabled={!mode}
+                    disabled={!mode || !termsAccepted}
                     className={`w-full py-3 rounded-lg font-bold uppercase tracking-wider transition-all duration-300 ${
-                        mode 
+                        mode && termsAccepted
                         ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                 >
                     Save Preference
                 </button>
-
                 {startDate && endDate && (
                     <div className="text-center text-sm text-gray-500 mt-4">
-                    Pre-enlistment Period: <br/> {dateFormatter.format(new Date(startDate))} - {dateFormatter.format(new Date(endDate))}
+                        Pre-enlistment Period: <br/> {dateFormatter.format(new Date(startDate))} - {dateFormatter.format(new Date(endDate))}
                     </div>
                 )}
             </div>
+            <TermsModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onAccept={handleTermsAccept}
+            />
         </div>
     );
 };
