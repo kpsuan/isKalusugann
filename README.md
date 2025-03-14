@@ -1,3 +1,5 @@
+<h1>isKalusugan!</h1>
+ 
  This study presents the design and implementation of a web-based manage
 ment system particularly managing the Annual Physical Examinations for
  the Health Services Unit (HSU) at the University of the Philippines Visayas
@@ -12,8 +14,8 @@ mation dissemination. Usability testing conducted with UPV Constituents
 average and excellent user experience for the developed system
 
 
-
-to install dependencies:
+<h3>How to Run</h3>
+To install dependencies:
 npm install
 
 
