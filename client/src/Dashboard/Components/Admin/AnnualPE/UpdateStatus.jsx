@@ -35,6 +35,7 @@ import axios from 'axios';
 
 import {HiOutlineUpload} from 'react-icons/hi';
 import ApprovalWarning from "./ApprovalWarning";
+import { logActivity } from "../../../../../../api/controllers/activityLog.controller";
 
 const UserProfile = () => {
   const dispatch = useDispatch();
@@ -78,8 +79,11 @@ const UserProfile = () => {
             comment: userData.comment,
             approvedByDentist: userData.approvedByDentist || '',
             approvedByDentistLicense: userData.approvedByDentistLicense || '',
+            approvedByDentistData: userData.approvedByDentistDate || '',
+
             approvedByDoctor: userData.approvedByDoctor || '',
-            approvedByDoctorLicense: userData.approvedByDoctorLicense || ''
+            approvedByDoctorLicense: userData.approvedByDoctorLicense || '',
+            approvedByDoctorDate: userData.approvedByDoctorDate|| '',
           });
         } else {
           console.error("Error fetching user data:", userData.message);
@@ -99,12 +103,11 @@ useEffect(() => {
   if (formData.dentistStatus === "approved" && formData.doctorStatus === "approved") {
     setFormData((prev) => ({ ...prev, status: "approved" }));
   }
-  if (formData.dentistStatus === "approved" || formData.doctorStatus === "approved") {
-    setFormData((prev) => ({ ...prev, status: "NO ACTION" }));
-  }
+ 
   if (formData.dentistStatus === "NO ACTION" || formData.doctorStatus === "NO ACTION") {
     setFormData((prev) => ({ ...prev, status: "NO ACTION" }));
   }
+  
   if (formData.dentistStatus === "denied" || formData.doctorStatus === "denied") {
     setFormData((prev) => ({ ...prev, status: "denied" }));
   }
@@ -178,34 +181,53 @@ useEffect(() => {
         firstName: user.firstName,
         lastName: user.lastName,
         middleName: user.middleName,
-        username: user.username
+        username: user.username,
+        userId: user._id , 
+        
       }
     };
     
     const stateData = {
       medicalRemark: formData.comment || '',
       approvers: currentApprovers,
-      status: formData.status === 'approved' ? 'Approved' : (formData.status === 'denied' ? 'Denied' : formData.status)
+      status: formData.status === 'approved' ? 'Approved' : (formData.status === 'denied' ? 'Denied' : formData.status),
+      dentistStatus: formData.dentistStatus || user.dentistStatus,
+      doctorStatus: formData.doctorStatus || user.doctorStatus
     };
     
     const stateKey = `certificate_state_${user._id}_${Date.now()}`;
     sessionStorage.setItem(stateKey, JSON.stringify(stateData));
     
     const certificateUrl = `/certificate/${user._id}?stateKey=${stateKey}`;
-    window.open(certificateUrl, '_blank');
+    window.location.href = certificateUrl;
 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    const now = new Date(); // Get current timestamp
+    
+    let activityMessage = ""; // Initialize activity message
+
     const updatedFormData = {
       ...formData,
       approvedByDentist: currentUser.role === 'Dentist' ? `${currentUser.firstName} ${currentUser.lastName}` : formData.approvedByDentist,
       approvedByDentistLicense: currentUser.role === 'Dentist' ? currentUser.licenseNumber : formData.approvedByDentistLicense,
+      approvedByDentistDate: currentUser.role === "Dentist" ? now.toISOString() : formData.approvedByDentistDate, // Log timestamp
+
+     
       approvedByDoctor: currentUser.role === 'Doctor' ? `${currentUser.firstName} ${currentUser.lastName}` : formData.approvedByDoctor,
-      approvedByDoctorLicense: currentUser.role === 'Doctor' ? currentUser.licenseNumber : formData.approvedByDoctorLicense
+      approvedByDoctorLicense: currentUser.role === 'Doctor' ? currentUser.licenseNumber : formData.approvedByDoctorLicense,
+      approvedByDoctorDate: currentUser.role === "Doctor" ? now.toISOString() : formData.approvedByDoctorDate, // Log timestamp
+
     };
+
+  // Set activity message based on the approver's role
+  if (currentUser.role === "Dentist") {
+    activityMessage = `Status modifed by Dentist: ${currentUser.firstName} ${currentUser.lastName}`;
+  } else if (currentUser.role === "Doctor") {
+    activityMessage = `Status modifed by Doctor: ${currentUser.firstName} ${currentUser.lastName}`;
+  }
   
     try {
       const res = await fetch(`/api/user/update/${user._id}`, {
@@ -270,9 +292,51 @@ useEffect(() => {
           toast.error('User updated but failed to send approval email.');
         }
       } else {
+
         toast.success('User status updated successfully!');
       }
+      
+      const approvalLog = {
+        modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+        role: currentUser.role,
+        approvedAt: now.toISOString(), // Timestamp
+        userId: user._id, // The user being approved
+        studentDetails: {
+          id: user._id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          college: user.college,
+          degreeProgram: user.degreeProgram,
+          yearLevel: user.yearLevel,
+          status: updatedFormData.status, // Updated status
+          approvedBy: currentUser.role,
+          approvedDate: now.toISOString(),
+      },
+      };
   
+      try {
+        const logResponse = await fetch("/api/activity/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: currentUser?._id, // Ensure this is defined
+            action: `Status modified by ${currentUser.role}`,
+            details: approvalLog,
+          }),
+        });
+      
+        const logData = await logResponse.json();
+        
+        if (!logResponse.ok) {
+          throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+        }
+      
+        console.log("Activity log success:", logData);
+      } catch (error) {
+        console.error("Error logging activity:", error);
+      }
+      
+
       setUpdateSuccess(true);
       setScrollTop(true);
       setTimeout(() => {
@@ -616,7 +680,7 @@ useEffect(() => {
                     </label>
                     <select
                       id="status"
-                      value={formData.status || "NO ACTION"}
+                      value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       className={`w-full p-3 border rounded-lg transition-all duration-200 ${
                         !(formData.doctorStatus === "approved" && formData.dentistStatus === "approved")

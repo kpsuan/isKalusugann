@@ -13,58 +13,61 @@ import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 
 
-const FileUploadSection = ({ title, fileType, fileName, uploadPercent, handleFileChange, handleFileRemove, uploadError }) => (
+const FileUploadSection = ({ title, description, fileType, fileName, uploadPercent, handleFileChange, handleFileRemove, uploadError }) => (
   <div className="w-full space-y-4">
+  <div className="flex flex-col">
     <div className="flex items-center space-x-3">
       <IoCloudUpload className="text-2xl text-cyan-600" />
       <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
     </div>
-    <Label
-      htmlFor={`dropzone-file-${fileType}`}
-      className="group flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:border-cyan-500 hover:bg-cyan-50 transition-all duration-300"
-    >
-      <div className="flex flex-col items-center justify-center text-center">
-        <IoDocumentText className="h-12 w-12 text-gray-400 group-hover:text-cyan-600 transition-colors" />
-        <p className="mt-2 text-sm text-gray-600 group-hover:text-cyan-700">
-          Drag and drop or <span className="font-semibold text-cyan-600">click to upload</span>
-        </p>
-        <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 10MB)</p>
-      </div>
-      <FileInput
-        id={`dropzone-file-${fileType}`}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-    </Label>
-
-    {fileName && (
-      <div className="flex items-center justify-between p-4 bg-white shadow-md rounded-lg border">
-        <div className="flex items-center space-x-3">
-          <IoDocumentText className="text-2xl text-cyan-600" />
-          <span className="text-gray-700 truncate max-w-[200px]">{fileName}</span>
-          {uploadPercent === 100 && <MdCheckCircle className="text-green-500" />}
-        </div>
-        <div className="flex items-center space-x-2">
-          {uploadPercent > 0 && uploadPercent < 100 && (
-            <div className="w-24 bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-cyan-600 h-2.5 rounded-full" 
-                style={{width: `${uploadPercent}%`}}
-              ></div>
-            </div>
-          )}
-          <MdClose 
-            onClick={handleFileRemove} 
-            className="text-red-500 hover:text-red-700 cursor-pointer text-xl" 
-          />
-        </div>
-      </div>
-    )}
-
-    {uploadError && (
-      <p className="text-red-500 text-sm">Error uploading file. Please try again.</p>
-    )}
+    <p className="text-sm text-red-400 font-light mt-1">{description}</p>
   </div>
+  <Label
+    htmlFor={`dropzone-file-${fileType}`}
+    className="group flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:border-cyan-500 hover:bg-cyan-50 transition-all duration-300"
+  >
+    <div className="flex flex-col items-center justify-center text-center">
+      <IoDocumentText className="h-12 w-12 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+      <p className="mt-2 text-sm text-gray-600 group-hover:text-cyan-700">
+        Drag and drop or <span className="font-semibold text-cyan-600">click to upload</span>
+      </p>
+      <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 10MB)</p>
+    </div>
+    <FileInput
+      id={`dropzone-file-${fileType}`}
+      className="hidden"
+      onChange={handleFileChange}
+    />
+  </Label>
+
+  {fileName && (
+    <div className="flex items-center justify-between p-4 bg-white shadow-md rounded-lg border">
+      <div className="flex items-center space-x-3">
+        <IoDocumentText className="text-2xl text-cyan-600" />
+        <span className="text-gray-700 truncate max-w-[200px]">{fileName}</span>
+        {uploadPercent === 100 && <MdCheckCircle className="text-green-500" />}
+      </div>
+      <div className="flex items-center space-x-2">
+        {uploadPercent > 0 && uploadPercent < 100 && (
+          <div className="w-24 bg-gray-200 rounded-full h-2.5">
+            <div 
+              className="bg-cyan-600 h-2.5 rounded-full" 
+              style={{width: `${uploadPercent}%`}}
+            ></div>
+          </div>
+        )}
+        <MdClose 
+          onClick={handleFileRemove} 
+          className="text-red-500 hover:text-red-700 cursor-pointer text-xl" 
+        />
+      </div>
+    </div>
+  )}
+
+  {uploadError && (
+    <p className="text-red-500 text-sm">Error uploading file. Please try again.</p>
+  )}
+</div>
 );
 
 const FileSubmission = () => {
@@ -287,12 +290,22 @@ const handleFileRemove = async (fileType) => {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-3xl font-bold mb-2">Submit Medical Forms</h1>
-                  <p className="text-cyan-100">Upload your medical documents for review</p>
+                  <p className="w-1/2">
+                    Medical certificates must come from the 
+                    <strong className='text-blue-100'> Accredited Government Hospitals and RHUs in the Philippines</strong>.
+                    </p>
                 </div>
                 <div className="bg-white/20 px-4 py-2 rounded-md">
                   PE Mode: <span className="font-bold">{currentUser?.annualPE}</span>
                 </div>
+                
               </div>
+              <a href="https://nhfr.doh.gov.ph/VActivefacilitiesList" target="_blank" rel="noopener noreferrer" className="text-white hover:underline inline-flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                    </svg>
+                                                    View approved health facilities
+                                                </a>
             </Card>
 
             {/* Two-column layout */}
@@ -357,6 +370,7 @@ const handleFileRemove = async (fileType) => {
                 <FileUploadSection 
                   title="Upload medical certificate from your Doctor"
                   fileType="medcertUser"
+                  description = "Important: Medical certificates must be issued by accredited government hospitals only. Private hospital certificates will not be accepted."
                   fileName={fileName4}
                   uploadPercent={uploadPercent4}
                   handleFileChange={(e) => {
@@ -392,6 +406,15 @@ const handleFileRemove = async (fileType) => {
                   <MdErrorOutline className="mr-2 text-orange-500" /> Important Reminders
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-600">
+                  <li className="flex items-start">
+                    <span className="mr-2 text-green-500">•</span>
+                   <a href="https://nhfr.doh.gov.ph/VActivefacilitiesList" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                    </svg>
+                                                    View approved health facilities
+                                                </a>
+                  </li>
                   <li className="flex items-start">
                     <span className="mr-2 text-green-500">•</span>
                     Maximum file size is 10MB per document

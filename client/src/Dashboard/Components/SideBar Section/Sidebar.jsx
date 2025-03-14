@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Home, FileText, Calendar, Bell, User, Settings, HelpCircle, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, FileText, Calendar, Bell, User, ClipboardList, Settings, HelpCircle, ChevronDown } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import logo from '../../../assets/logo1.png'
 import { useNavigate } from 'react-router-dom';
-
+import ActivityLog from '../Admin/Personnel/ActivityLog';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -234,7 +234,9 @@ const Sidebar = () => {
           </a>
 
           {/* Profile */}
-          <a href="/my-Profile" className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
+          <a href={currentUser?.isAdmin ? "/admin-profile" : "/my-Profile"}
+
+            className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">
             <User className="w-5 h-5" />
             {!isCollapsed && <span className="ml-3">My Profile</span>}
           </a>
@@ -251,9 +253,20 @@ const Sidebar = () => {
               <Settings className="w-5 h-5" />
               {!isCollapsed && <span className="ml-3">Account</span>}
             </a>
+            {currentUser.isSuperAdmin && (
+            <a
+               href="/activity-log"
+               className="flex items-center px-4 py-2.5 text-gray-600 hover:bg-blue-50 rounded-lg transition-colors">            
+               <ClipboardList className="w-5 h-5" />
+               <span className="ml-3">Activity Log</span>
+           </a>
+           )}
+
           </nav>
         </div>
 
+       
+      
         {/* Help Card */}
         {!isCollapsed && (
           <div className="mt-8 bg-blue-50 rounded-lg p-4 relative">

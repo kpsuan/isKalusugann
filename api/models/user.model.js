@@ -221,9 +221,40 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    approvedByDentistDate:{
+      type: Date,
+      default: null,
+    },
+    approvedByDoctorDate:{
+      type: Date,
+      default: null,
+    },
+
     licenseNumber: {
       type: String,
       default: null,
+    },
+    isNewUser:{
+      type: Boolean,
+      default: true
+    },
+
+    isArchive:{
+      type: Boolean,
+      default: false
+    },
+    isActive:{
+      type: Boolean,
+      default: true
+    },
+    archivedDate: {
+      type: Date,
+      default: null,
+    },
+    isNewUser:{
+      type: Boolean,
+      default: true
     },
 
     resetPasswordToken: String,

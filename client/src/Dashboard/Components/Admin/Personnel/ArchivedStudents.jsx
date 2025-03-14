@@ -17,25 +17,20 @@ import { useDispatch } from 'react-redux';
 
 import * as XLSX from 'xlsx'; // Import the XLSX library
 
-const ManageStudents = () => {
+const ArchiveStudents = () => {
   const { currentUser } = useSelector((state) => state.user);
-  const [activeTab, setActiveTab] = useState("all");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isDeleteGraduatingModalOpen, setIsDeleteGraduatingModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [limit] = useState(9);
   const [totalUsers, setTotalUsers] = useState(0);
-  const [totalActive, setTotalActive] = useState(0);
-  const [totalGraduating, setTotalGraduating] = useState(0);
-  const [totalArchived, setTotalArchived] = useState(0);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
+
 
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState(null);
@@ -47,6 +42,9 @@ const ManageStudents = () => {
   const [sortOrder, setSortOrder] = useState("desc"); // "asc" or "desc"
   const [sortField, setSortField] = useState("lastName");
   const [yearLevels, setYearLevels] = useState(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"]);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isArchiveUserModalOpen, setIsArchiveUserModalOpen] = useState(false);
+
   
   const dispatch = useDispatch();
 
@@ -56,7 +54,7 @@ const ManageStudents = () => {
        setError(null); 
        try {
          const startIndex = (currentPage - 1) * limit;
-         let url = `/api/user/getall?startIndex=${startIndex}&limit=${limit}`;
+         let url = `/api/user/get-archived?startIndex=${startIndex}&limit=${limit}`;
          if (filter) {
            url += `&searchQuery=${encodeURIComponent(filter)}`;        
          }
@@ -83,7 +81,7 @@ const ManageStudents = () => {
          if (res.ok) {
            setUsers(data.users);
            setTotalUsers(data.totalUsers);
-           setTotalActive(data.totalActive);
+           setTotalArchived(data.totalInactive)
            setTotalGraduating(data.totalGraduating);
            setStudents(data.users);
            setIsLoading(false);
@@ -115,44 +113,6 @@ const ManageStudents = () => {
      }
    }, [currentUser, filter, currentPage, limit, graduationFilter, collegeFilter, degreeProgramFilter, yearLevelFilter, sortOrder, sortField]);
  
-
-
-   useEffect(() => {
-        const fetchArchived = async () => {
-          setLoading(true); 
-          setError(null); 
-          try {
-            const startIndex = (currentPage - 1) * limit;
-            let url = `/api/user/get-archived?startIndex=${startIndex}&limit=${limit}`;
-            if (filter) {
-              url += `&searchQuery=${encodeURIComponent(filter)}`;        
-            }
-          
-            const res = await fetch(url);
-            const data = await res.json();
-            if (res.ok) {
-              setTotalArchived(data.totalUsers)
-           
-            } else {
-              setError(data.message || "Failed to fetch users.");
-              setIsLoading(false);
-            }
-          } catch (error) {
-            setError("An error occurred while fetching users.");
-            setIsLoading(false);
-          } finally {
-            setLoading(false);
-          }
-        };
-    
-        if (currentUser && currentUser.isAdmin) {
-          fetchArchived();
-        } else {
-          // If it's not an admin, still set loading to false
-          setIsLoading(false);
-        }
-      }, [currentUser, filter, currentPage, limit, sortOrder, sortField]);
-    
 
    const handleFilterChange = (event) => {
     setFilter(event.target.value);
@@ -191,7 +151,7 @@ const ManageStudents = () => {
       const month = String(now.getMonth() + 1).padStart(2, '0'); // Ensure two-digit format
       const day = String(now.getDate()).padStart(2, '0'); 
   
-      const fileName = `Student_Data_${year}_${month}_${day} exported.xlsx`;
+      const fileName = `[ARCHIVED]Student_Data_${year}_${month}_${day} exported.xlsx`;
   
       const ws = XLSX.utils.json_to_sheet(allUsers.map(user => ({
         'firstName': user.firstName,
@@ -216,145 +176,88 @@ const ManageStudents = () => {
     }
   };
   
-
-  const handleFileImport = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-  
-    // Show loading toast
-    const loadingToastId = toast.loading("Processing file...");
-    
-    const fileReader = new FileReader();
-    fileReader.onload = async (e) => {
-      try {
-        let importedData;
-        
-        // Parse file based on type
-        if (file.type === 'application/json') {
-          importedData = JSON.parse(e.target.result);
-        } else if (file.type === 'text/csv') {
-          // CSV parsing
-          const csvRows = e.target.result.split('\n');
-          const headers = csvRows[0].split(',');
-          
-          importedData = csvRows.slice(1)
-            .filter(row => row.trim()) // Skip empty rows
-            .map(row => {
-              const values = row.split(',');
-              const student = {};
-              
-              headers.forEach((header, index) => {
-                // Handle boolean values
-                if (values[index]?.trim().toLowerCase() === 'true') {
-                  student[header.trim()] = true;
-                } else if (values[index]?.trim().toLowerCase() === 'false') {
-                  student[header.trim()] = false;
-                } else {
-                  student[header.trim()] = values[index]?.trim() || '';
-                }
-              });
-              
-              return student;
-            });
-        } else {
-          toast.update(loadingToastId, {
-            render: "Unsupported file format. Please use JSON or CSV.",
-            type: "error",
-            isLoading: false,
-            autoClose: 3000
-          });
-          return;
-        }
-        
-        // Validate required fields
-        const validatedData = importedData.filter(student => {
-          const requiredFields = ['username', 'email', 'password', 'firstName', 'lastName', 'college', 'degreeProgram', 'yearLevel'];
-          return requiredFields.every(field => student[field] && student[field].toString().trim() !== '');
-        });
-  
-        if (validatedData.length === 0) {
-          toast.update(loadingToastId, {
-            render: "No valid student data found. Please check your file format.",
-            type: "error",
-            isLoading: false,
-            autoClose: 3000
-          });
-          return;
-        }
-  
-        // Send to backend API
-        const response = await fetch('/api/auth/import', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ students: validatedData }),
-        });
-  
-        const result = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(result.message || 'Failed to import students');
-        }
-  
-        // Show results
-        if (result.results.failed > 0) {
-          toast.update(loadingToastId, {
-            render: `Imported ${result.results.successful} students. ${result.results.failed} failed. Check console for details.`,
-            type: "warning",
-            isLoading: false,
-            autoClose: 5000
-          });
-          
-          console.log("Import errors:", result.results.errors);
-        } else {
-          toast.update(loadingToastId, {
-            render: `Successfully imported ${result.results.successful} students!`,
-            type: "success",
-            isLoading: false,
-            autoClose: 3000
-          });
-        }
-        
-        setIsImportModalOpen(false);
-        
-        
-        // Option 1: Fetch updated list
-        // fetchStudents();
-        
-        // Option 2: Reload page
-        window.location.reload();
-        
-      } catch (error) {
-        toast.update(loadingToastId, {
-          render: 'Error: ' + (error.message || 'Unknown error occurred'),
-          type: "error",
-          isLoading: false,
-          autoClose: 3000
-        });
-        console.error("Import error:", error);
-      }
-    };
-  
-    if (file.type === 'application/json' || file.type === 'text/csv') {
-      fileReader.readAsText(file);
-    } else {
-      toast.dismiss(loadingToastId);
-      toast.error('Unsupported file format. Please use JSON or CSV.');
-    }
-  };
-
-  const handleArchiveGraduating = async () => {
+  const handleRestoreArchived = async (userId) => {
+    console.log(userId);
     try {
-      const res = await fetch(`/api/user/archive-graduating`, {
+        const res = await fetch(`/api/user/restore-archive/${userId}`, {
+            method: 'PUT',
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            toast.error(data.message || 'Failed to restore student');
+            return;
+        }
+
+        // Fetch restored user details
+        const userRes = await fetch(`/api/user/${userId}`);
+        const userData = await userRes.json();
+
+        if (!userRes.ok) {
+            toast.error('Failed to retrieve user details for logging');
+            return;
+        }
+
+        // Log activity 
+        const now = new Date(); // Get current timestamp
+
+        const approvalLog = {
+            modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+            role: currentUser.isSuperAdmin ? "superadmin" : currentUser.role || "user",
+            approvedAt: now.toISOString(),
+            userId: currentUser._id,
+            restoredUser: {
+                id: userData._id,
+                name: `${userData.firstName} ${userData.lastName}`,
+                email: userData.email,
+                degreeProgram: userData.degreeProgram,
+            }
+        };
+
+        try {
+            const logResponse = await fetch("/api/activity/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: currentUser?._id,
+                    action: `${currentUser.role} restored student ${userData.firstName} ${userData.lastName} back to database`,
+                    details: approvalLog,
+                }),
+            });
+
+            const logData = await logResponse.json();
+
+            if (!logResponse.ok) {
+                throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+            }
+
+            console.log("Activity log success:", logData);
+        } catch (error) {
+            console.error("Error logging activity:", error);
+        }
+
+        toast.success('Student restored successfully');
+        setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+        toast.error('An error occurred while restoring student');
+    }
+};
+
+  
+  const handleRestoreAllArchived = async () => {
+    try {
+      const res = await fetch(`/api/user/restore-allArchived`, {
         method: 'PUT',
       });
+  
       const data = await res.json();
+  
       if (!res.ok) {
-        toast.error(data.message || 'Failed to archive graduating students');
+        toast.error(data.message || 'Failed to restore archived users');
         return;
       }
-      
+  
       //Log activity 
       const now = new Date(); // Get current timestamp
 
@@ -371,7 +274,7 @@ const ManageStudents = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: currentUser?._id, 
-            action: `${currentUser.role} archived students to database`,
+            action: `${currentUser.role} restored all students back to database`,
             details: approvalLog,
           }),
         });
@@ -387,16 +290,13 @@ const ManageStudents = () => {
         console.error("Error logging activity:", error);
       }
 
-      toast.success('Graduating students archived successfully');
+      toast.success(`${data.message}`);
       setTimeout(() => window.location.reload(), 1000);
-      setStudents(students.filter(student => !student.isGraduating));
-      setIsDeleteGraduatingModalOpen(false);
     } catch (error) {
-      toast.error('An error occurred while archiving graduating students');
+      toast.error('An error occurred while restoring archived users');
     }
-
   };
-
+  
 
 
   return (
@@ -407,12 +307,12 @@ const ManageStudents = () => {
             <div className="mainContent m-0 p-0">
                 <div className="flex-1 overflow-auto">
                     {/* Header Section */}
-                    <div className="bg-gradient-to-r from-cyan-600 to-green-400 p-8">
+                    <div className="bg-gradient-to-r from-rose-600 to-red-500 p-8">
                     <div className="max-w-7xl p-8 mx-auto">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">
-                            Manage Students
+                            Archived Students
                             </h1>
                             <p className="text-blue-100">
                             View, add, import and manage student accounts
@@ -422,32 +322,14 @@ const ManageStudents = () => {
                         {currentUser && currentUser.isAdmin && (
                             <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
                             <button
-                                onClick={() => setIsAddModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 bg-white text-green-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+                                onClick={() => setIsArchiveModalOpen(true)}
+                                className="inline-flex items-center px-4 py-2 bg-white text-red-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
                             >
                                 <FaUserPlus className="w-4 h-4 mr-2" />
-                                Add Student
+                                Restore All Student
                             </button>
-                           
-                            
-                            <button
-                                onClick={() => setIsImportModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 bg-white text-green-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-                            >
-                                <FaFileUpload className="w-4 h-4 mr-2" />
-                                Import Students
-                            </button>
-
-                           
-                            
-                            <button
-                                onClick={() => setIsDeleteGraduatingModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 bg-white text-green-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-                            >
-                                <FaGraduationCap className="w-4 h-4 mr-2" />
-                                Archive Graduating
-                            </button>
-                            </div>
+                
+                           </div>
                         )}
                         </div>
                     </div>
@@ -467,53 +349,6 @@ const ManageStudents = () => {
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="bg-white rounded-lg shadow-sm p-4">
-                        <div className="flex items-center">
-                          <div className="bg-green-100 p-3 rounded-full">
-                            <FaGraduationCap className="h-6 w-6 text-green-600" />
-                          </div>
-                          <div className="ml-4">
-                            <h2 className="text-sm font-medium text-gray-500">Graduating Students</h2>
-                            <p className="text-2xl font-semibold text-gray-800">
-                              {totalGraduating}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-white rounded-lg shadow-sm p-4 transform transition duration-300 hover:scale-105 hover:bg-gray-100 p-2 rounded-lg">
-                        <div className="flex items-center">
-                          <div className="bg-green-100 p-3 rounded-full">
-                            <FaGraduationCap className="h-6 w-6 text-green-600" />
-                          </div>
-                          <div 
-                            className="ml-4 cursor-pointer "
-                            onClick={() => window.open('/archivedStudents', '_blank')}
-                          >
-                            <h2 className="text-sm font-medium text-gray-500">Archived Students</h2>
-                            <p className="text-2xl font-semibold text-gray-800">
-                              {totalArchived}
-                            </p>
-                          </div>
-
-                        </div>
-                      </div>
-                      
-                      <div className="bg-white rounded-lg shadow-sm p-4">
-                        <div className="flex items-center">
-                          <div className="bg-purple-100 p-3 rounded-full">
-                            <HiOutlineUserAdd className="h-6 w-6 text-purple-600" />
-                          </div>
-                          <div className="ml-4">
-                            <h2 className="text-sm font-medium text-gray-500">Non Graduating Students</h2>
-                            <p className="text-2xl font-semibold text-gray-800">
-                              {totalActive}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                 
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -537,23 +372,7 @@ const ManageStudents = () => {
                               </div>
                             </div>
                             
-                            {/* Graduation Status Dropdown */}
-                            <div className="relative w-full sm:w-auto mb-3 sm:mb-0">
-                              <select
-                                className="pl-3 pr-10 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                                value={graduationFilter}
-                                onChange={(e) => handleGraduationFilterChange(e.target.value)}
-                              >
-                                <option value="all">All Students</option>
-                                <option value="graduating">Graduating Only</option>
-                                <option value="active">Active Only</option>
-                              </select>
-                              <div className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </div>
-                            </div>
+                            
                             
                             {/* Filter button */}
                             <button
@@ -640,10 +459,12 @@ const ManageStudents = () => {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {students.map((student) => (
+                                    {users.map((student) => (
                                     <tr key={student.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-lg font-medium text-gray-900">
@@ -658,15 +479,28 @@ const ManageStudents = () => {
                                         <div className="text-sm text-gray-500">{student.email}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                        {student.isGraduating ? (
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Graduating
-                                            </span>
-                                        ) : (
+                                        {student.isActive ? (
                                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                             Active
                                             </span>
+                                        ) : (
+                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            Inactive
+                                            </span>
                                         )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        
+                                        <button 
+                                        onClick={() => {
+                                            setSelectedUserId(student._id);
+                                            setIsArchiveUserModalOpen(true);
+                                        }}
+                                        className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Restore
+                                        </button>
+
+                                        
                                         </td>
                                        
                                     </tr>
@@ -674,7 +508,7 @@ const ManageStudents = () => {
                                 </tbody>
                                 </table>
                                 
-                                {students.length === 0 && (
+                                {users.length === 0 && (
                                 <div className="text-center py-10">
                                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -726,53 +560,7 @@ const ManageStudents = () => {
             </div>
       </div>
       
-      {/* Import Students Modal */}
-      <ImportStudentsModal 
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-      />
-      
-      {/* Delete Graduating Students Confirmation Modal */}
-      {isDeleteGraduatingModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
-              <FaGraduationCap className="w-6 h-6 text-red-600" />
-            </div>
-            
-            <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Archive Graduating Students</h3>
-            <p className="text-sm text-gray-500 text-center mb-4">
-              Are you sure you want to archive all graduating students? You can still restore archive users in the settings.
-            </p>
-            
-            <div className="flex justify-center space-x-3 mt-4">
-              <button
-                onClick={() => setIsDeleteGraduatingModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleArchiveGraduating}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Yes, Archive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Add Student Modal */}
-      <AddStudentModal
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            onAdd={(newUser) => {
-              setUsers([...users, newUser]);
-              toast.success('User created successfully!');
-              setTimeout(() => window.location.reload(), 1000);
-            }}
-        />
+
         {isFilterModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -924,6 +712,70 @@ const ManageStudents = () => {
             </div>
         </div>
         )}
+
+          {/* Restore Archived Students Confirmation Modal */}
+              {isArchiveModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+                      <FaGraduationCap className="w-6 h-6 text-red-600" />
+                    </div>
+                    
+                    <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Restore Archived Students</h3>
+                    <p className="text-sm text-gray-500 text-center mb-4">
+                      Are you sure you want to restore all archived students? Action cannot be undone.
+                    </p>
+                    
+                    <div className="flex justify-center space-x-3 mt-4">
+                      <button
+                        onClick={() => setIsArchiveModalOpen(false)}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleRestoreAllArchived}
+                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                      >
+                        Yes, Archive
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+        
+          {/* Restore Archived Students Confirmation Modal */}
+          {isArchiveUserModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mx-auto mb-4">
+                      <FaGraduationCap className="w-6 h-6 text-green-600" />
+                    </div>
+                    
+                    <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Restore Student</h3>
+                    <p className="text-sm text-gray-500 text-center mb-4">
+                      Are you sure you want to restore archived student? Action cannot be undone.
+                    </p>
+                    
+                    <div className="flex justify-center space-x-3 mt-4">
+                        <button
+                        onClick={() => setIsArchiveUserModalOpen(false)}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                        >
+                        Cancel
+                        </button>
+                        <button
+                        onClick={() => handleRestoreArchived(selectedUserId)}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-red-700"
+                        >
+                        Yes, Restore
+                        </button>
+                    </div>
+                  </div>
+                </div>
+          )}
+
       {/* Custom CSS for animations */}
       <style jsx>{`
         @keyframes slideInRight {
@@ -948,4 +800,4 @@ const ManageStudents = () => {
   );
 };
 
-export default ManageStudents;
+export default ArchiveStudents;

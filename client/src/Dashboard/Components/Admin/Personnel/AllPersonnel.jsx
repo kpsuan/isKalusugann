@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { HiOutlineExclamationCircle, HiOutlineCalendar, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineExclamationCircle, HiOutlineCalendar, HiOutlinePencil, HiOutlineTrash, HiOutlineEye, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 import { toast, ToastContainer } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import {
@@ -68,29 +68,121 @@ const AllPersonnel = () => {
     setCurrentPage(1);
   };
 
+  // Pagination handlers
+  const totalPages = Math.ceil(totalUsers / limit);
   
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const handlePageClick = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPageButtons = 5; // Show maximum 5 page buttons at a time
+    
+    // Calculate start and end page numbers to display
+    let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    let endPage = startPage + maxPageButtons - 1;
+    
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxPageButtons + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
 
   const handleDeleteAccount = async (userId) => {
     try {
-      dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${userId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        dispatch(deleteUserFailure(data));
-        toast.error(data.message || 'Failed to delete user');
-        return;
-      }
-      toast.success('User deleted successfully');
-      window.location.reload();
-      setUsers(users.filter(user => user._id !== userId));
+        dispatch(deleteUserStart());
+
+        // 🔍 Find the user before deleting (from state)
+        const userToDelete = users.find(user => user._id === userId);
+        if (!userToDelete) {
+            toast.error("User not found.");
+            return;
+        }
+
+        const res = await fetch(`/api/user/delete/${userId}`, {
+            method: 'DELETE',
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            dispatch(deleteUserFailure(data));
+            toast.error(data.message || 'Failed to delete user');
+            return;
+        }
+
+        // 📝 Log activity with deleted user's details
+        const now = new Date();
+        const approvalLog = {
+            modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+            role: currentUser.isSuperAdmin ? "superadmin" : currentUser.role || "user",
+            approvedAt: now.toISOString(),
+            userId: currentUser._id,
+            deletedUser: {  // 👈 Store deleted user details
+                id: userToDelete._id,
+                firstName: userToDelete.firstName,
+                lastName: userToDelete.lastName,
+                email: userToDelete.email,
+                role: userToDelete.role || "user",
+                college: userToDelete.college || "N/A",
+                degreeProgram: userToDelete.degreeProgram || "N/A",
+                yearLevel: userToDelete.yearLevel || "N/A",
+            },
+        };
+
+        try {
+            const logResponse = await fetch("/api/activity/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: currentUser._id,
+                    action: `${currentUser.role} deleted a user account`,
+                    details: approvalLog,
+                }),
+            });
+
+            const logData = await logResponse.json();
+
+            if (!logResponse.ok) {
+                throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+            }
+
+            console.log("Activity log success:", logData);
+        } catch (error) {
+            console.error("Error logging activity:", error);
+        }
+
+        // ✅ Successfully deleted user
+        toast.success('User deleted successfully');
+        setUsers(users.filter(user => user._id !== userId));
+        window.location.reload();
     } catch (error) {
-      dispatch(deleteUserFailure(error));
-      toast.error('An error occurred while deleting the user');
+        dispatch(deleteUserFailure(error));
+        toast.error('An error occurred while deleting the user');
     }
-  };
+};
+
   
 
   return (
@@ -109,7 +201,18 @@ const AllPersonnel = () => {
             </div>
           </div>
         </div>
-        {currentUser.isAdmin && users.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-6">
+            <div className="text-red-500 mb-2">
+              <HiOutlineExclamationCircle className="w-8 h-8 mx-auto" />
+            </div>
+            <p className="text-red-500">{error}</p>
+          </div>
+        ) : currentUser.isAdmin && users.length > 0 ? (
           <div className="animate-fade-in">
             
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -163,7 +266,8 @@ const AllPersonnel = () => {
                               to={'/my-Profile'}
                               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200"
                             >
-                              <HiOutlinePencil className="w-5 h-5" />
+                            <HiOutlineEye className="w-5 h-5" /> 
+
                             </Link>
                             <button
                               onClick={() => {
@@ -183,6 +287,47 @@ const AllPersonnel = () => {
                 </table>
               </div>
               
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      Showing <span className="font-medium">{Math.min((currentPage - 1) * limit + 1, totalUsers)}</span> to <span className="font-medium">{Math.min(currentPage * limit, totalUsers)}</span> of <span className="font-medium">{totalUsers}</span> users
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        <HiOutlineChevronLeft className="w-5 h-5" />
+                      </button>
+                      
+                      {getPageNumbers().map(pageNumber => (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageClick(pageNumber)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-md ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                      
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        <HiOutlineChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (

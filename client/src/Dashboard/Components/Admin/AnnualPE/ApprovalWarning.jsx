@@ -4,37 +4,32 @@ const ApprovalWarning = ({ user }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [bounce, setBounce] = useState(false);
 
-  // Animation effect
   useEffect(() => {
     const bounceInterval = setInterval(() => {
       setBounce((prev) => !prev);
     }, 1500);
 
-    return () => {
-      clearInterval(bounceInterval);
-    };
+    return () => clearInterval(bounceInterval);
   }, []);
 
-  // Check which submissions are missing
+  // submissions na missing
   const missingSubmissions = [];
 
   if (!user.peForm) {
     missingSubmissions.push("Missing PE form submission");
   }
-
   if (!user.labResults) {
     missingSubmissions.push("Missing laboratory results");
   }
-
   if (!user.requestPE) {
     missingSubmissions.push("Missing request for PE");
   }
-
   if (!user.medcertUser) {
     missingSubmissions.push("Missing medcert from their doctor");
   }
 
-  // If all files are submitted, show "Fit for Approval"
+  if (!isVisible) return null;
+
   if (missingSubmissions.length === 0) {
     return (
       <div className="fixed top-20 right-8 max-w-md z-50">
@@ -62,7 +57,7 @@ const ApprovalWarning = ({ user }) => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-green-800">Fit for Approval</h3>
+              <h3 className="text-lg font-medium text-green-800">Complete Documents!</h3>
               <p className="mt-2 text-sm text-green-700">
                 All required documents have been submitted.
               </p>
@@ -82,9 +77,7 @@ const ApprovalWarning = ({ user }) => {
     );
   }
 
-  // Show missing files warning
-  if (!isVisible) return null;
-
+  //  missing files warning
   return (
     <div className="fixed top-20 right-8 max-w-md z-50">
       <div

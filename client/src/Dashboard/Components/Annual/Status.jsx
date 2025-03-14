@@ -77,6 +77,23 @@ const Status = () => {
     const userHasChoice = currentUser?.annualPE;
     const cleanRemarks = currentUser.rescheduleRemarks?.replace(/<\/?p>/g, '');
 
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const res = await fetch(`/api/user/${currentUser._id}`);
+                const updatedUser = await res.json();
+                if (res.ok) {
+                    dispatch(updateUserSuccess(updatedUser));
+                }
+            } catch (error) {
+                console.error("Error fetching updated user:", error);
+            }
+        };
+    
+        fetchCurrentUser();
+    }, [currentUser._id]); // Runs when currentUser._id changes
+    
+    
 
     const [formData, setFormData] = useState({});
 

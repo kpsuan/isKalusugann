@@ -1,6 +1,7 @@
 import Sidebar from '../../SideBar Section/Sidebar';
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
+
 import { Card, Timeline, Accordion, Tabs, Alert, Button, Modal, ModalBody, TextInput, Table, TableCell } from 'flowbite-react';
 import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { HiArrowNarrowRight } from "react-icons/hi";
@@ -35,6 +36,7 @@ const AnnualHomeAdmin = () => {
     // Define the pre-enlistment period
     const [preEnlistStart, setPreEnlistStart] = useState(new Date());
     const [preEnlistEnd, setPreEnlistEnd] = useState(new Date());
+    const { currentUser } = useSelector((state) => state.user);
 
     useEffect(() => {
         const fetchSavedDates = async () => {
@@ -66,23 +68,39 @@ const AnnualHomeAdmin = () => {
             toast.error("Start and End dates are required.");
             return;
         }
-
+        const userId = currentUser?._id;
+        
+        console.log("User ID before sending request:", userId);
+        console.log("Sending data:", {
+            userId,
+            preEnlistStart: preEnlistStart.toISOString(),
+            preEnlistEnd: preEnlistEnd.toISOString(),
+        });
+    
         try {
+            if (!userId) {
+                console.error("User ID not found");
+                toast.error("User ID is missing.");
+                return;
+            }
+    
             const response = await axios.post('/api/settings/savePreEnlistDates', {
+                userId,
                 preEnlistStart: preEnlistStart.toISOString(),
                 preEnlistEnd: preEnlistEnd.toISOString(),
             });
-
+    
             if (response.status === 200) {
                 toast.success(response.data.message);
                 setPreEnlistStart(preEnlistStart);
                 setPreEnlistEnd(preEnlistEnd);
             }
         } catch (error) {
-            console.error("Error saving dates:", error);
+            console.error("Error saving dates:", error.response?.data || error);
             toast.error("Failed to save dates. Please try again.");
         }
     };
+    
 
     useEffect(() => {
         const now = new Date();

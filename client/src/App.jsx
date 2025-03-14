@@ -95,6 +95,9 @@ import ApprovedOverall from './Dashboard/Components/Admin/AnnualPE/ApprovalOvera
 import UnavailableDatesManager from './Dashboard/Components/Admin/AnnualPE/UnavailableDatesManager';
 import UnavailableDatesPage from './Dashboard/Components/Admin/AnnualPE/UnavailableDatesAdmin';
 import ManageStudents from './Dashboard/Components/Admin/Personnel/ManageStudents';
+import ArchiveStudents from './Dashboard/Components/Admin/Personnel/ArchivedStudents';
+import AdminProfile from './pages/AdminProfile';
+import ActivityLog from './Dashboard/Components/Admin/Personnel/ActivityLog';
 
 
 export default function App() {
@@ -118,6 +121,7 @@ export default function App() {
           <Route path='/attendance2' element={<Attendance2 />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/my-Profile' element={<MoreInfo />} />
+          <Route path='/admin-profile' element={<AdminProfile />} />
           <Route path='/moreInfo' element={<MoreInfo />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/annualPE" element={<AnnualPe />} />
@@ -206,6 +210,8 @@ export default function App() {
           <Route path="/getDocRequest" element={<DocRequest />} />
 
           <Route path="/setunavailable" element={<UnavailableDatesPage />} />
+          <Route path="/archivedStudents" element={<ArchiveStudents />} />
+          <Route path="/activity-log" element={<ActivityLog />} />
 
           
 

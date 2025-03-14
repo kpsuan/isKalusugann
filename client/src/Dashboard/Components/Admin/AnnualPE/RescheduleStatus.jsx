@@ -233,12 +233,6 @@ const RescheduleStatus = () => {
     }
 };
 
-useEffect(() => {
-  if (userId) {
-      handleReleaseSlot(userId);
-  }
-}, [userId]);
-
 
 const handleReleaseSlot = async (userId) => {
   try {

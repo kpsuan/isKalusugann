@@ -20,12 +20,11 @@ const AnnualProcess2 = () => {
     const refreshStatus = async () => {
         try {
             setRefreshing(true);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            const { data } = await axios.get(`/api/user/${currentUser?._id}`); // Fetch updated user data from backend
             setStepCompletion({
-                generalPE: currentUser?.isGeneral || false,
-                dental: currentUser?.isDental || false,
-                doctorCheckup: currentUser?.status === 'approved' || false,
+                generalPE: data?.isGeneral || false,
+                dental: data?.isDental || false,
+                doctorCheckup: data?.status === 'approved' || false,
             });
         } catch (error) {
             console.error('Error refreshing status:', error);
@@ -33,6 +32,18 @@ const AnnualProcess2 = () => {
             setRefreshing(false);
         }
     };
+    
+    useEffect(() => {
+        refreshStatus(); // Fetch initial data on mount
+    
+        const intervalId = setInterval(() => {
+            refreshStatus(); // Poll every 5 seconds for real-time updates
+        }, 5000);
+    
+        return () => clearInterval(intervalId); // Cleanup interval on unmount
+    }, [currentUser]);
+    
+
 
     useEffect(() => {
         setStepCompletion((prev) => ({

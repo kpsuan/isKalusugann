@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import { ACCOUNT_CREATED_TEMPLATE } from '../../../../../../api/utils/emailTemplate';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
 
 const ImportStudentsModal = ({ isOpen, onClose }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -135,8 +137,41 @@ const ImportStudentsModal = ({ isOpen, onClose }) => {
           });
           navigate('/manage-students')
         }
-                // Reload the page to reflect changes
-       
+
+        //Log activity 
+
+        const now = new Date(); // Get current timestamp
+        const numImported = result.results.successful; // Number of successful imports
+
+        const approvalLog = {
+          modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+          role: currentUser.isSuperAdmin ? "superadmin" : currentUser.role || "user",
+          approvedAt: now.toISOString(), 
+          userId: currentUser._id, 
+          importedStudents: numImported,
+        };
+        
+        try {
+          const logResponse = await fetch("/api/activity/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: currentUser?._id, 
+              action: `${currentUser.role} imported ${numImported} students to database`,
+              details: approvalLog,
+            }),
+          });
+        
+          const logData = await logResponse.json();
+          
+          if (!logResponse.ok) {
+            throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+          }
+        
+          console.log("Activity log success:", logData);
+        } catch (error) {
+          console.error("Error logging activity:", error);
+        }
         
       } catch (error) {
         toast.update(loadingToastId, {

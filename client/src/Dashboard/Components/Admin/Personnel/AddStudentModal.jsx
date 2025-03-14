@@ -3,6 +3,7 @@ import { HiOutlinePlusCircle, HiOutlineX, HiOutlineUser, HiOutlineMail, HiOutlin
 import { toast, ToastContainer } from 'react-toastify';
 import { ACCOUNT_CREATED_TEMPLATE } from '../../../../../../api/utils/emailTemplate';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
 
 
 const AddStudentModal = ({ isOpen, onClose, onAdd }) => {
@@ -20,6 +21,7 @@ const AddStudentModal = ({ isOpen, onClose, onAdd }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { currentUser } = useSelector((state) => state.user);
 
   const handleChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -32,52 +34,87 @@ const AddStudentModal = ({ isOpen, onClose, onAdd }) => {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      
-      if (data.success === false) {
-        toast.error('Unable to add user');
-      } else {
-        
+        const res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        });
+
+        const data = await res.json();
+        console.log("Signup response data:", data); // Debugging log
+
+        if (!res.ok || data.success === false) {
+            toast.error('Unable to add user');
+            setLoading(false);
+            return;
+        }
+
         onAdd(data);
-        
+
         let emailContent = ACCOUNT_CREATED_TEMPLATE
-        .replace('{firstName}', formData.firstName)
-        .replace('{email}', formData.email)
-        .replace('{password}', formData.password); 
+            .replace('{firstName}', formData.firstName)
+            .replace('{email}', formData.email)
+            .replace('{password}', formData.password);
 
         await axios.post('/api/email/emailUser', {
             email: formData.email,
             subject: 'isKalusugan Account Created',
-            html: emailContent // Use html instead of text for formatted email
+            html: emailContent,
         });
-        
-        toast.success('User added successfully', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });        
+
+         // Log activity 
+         const now = new Date();
+         const approvalLog = {
+             modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+             role: currentUser.isSuperAdmin ? "superadmin" : currentUser.role || "user",
+             approvedAt: now.toISOString(),
+             userId: currentUser._id,
+             addedUser: {
+               id: data.user._id,  // Still using data.user._id since formData won't have an ID before user is created
+               name: `${formData.firstName} ${formData.lastName}`, // ✅ Using formData fields
+               email: formData.email,
+               college: formData.college,
+               degreeProgram: formData.degreeProgram,
+               yearLevel: formData.yearLevel,
+           }
+         };
+ 
+         try {
+             const logResponse = await fetch("/api/activity/log", {
+                 method: "POST",
+                 headers: { "Content-Type": "application/json" },
+                 body: JSON.stringify({
+                     userId: currentUser._id,
+                     action: `${currentUser.role} created a student account`,
+                     details: approvalLog,
+                 }),
+             });
+ 
+             const logData = await logResponse.json();
+             console.log("Activity log response:", logResponse.status, logData); // Debugging log
+ 
+             if (!logResponse.ok) {
+                 throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+             }
+ 
+             console.log("Activity log success:", logData);
+         } catch (error) {
+             console.error("Error logging activity:", error);
+         }
+
+        toast.success('User added successfully');
         onClose();
         setTimeout(() => window.location.reload(), 1000);
+       
 
-        
-      }
     } catch (error) {
-      setError("An error occurred while creating the user.");
+        console.error("Signup Error:", error);
+        setError("An error occurred while creating the user.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   if (!isOpen) return null;
 

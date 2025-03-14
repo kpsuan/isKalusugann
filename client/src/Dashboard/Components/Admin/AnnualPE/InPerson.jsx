@@ -282,11 +282,14 @@ const InPerson = () => {
       toast.error("Start and End dates are required.");
       return;
     }
-  
+    
+    const userId = currentUser?._id;
+
     try {
       const response = await axios.post('/api/settings/saveDates', {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
+        userId
       });
   
       if (response.status === 200) {
@@ -391,10 +394,13 @@ const InPerson = () => {
       return;
     }
   
+    const userId = currentUser?._id;
+
     setLoading(true);
     try {
       // Step 1: Generate the schedule
       await axios.post(`/api/user/assignschedule`, {
+        userId,
         startDate: savedStartDate,
         endDate: savedEndDate,
       });
@@ -468,10 +474,12 @@ const InPerson = () => {
   
   const handleClearSchedules = async () => {
     setLoading(true);
+    const userId = currentUser?._id;
+
     try {
       // Clear schedules on the backend
-      await axios.delete(`/api/settings/clearDates`);
-      await axios.delete(`/api/user/deleteschedule`);
+      await axios.delete(`/api/settings/clearDates`, { data: { userId } });
+      await axios.delete(`/api/user/deleteschedule`, { data: { userId } });
       // Clear savedStartDate and savedEndDate from state
       setSavedStartDate(null);
       setSavedEndDate(null);

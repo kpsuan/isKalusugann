@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sidebar from '../../SideBar Section/Sidebar';
 import { LoaderCircle, UserRound, Clock } from 'lucide-react';
+import {FaGraduationCap} from 'react-icons/fa';
 
 const DentalQueue = () => {
   const [studentsInQueue, setStudentsInQueue] = useState([]);
@@ -11,6 +12,8 @@ const DentalQueue = () => {
   const [nextStep, setNextStep] = useState('Doctor');
   const [loading, setLoading] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);  
+  const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
 
   useEffect(() => {
     fetchQueue();
@@ -27,7 +30,6 @@ const DentalQueue = () => {
         params: { step: currentStep },
       });
       setStudentsInQueue(response.data.students);
-      // Assuming the first student in queue is the current one being served
       setCurrentStudent(response.data.students[0] || null);
     } catch (error) {
       console.error('Error fetching queue data:', error);
@@ -62,6 +64,7 @@ const DentalQueue = () => {
   
       if (response.status === 200) {
         toast.success(response.data.message); 
+        setIsPriorityModalOpen(false)
       }
     } catch (error) {
       console.error('Error making student priority:', error);
@@ -189,7 +192,10 @@ const DentalQueue = () => {
                             </td>
                             <td className="px-6 py-4">
                               <button
-                                onClick={() => handleMakePriority(student.studentId)}
+                                onClick={() => 
+                                  {
+                                    setSelectedUserId(student.studentId);
+                                    setIsPriorityModalOpen(true);}}
                                 disabled={loading}
                                 className="bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                               >
@@ -221,6 +227,36 @@ const DentalQueue = () => {
           </div>
         </div>
       </div>
+       {/* Make Student Priority Confirmation Modal */}
+        {isPriorityModalOpen && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mx-auto mb-4">
+                                  <FaGraduationCap className="w-6 h-6 text-green-600" />
+                                </div>
+                                
+                                <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Prioritize Student</h3>
+                                <p className="text-sm text-gray-500 text-center mb-4">
+                                  Are you sure you want to prioritize student? Action cannot be undone.
+                                </p>
+                                
+                                <div className="flex justify-center space-x-3 mt-4">
+                                    <button
+                                    onClick={() => setIsPriorityModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                    >
+                                    Cancel
+                                    </button>
+                                    <button
+                                    onClick={() => handleMakePriority(selectedUserId)}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-red-700"
+                                    >
+                                    Yes, Prioritize
+                                    </button>
+                                </div>
+                              </div>
+                            </div>
+        )}
     </div>
   );
 };

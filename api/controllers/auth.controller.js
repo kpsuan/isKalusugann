@@ -6,10 +6,10 @@ import jwt from 'jsonwebtoken';
 import { emailUser } from './emailuser.controller.js';
 
 export const signup = async (req, res, next) => {
-  const { username, email, password, firstName, lastName, role, isAdmin, isSuperAdmin, licenseNumber, isGraduating, college, degreeProgram, yearLevel } = req.body;
+  const { username, email, password, firstName, lastName, role, isAdmin, isSuperAdmin, isNewUser,  isGraduating, college, degreeProgram, yearLevel } = req.body;
   const slug =req.body.email.split(' ').join('').toLowerCase().replace(/up|edu|ph/g, '').replace(/[^a-zA-Z0-9-]/g, '-');
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const newUser = new User({ username, email, slug, password: hashedPassword, firstName, lastName, role, isAdmin, isSuperAdmin, licenseNumber, isGraduating, college, degreeProgram, yearLevel });
+  const newUser = new User({ username, email, slug, password: hashedPassword, isNewUser, firstName, lastName, role, isAdmin, isSuperAdmin,  isGraduating, college, degreeProgram, yearLevel });
   try {
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
@@ -98,10 +98,10 @@ export const signin = async (req, res, next) => {
     if (!validPassword) return next(errorHandler(401, 'wrong credentials'));
 
     const token = jwt.sign({ id: validUser._id, isAdmin: validUser.isAdmin }, process.env.JWT_SECRET);
-    const { password: hashedPassword, ...rest } = validUser._doc;
+    const { password: hashedPassword, isNewUser, ...rest } = validUser._doc;
     const expiryDate = new Date(Date.now() + 3600000); // 1 hour
     res
-      .cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+      .cookie('access_token', token, { httpOnly: true, expires: expiryDate, })
       .status(200)
       .json(rest);
   } catch (error) {

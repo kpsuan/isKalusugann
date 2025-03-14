@@ -1,17 +1,20 @@
 import Settings from "../models/settings.model.js";
 
 import { errorHandler } from "../utils/error.js"
+import { logActivity } from "./activityLog.controller.js";
 
 export const saveDates = async (req, res, next) => {
    try {
-    const { startDate, endDate } = req.body;
+    const {userId, startDate, endDate } = req.body;
 
-    // Save to database (Assuming a Settings model exists)
-    await Settings.updateOne(
-      { key: "annualPE" }, // Key to identify the setting
-      { startDate, endDate },
-      { upsert: true } // Insert if not exists
+    const settings = await Settings.findOneAndUpdate(
+      { key: "annualPE" }, 
+      { startDate, endDate, updatedBy: userId }, // Save userId
+      { upsert: true, new: true }
     );
+
+    // Log activity
+    await logActivity(userId, "Updated annual PE dates", settings);
 
     res.status(200).json({ message: "Dates saved successfully!" });
   } catch (error) {
@@ -22,14 +25,18 @@ export const saveDates = async (req, res, next) => {
 
 export const savePreEnlistmentDates = async (req, res, next) => {
   try {
-   const { preEnlistStart, preEnlistEnd } = req.body;
+   const { userId, preEnlistStart, preEnlistEnd } = req.body;
 
-   // Save to database (Assuming a Settings model exists)
-   await Settings.updateOne(
-     { key: "annualPE" }, // Key to identify the setting
-     { preEnlistStart, preEnlistEnd },
-     { upsert: true } // Insert if not exists
-   );
+   console.log("Received in backend:", { userId, preEnlistStart, preEnlistEnd });
+
+    const settings = await Settings.findOneAndUpdate(
+      { key: "annualPE" },
+      { preEnlistStart, preEnlistEnd, updatedBy: userId },
+      { upsert: true, new: true }
+    );
+
+    // Log activity
+    await logActivity(userId, "Updated pre-enlistment dates", settings);
 
    res.status(200).json({ message: "Pre-enlistment dates saved successfully!" });
  } catch (error) {
@@ -69,10 +76,15 @@ export const getPreEnlistmentDates = async (req, res, next) => {
 
 export const clearDates = async (req, res, next) => {
   try {
-    await Settings.updateOne(
+    const { userId } = req.body;
+    const settings = await Settings.updateOne(
       { key: "annualPE" },
-      { $set: { startDate: "", endDate: "", unavailableDates: "" } } // Retain fields with null values
+      { $set: { startDate: "", endDate: "", unavailableDates: "", clearedBy: userId, clearedAt: new Date() 
+      } } // Retain fields with null values
     );
+
+    // Log activity
+    await logActivity(userId, "Cleared dates for schedule", settings);
 
     res.status(200).json({ message: "Dates cleared successfully!" });
   } catch (error) {
@@ -82,11 +94,17 @@ export const clearDates = async (req, res, next) => {
 };
 
 export const clearPreEnlistmentDates = async (req, res, next) => {
+  const userId = req.user.id;
+
   try {
-    await Settings.updateOne(
+    const settings = await Settings.updateOne(
       { key: "annualPE" },
-      { $set: { preEnlistStart: "", preEnlistEnd: "" } } // Retain fields with null values
+      { $set: { preEnlistStart: "", preEnlistEnd: "", clearedBy: userId, clearedAt: new Date() 
+      }} 
     );
+
+    // Log activity
+    await logActivity(userId, "Updated pre-enlistment dates", settings);
 
     res.status(200).json({ message: "Dates cleared successfully!" });
   } catch (error) {
@@ -141,8 +159,8 @@ export const updateUnavailableDates = async (req, res, next) => {
     if (!req.user.isAdmin) {
       return next(errorHandler(403, 'Only admins are allowed to update unavailable dates.'));
     }
-
     const { datesToAdd = [], datesToRemove = [] } = req.body;
+    const userId = req.user.id;
     
     // Get current settings
     const settings = await Settings.getSettings();
@@ -167,7 +185,12 @@ export const updateUnavailableDates = async (req, res, next) => {
     
     // Update the settings
     settings.unavailableDates = Array.from(currentUnavailableDates);
+    settings.updatedBy = userId; // Save userId
+
     await settings.save();
+
+    await logActivity(userId, "Updated unavailable dates", settings);
+
     
     res.status(200).json({
       message: 'Unavailable dates updated successfully',

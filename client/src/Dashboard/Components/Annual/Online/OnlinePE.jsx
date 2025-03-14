@@ -29,9 +29,17 @@ const OnlinePE = () => {
                 <div className='mainContent'>
                     <Top title={headerTitle}/>
                             <div className="titleOnlinePE flex">
-                                    <h4 className="text-center"><b>Preenlistment Period </b></h4>
-                                    <h1 className="text-3xl text-black text-center"> Online Medical Examination System</h1>
-                                    <p className="text-center text-gray-400"> Below shows the process of the Online Medical Examination System. Click the confirm button to get started</p>
+                            <div className="mb-8 text-center">
+                            <span className="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-1 rounded-full">
+                                Preenlistment Period
+                            </span>
+                            <h1 className="text-3xl font-bold mt-4 mb-2">Online Medical Examination System</h1>
+                            <p className="text-gray-600 max-w-2xl mx-auto">
+                                Below shows the process of the Online Medical Examination System. 
+                                Click the confirm button to get started.
+                            </p>
+                        </div>
+
                                     <div className="w-3/4 mx-auto pt-5">
                                         <Accordion className="w-full mx-auto shadow-lg">
                                             <Accordion.Panel className="active">
@@ -54,18 +62,25 @@ const OnlinePE = () => {
                                             <Accordion.Panel>
                                                 <Accordion.Title className="text-lg font-semibold">Submission of Forms</Accordion.Title>
                                                 <Accordion.Content>
-                                                <p className="mb-2 text-gray-500 dark:text-gray-400">
-                                                Users are required to submit the required forms after the pre-enlistment period in order for the HSU to validate them. 
+                                                <p className="text-gray-600 pl-11">
+                                                    Users are required to submit the necessary forms after the pre-enlistment 
+                                                    period for HSU validation. The medical certificate must come from the 
+                                                    <strong> List of Regulated Health Facilities and Services and RHUs in the Philippines</strong>.
                                                 </p>
-                                                <p className="text-gray-500 dark:text-gray-400">
-                                                    Download the&nbsp;
-                                                    <a
-                                                    href="https://flowbite.com/docs/getting-started/introduction/"
-                                                    className="text-cyan-600 hover:underline dark:text-cyan-500"
-                                                    >
-                                                    forms needed&nbsp;
+                                                <div className="pl-11 mt-2 flex flex-col space-y-2">
+                                                    <a href="https://nhfr.doh.gov.ph/VActivefacilitiesList" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                        </svg>
+                                                        View approved health facilities
                                                     </a>
-                                                </p>
+                                                    <a href="#" className="text-blue-600 hover:underline inline-flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        Download required forms
+                                                    </a>
+                                                </div>
                                                 </Accordion.Content>
                                             </Accordion.Panel>
                                             <Accordion.Panel>

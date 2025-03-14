@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HiOutlinePlusCircle, HiOutlineX, HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineIdentification, HiOutlineUserGroup } from 'react-icons/hi';
 import { toast, ToastContainer } from 'react-toastify';
+import { useSelector } from 'react-redux';
 
 const AddUserModal = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { currentUser } = useSelector((state) => state.user);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -57,9 +59,50 @@ const AddUserModal = ({ isOpen, onClose, onAdd }) => {
           pauseOnHover: true,
           draggable: true,
         });
-  
+        
         onClose();
         setTimeout(() => window.location.reload(), 1000);
+        
+        //Log activity 
+
+        const now = new Date(); // Get current timestamp
+     
+        const approvalLog = {
+          modifiedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+          role: currentUser.isSuperAdmin ? "superadmin" : currentUser.role || "user",
+          approvedAt: now.toISOString(), 
+          userId: currentUser._id, 
+          addedUser: {
+            id: data.user?._id, // ID of the new user
+            firstName: data.user?.firstName,
+            lastName: data.user?.lastName,
+            email: data.user?.email,
+            username: data.user?.username,
+            role: data.user?.role,
+          }
+        };
+        
+        try {
+          const logResponse = await fetch("/api/activity/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: currentUser?._id, 
+              action: `${currentUser.role} created an admin account`,
+              details: approvalLog,
+            }),
+          });
+        
+          const logData = await logResponse.json();
+          
+          if (!logResponse.ok) {
+            throw new Error(`Activity log failed: ${logData.error || "Unknown error"}`);
+          }
+        
+          console.log("Activity log success:", logData);
+        } catch (error) {
+          console.error("Error logging activity:", error);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -168,21 +211,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd }) => {
                                           onChange={handleChange} />
                                   </div>
                               </div>
-                              {/* LN Field */}
-                              <div>
-                                  <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
-                                  <div className="relative">
-                                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                          <HiOutlineLockClosed className="h-5 w-5 text-gray-400" />
-                                      </div>
-                                      <input
-                                          type="text"
-                                          id="licenseNumber"
-                                          placeholder="License Number"
-                                          className="pl-10 w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                          onChange={handleChange} />
-                                  </div>
-                              </div>
+                              
 
                               <div className="space-y-2">
                                   <div className="flex gap-4">

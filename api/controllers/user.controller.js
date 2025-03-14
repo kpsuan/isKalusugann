@@ -11,6 +11,7 @@ import path from 'path';
 import moment from 'moment';
 import DocumentRequest from '../models/documentRequest.model.js';
 import Settings from '../models/settings.model.js';
+import { logActivity } from './activityLog.controller.js';
 
 
 export const test = (req, res) => {
@@ -117,6 +118,8 @@ export const updateUser = async (req, res, next) => {
         doctorStatus: req.body.doctorStatus,
         approvedByDentist: req.body.approvedByDentist,
         approvedByDoctor: req.body.approvedByDoctor,
+        approvedByDoctorDate: req.body.approvedByDoctorDate,
+        approvedByDentistDate: req.body.approvedByDentistDate,
         approvedByDentistLicense: req.body.approvedByDentistLicense,
         approvedByDoctorLicense: req.body.approvedByDoctorLicense,
         licenseNumber: req.body.licenseNumber,
@@ -217,7 +220,50 @@ export const sendAdminNotification2 = async (req, res) => {
   }
 };
 
+export const updateOnboardingStatus = async (req, res) => {
+  try{
+    const {id} = req.params
 
+    const updatedUser = await User.findByIdAndUpdate(
+      id, 
+      {isNewUseer: false},
+    );
+
+    if (!updatedUser){
+      return res.status(404).json({ message: 'User not found' });
+
+    }
+    return res.status(200).json({ success: true, user: updatedUser });
+
+  } catch(error){
+    console.error("error updating onboarding status: ", error)
+    res.status(500).json({ message: 'Server error', error: error.message });
+
+  }
+}
+
+export const updateUserStatus = async (req, res) => {
+  try{
+    const {id} = req.params
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id, 
+      {isPresent: "PENDING"},
+
+    );
+
+    if (!updatedUser){
+      return res.status(404).json({ message: 'User not found' });
+
+    }
+    return res.status(200).json({ success: true, user: updatedUser });
+
+  } catch(error){
+    console.error("error updating status: ", error)
+    res.status(500).json({ message: 'Server error', error: error.message });
+
+  }
+}
 
 export const updateNotifications = async (req, res) => {
   try {
@@ -482,15 +528,77 @@ export const deleteUser = async (req, res, next) => {
   }
 }
 
-export const deleteGraduatingUsers = async (req, res, next) => {
+export const archiveGraduatingUsers = async (req, res, next) => {
   try {
-    const result = await User.deleteMany({ isGraduating: true });
-    res.status(200).json({ message: "All graduating users have been deleted.", deletedCount: result.deletedCount });
+    const result = await User.updateMany(
+      { isGraduating: true },
+      { 
+        $set: { 
+          isArchived: true,
+          archivedDate: new Date(),
+          isActive: false,
+          annualPE: "",
+          schedule: "",     
+        } 
+      }
+    );
+    
+    res.status(200).json({ 
+      message: "All graduating users have been archived.", 
+      archivedCount: result.modifiedCount 
+    });
   } catch (error) {
     next(error);
   }
 };
 
+export const restoreArchivedUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    
+    const result = await User.updateOne(
+      { _id: userId, isActive: false },
+      { 
+        $set: { 
+          isArchived: false,
+          isActive: true,
+          archivedDate: null
+        } 
+      }
+    );
+    
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "User not found or already active." });
+    }
+    
+    res.status(200).json({ message: "User has been restored from archive." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const restoreAllArchivedUsers = async (req, res, next) => {
+  try {
+    const result = await User.updateMany(
+      { isActive: false }, // Restore all users who are archived
+      { 
+        $set: { 
+          isArchived: false,
+          isActive: true,
+          archivedDate: null
+        } 
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "No archived users found." });
+    }
+
+    res.status(200).json({ message: `${result.modifiedCount} users have been restored from archive.` });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 export const getMonthlyStats = async (req, res) => {
@@ -2144,12 +2252,15 @@ const philippineHolidays2025 = [
 const holidaySet = new Set(philippineHolidays2025);
 
 export const assignSchedule = async (req, res, next) => {
+  // Start timing the execution
+  const startTime = performance.now();
+  
   try {
     if (!req.user.isAdmin) {
       return next(errorHandler(403, 'Only admins are allowed to generate schedules.'));
     }
 
-    const { startDate, endDate } = req.body;
+    const {userId, startDate, endDate } = req.body;
 
     // Calculate available dates
     const oneDay = 24 * 60 * 60 * 1000;
@@ -2231,23 +2342,46 @@ export const assignSchedule = async (req, res, next) => {
     if (bulkOps.length > 0) {
       await User.bulkWrite(bulkOps, { ordered: false });
     }
+    
     // Save the schedule generation information
     settings.lastScheduleGeneration = {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       unavailableDates: Array.from(unavailableDatesSet),
-      generatedAt: new Date()
+      generatedAt: new Date(),
+      generatedBy: userId
     };
     await settings.save();
+     // Log activity
+    await logActivity(userId, "Generated schedule", settings.lastScheduleGeneration);
+
+    
+      // Calculate total execution time
+    const endTime = performance.now();
+    const executionTimeMs = endTime - startTime;
+
+    // Console log execution time - correctly formatted
+    console.log('Execution time:', executionTimeMs);
+    console.log('Execution time in sec:', executionTimeMs / 1000);
+  
     res.status(200).json({ 
       message: 'Assigned dates to all users successfully',
       stats: {
         totalUsers: allUsers.length,
         availableDates: assignedDates.length,
-        unavailableDates: Array.from(unavailableDatesSet)
+        unavailableDates: Array.from(unavailableDatesSet),
+        executionTimeMs: executionTimeMs,
+        executionTimeSec: executionTimeMs / 1000
       }
-    });    
+    }
+  ); 
+
+       
   } catch (error) {
+    // Measure execution time even if there's an error
+    const endTime = performance.now();
+    const executionTimeMs = endTime - startTime;
+    console.error(`Schedule assignment failed after ${executionTimeMs}ms:`, error);
     next(error);
   }
 };
@@ -2401,7 +2535,7 @@ export const handleEmergency = async (req, res, next) => {
       return next(errorHandler(403, 'Only admins can reschedule due to emergencies.'));
     }
 
-    const { emergencyDate, startDate, endDate, reason } = req.body;
+    const { emergencyDate, startDate, endDate, reason} = req.body;
 
      // Save emergency date to database
      await Emergency.create([{
@@ -2536,6 +2670,7 @@ export const handleEmergency = async (req, res, next) => {
   }
 };
 
+
 export const releaseUser = async (req, res) => {
   const { userId } = req.params;
 
@@ -2608,7 +2743,9 @@ export const deleteAllEmergencyDates = async (req, res, next) => {
 
 export const deleteSchedule = async (req, res, next) => {
   try {
-    // Clear user schedules and related fields
+    const { userId } = req.body;
+    console.log("User ID received for delete:", userId);    
+    
     await User.updateMany(
       { annualPE: 'InPerson' }, 
       { $set: { 
@@ -2646,7 +2783,7 @@ export const deleteSchedule = async (req, res, next) => {
     const currentSettings = await Settings.findOne({ key: 'system' });
     if (currentSettings) {
       // Store the current configuration in lastScheduleGeneration
-      await Settings.updateOne(
+      const settings = await Settings.updateOne(
         { key: 'system' },
         { 
           $set: {
@@ -2654,13 +2791,17 @@ export const deleteSchedule = async (req, res, next) => {
               startDate: currentSettings.startDate,
               endDate: currentSettings.endDate,
               unavailableDates: currentSettings.unavailableDates,
-              generatedAt: new Date()
+              generatedAt: new Date(),
+              clearedBy: userId // ✅ Store who cleared the schedule
+
             },
             // Clear the current unavailable dates
             unavailableDates: []
           }
         }
       );
+
+      await logActivity(userId, "Deleted schedule", settings);
     }
 
     res.status(200).json({ 
@@ -2787,8 +2928,7 @@ export const getAll = async (req, res, next) => {
   }
   
   try {
-    // Base query
-    let query = { isAdmin: false, isSuperAdmin: false };
+    let query = { isAdmin: false, isSuperAdmin: false, isActive: true };
 
     if (req.query.searchQuery) {
       const searchQuery = req.query.searchQuery.trim();
@@ -2817,12 +2957,10 @@ export const getAll = async (req, res, next) => {
     if (req.query.isGraduating) {
       query.isGraduating = req.query.isGraduating;
     }
-    // Pagination and sorting parameters
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = req.query.limit === 'all' ? 0 : parseInt(req.query.limit) || 9; 
     const sortDirection = req.query.order === 'asc' ? 1 : -1;
 
-    // Execute queries in parallel using Promise.all
     const [users, aggregationResults] = await Promise.all([
       // Query 1: Get paginated user data
       User.find(query)
@@ -2834,9 +2972,145 @@ export const getAll = async (req, res, next) => {
         })
         .skip(startIndex)
         .limit(limit)
-        .lean(), // Use lean() for better performance when you don't need Mongoose document methods
+        .lean(), 
       
-      // Query 2: Use aggregation for all counts in a single database operation
+      User.aggregate([
+        { $match: query },
+        {
+          $facet: {
+            // Total counts
+            'totalCounts': [
+              {
+                $group: {
+                  _id: null,
+                  totalUsers: { $sum: 1 },
+                  totalApproved: { 
+                    $sum: { $cond: [{ $eq: ["$status", "approved"] }, 1, 0] }
+                  },
+                  totalGraduating: {
+                    $sum: { $cond: [{ $eq: ["$isGraduating", true] }, 1, 0] }
+                  },
+                  totalActive: {                    
+                  $sum: { $cond: [{ $eq: ["$isGraduating", false] }, 1, 0] }
+                  },
+                  totalInactive: {                    
+                    $sum: { $cond: [{ $eq: ["$isActive", false] }, 1, 0] }
+                  },
+                  totalArchived: {                    
+                    $sum: { $cond: [{ $eq: ["$isArchived", true] }, 1, 0] }
+                  },
+                  totalDenied: { 
+                    $sum: { $cond: [{ $eq: ["$status", "denied"] }, 1, 0] }
+                  },
+                  totalPending: { 
+                    $sum: { $cond: [{ $eq: ["$status", "NO ACTION"] }, 1, 0] }
+                  },
+                  lastMonthUsers: {
+                    $sum: {
+                      $cond: [
+                        { $gte: ["$createdAt", new Date(new Date().setMonth(new Date().getMonth() - 1))] },
+                        1,
+                        0
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+          }
+        }
+      ])
+    ]);
+
+    // Process aggregation results
+    const totalCountsResult = aggregationResults[0].totalCounts[0] || {
+      totalUsers: 0,
+      totalApproved: 0, 
+      totalDenied: 0,
+      totalActive: 0,
+      totalInactive: 0,
+      totalArchived: 0,
+      totalPending: 0,
+      lastMonthUsers: 0,
+      totalGraduating: 0,
+    };
+  
+
+    // Remove sensitive data (password)
+    const usersWithoutPassword = users.map(user => {
+      const { password, ...rest } = user;
+      return rest;
+    });
+
+
+    // Send response
+    res.status(200).json({
+      users: usersWithoutPassword,
+      totalUsers: totalCountsResult.totalUsers,
+      totalInPersonUsers: totalCountsResult.totalUsers,
+      totalApproved: totalCountsResult.totalApproved,
+      totalDenied: totalCountsResult.totalDenied,
+      totalPending: totalCountsResult.totalPending,
+      totalActive: totalCountsResult.totalActive,
+      totalGraduating: totalCountsResult.totalGraduating,
+      totalArchived:  totalCountsResult.totalArchived,
+      totalInactive:  totalCountsResult.totalInactive,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getArchivedStudents = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can see all users!'));
+  }
+  
+  try {
+    // Base query
+    let query = { isActive: false };
+
+    if (req.query.searchQuery) {
+      const searchQuery = req.query.searchQuery.trim();
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { middleName: { $regex: searchQuery, $options: 'i' } },
+        { college: { $regex: searchQuery, $options: 'i' } },
+        { degreeProgram: { $regex: searchQuery, $options: 'i' } },
+        { yearLevel: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+    
+    if (req.query.degreeProgram) {
+      query.degreeProgram = req.query.degreeProgram;
+    }
+    if (req.query.college) {
+      query.college = req.query.college;
+    }
+
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+   
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = req.query.limit === 'all' ? 0 : parseInt(req.query.limit) || 9; 
+    const sortDirection = req.query.order === 'asc' ? 1 : -1;
+
+    const [users, aggregationResults] = await Promise.all([
+      User.find(query)
+        .sort({
+          yearLevel: sortDirection,
+          college: 1,
+          degreeProgram: 1,
+          lastName: 1
+        })
+        .skip(startIndex)
+        .limit(limit)
+        .lean(), 
+      
       User.aggregate([
         { $match: query },
         {
@@ -2884,10 +3158,9 @@ export const getAll = async (req, res, next) => {
       totalUsers: 0,
       totalApproved: 0, 
       totalDenied: 0,
-      totalActive: 0,
+      totalInactive: 0,
       totalPending: 0,
       lastMonthUsers: 0,
-      totalGraduating: 0,
     };
   
 
@@ -2906,9 +3179,7 @@ export const getAll = async (req, res, next) => {
       totalApproved: totalCountsResult.totalApproved,
       totalDenied: totalCountsResult.totalDenied,
       totalPending: totalCountsResult.totalPending,
-      totalActive: totalCountsResult.totalActive,
-      totalGraduating: totalCountsResult.totalGraduating
-     
+      totalInactive:  totalCountsResult.totalInactive,
     });
   } catch (error) {
     next(error);

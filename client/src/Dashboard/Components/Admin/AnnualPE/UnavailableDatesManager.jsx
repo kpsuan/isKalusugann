@@ -3,6 +3,7 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar, X, AlertTriangle, Check, Clock, Trash, Plus, CalendarRange, AlertCircle } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 const UnavailableDatesManager = () => {
   // State
@@ -20,6 +21,8 @@ const UnavailableDatesManager = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isRemovingAll, setIsRemovingAll] = useState(false);
   const [showRemoveAllConfirm, setShowRemoveAllConfirm] = useState(false);
+
+  const { currentUser } = useSelector((state) => state.user);
 
   // Fetch unavailable dates on component mount
   useEffect(() => {
@@ -69,7 +72,8 @@ const UnavailableDatesManager = () => {
     if (!newDate) return;
     
     const formattedDate = newDate.toISOString().split('T')[0];
-    
+    const userId = currentUser?._id;
+
     if (isDateDisabled(newDate)) {
       setError('This date is already set as unavailable');
       return;
@@ -78,7 +82,8 @@ const UnavailableDatesManager = () => {
     try {
       setIsAdding(true);
       await axios.post('/api/settings/update-unavailable-dates', {
-        datesToAdd: [formattedDate]
+        datesToAdd: [formattedDate],
+        userId
       });
       
       setCustomUnavailableDates(prev => [...prev, newDate]);
@@ -97,6 +102,7 @@ const UnavailableDatesManager = () => {
   // Add a date range
   const addDateRange = async () => {
     if (!startDate || !endDate) return;
+    const userId = currentUser?._id;
     
     // Generate all dates in the range
     const allDates = getDatesInRange(startDate, endDate);
@@ -116,7 +122,8 @@ const UnavailableDatesManager = () => {
     try {
       setIsAdding(true);
       await axios.post('/api/settings/update-unavailable-dates', {
-        datesToAdd: newFormattedDates
+        datesToAdd: newFormattedDates,
+        userId
       });
       
       // Add to local state
@@ -163,11 +170,13 @@ const UnavailableDatesManager = () => {
   const removeUnavailableDate = async (dateToRemove) => {
     // Format date to YYYY-MM-DD
     const formattedDate = dateToRemove.toISOString().split('T')[0];
-    
+    const userId = currentUser?._id;
+
     try {
       setIsLoading(true);
       await axios.post('/api/settings/update-unavailable-dates', {
-        datesToRemove: [formattedDate]
+        datesToRemove: [formattedDate],
+        userId
       });
       
       // Remove from local state
@@ -186,6 +195,7 @@ const UnavailableDatesManager = () => {
 
   // Remove all unavailable dates
   const removeAllUnavailableDates = async () => {
+    
     if (customUnavailableDates.length === 0) {
       setShowRemoveAllConfirm(false);
       return;
@@ -198,9 +208,13 @@ const UnavailableDatesManager = () => {
       const allFormattedDates = customUnavailableDates.map(date => 
         date.toISOString().split('T')[0]
       );
+
+      const userId = currentUser?._id;
+
       
       await axios.post('/api/settings/update-unavailable-dates', {
-        datesToRemove: allFormattedDates
+        datesToRemove: allFormattedDates,
+        userId
       });
       
       // Clear the local state

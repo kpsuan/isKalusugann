@@ -40,7 +40,12 @@ import {
   getUsersForOverallApproval,
   getMonthlyStats,
   getAll,
-  deleteGraduatingUsers
+  updateOnboardingStatus,
+  updateUserStatus,
+  archiveGraduatingUsers,
+  getArchivedStudents,
+  restoreArchivedUser,
+  restoreAllArchivedUsers,
 
 
 } from '../controllers/user.controller.js';
@@ -51,7 +56,10 @@ const router = express.Router();
 router.get('/', test);
 router.post('/update/:id', verifyToken, updateUser);
 router.delete('/delete/:id', verifyToken, deleteUser);
-router.delete('/delete-graduating', verifyToken, deleteGraduatingUsers);
+router.put('/archive-graduating', verifyToken, archiveGraduatingUsers);
+router.put('/restore-archive/:userId', verifyToken, restoreArchivedUser);
+router.put('/restore-allArchived', verifyToken, restoreAllArchivedUsers);
+
 
 router.post('/updateReschedule/:id', verifyToken,  updateUserRescheduleDate);
 router.get('/:userId/notifications', verifyToken, updateNotifications);
@@ -60,8 +68,11 @@ router.put('/notifications/clear/:id', clearNotifications);
 
 router.get('/getusers', verifyToken, getUsers);
 router.get('/getall', verifyToken, getAll);
+router.get('/get-archived', verifyToken, getArchivedStudents);
 
 router.get('/getadmins', verifyToken, getAdmin);
+router.put('/updateOnboarding/:id', verifyToken, updateOnboardingStatus);
+router.put('/updateUserStatus/:id', verifyToken, updateUserStatus);
 
 router.get('/getstats', getStats);
 router.get('/getmonthlystats', getMonthlyStats);

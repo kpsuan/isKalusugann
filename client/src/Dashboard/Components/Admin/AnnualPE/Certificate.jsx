@@ -1,29 +1,45 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
 import { toJpeg } from 'html-to-image';
 import { format } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-
+import { app } from '../../../../firebase';
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from 'firebase/storage';
+import logo from '../../../../assets/uplogo.jpg'
 
 const MedicalCertificate = () => {
   const certificateRef = useRef(null);
-  const { userId } = useParams();
+  const { userId: urlUserId } = useParams();
+
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // TODO: Replace with actual admin check
   
+  // Upload states
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadedFileURL, setUploadedFileURL] = useState(null)
 
   const queryParams = new URLSearchParams(window.location.search);
   const stateKey = queryParams.get('stateKey');
 
   let stateData = null;
+  let userId = urlUserId; 
   if (stateKey) {
     try {
       const storedState = sessionStorage.getItem(stateKey);
       if (storedState) {
         stateData = JSON.parse(storedState);
+        userId = stateData.userId || stateData.approvers?.studentDetails?.userId || urlUserId;
         sessionStorage.removeItem(stateKey);
       }
     } catch (error) {
@@ -31,14 +47,16 @@ const MedicalCertificate = () => {
     }
   }
   
-  const { medicalRemark, approvers, status } = stateData || {
+  const { medicalRemark, approvers, status, doctorStatus, dentistStatus} = stateData || {
     medicalRemark: '',
     status: '',
     approvers: {
       dentist: { name: '', license: '', approved: false },
       doctor: { name: '', license: '', approved: false },
-      studentDetails: { firstName: '', lastName: '', middleName: '', username: '' }
-    }
+      studentDetails: { firstName: '', lastName: '', middleName: '', username: ''}
+    },
+    doctorStatus: '',
+    dentistStatus: '',
   };
   
   const [medicalDetails, setMedicalDetails] = useState({
@@ -134,7 +152,101 @@ const MedicalCertificate = () => {
     });
   };
 
-  
+  const handleUploadCertificate = async () => {
+    try {
+      setUploadProgress(0);
+      setUploadError(null);
+      setUploadSuccess(false);
+      
+      const targetUserId = userId; 
+      
+      if (!targetUserId) {
+        setUploadError('User ID not found');
+        return;
+      }
+      
+      // Convert the certificate to image data
+      if (certificateRef.current === null) {
+        setUploadError('Certificate not found');
+        return;
+      }
+      
+      const canvas = await html2canvas(certificateRef.current, { scale: 2 });
+      const imageData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const response = await fetch(imageData);
+      const blob = await response.blob();
+      const file = new File([blob], `medical_certificate_${approvers.studentDetails.lastName}.jpg`, { type: 'image/jpeg' });
+      
+      // Upload to Firebase storage
+      const storage = getStorage(app);
+      const fileName = `medcerts/${targetUserId}_${new Date().getTime()}.jpg`;
+      const storageRef = ref(storage, fileName);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress.toFixed(0));
+        },
+        (error) => {
+          setUploadError('Certificate upload failed');
+          setUploadProgress(null);
+          console.error('Upload error:', error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setUploadedFileURL(downloadURL);
+          
+          try {
+            const statusMapping = {
+              Approved: "approved",
+              Pending: "NO ACTION",
+              Rejected: "denied",
+            };
+            
+            const updatedData = {
+              medcert: downloadURL,
+              status: statusMapping[status] || "NO ACTION", // Default to NO ACTION if undefined
+              comment: medicalRemark,
+              doctorStatus: doctorStatus,
+              dentistStatus: dentistStatus,
+            };
+            
+            
+            const res = await fetch(`/api/user/update/${targetUserId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(updatedData),
+            });
+            
+            if (res.ok) {
+              setUploadSuccess(true);
+              setUploadProgress(null);
+              toast.success('Medical certificate uploaded successfully');
+              setTimeout(() => {
+                navigate(`/user-status/${targetUserId}`); // Redirect to user profile
+              }, 1500);
+
+            } else {
+              setUploadError('Failed to update user record');
+              console.error('User update failed:', await res.text());
+            }
+          } catch (updateError) {
+            setUploadError('Failed to update user record');
+            console.error('User update error:', updateError);
+          }
+        }
+      );
+    } catch (error) {
+      setUploadError('Certificate processing failed');
+      setUploadProgress(null);
+      console.error('Certificate processing error:', error);
+    }
+  };
 
   
   const currentDate = format(new Date(), 'MMMM d, yyyy');
@@ -144,6 +256,7 @@ const MedicalCertificate = () => {
       <div className="max-w-4xl mx-auto px-4">
         {isAdmin && (
           <>
+            <ToastContainer className="z-50" />
             <div className='text-2xl justify-center font-semibold text-gray-900 mb-6'>isKalusugan Medcert Generator</div>
             <div className="bg-white rounded-lg shadow-md mb-8">
               <div className="p-6">
@@ -367,7 +480,7 @@ const MedicalCertificate = () => {
             <div className="relative z-10 text-center mb-8">
               <div className="w-24 h-24 mx-auto mb-4">
                 <img 
-                  src="https://newsinfo.inquirer.net/files/2020/07/UP-Visayas-620x620.jpg" 
+                  src={logo} 
                   alt="University Logo" 
                   className="w-full h-full object-cover rounded-full border-4 border-blue-900"
                 />
@@ -504,13 +617,13 @@ const MedicalCertificate = () => {
           </button>
           
           <button 
-            onClick={onButtonClick}
+            onClick={handleUploadCertificate}
             className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors shadow-lg"
           >
             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Download Certificate
+            Upload Certificate
           </button>
           
           <button 
@@ -523,9 +636,33 @@ const MedicalCertificate = () => {
             PDF
           </button>
         </div>
-      </div>
-    </div>
-  );
-};
+        {/* Upload Progress and Status */}
+        {uploadProgress !== null && (
+          <div className="my-4">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">Uploading: {uploadProgress}%</p>
+          </div>
+        )}
+
+        {uploadError && (
+          <div className="my-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+            <p>{uploadError}</p>
+          </div>
+        )}
+
+        {uploadSuccess && (
+          <div className="my-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700">
+            <p>Certificate uploaded successfully!</p>
+          </div>
+        )}
+              </div>
+            </div>
+          );
+        };
 
 export default MedicalCertificate;

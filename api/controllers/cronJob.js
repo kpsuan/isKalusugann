@@ -42,7 +42,6 @@ cron.schedule('00 17 * * *', async () => {
   }
 });
 
-// Job that runs when the system starts to mark past schedules as absent
 const markPastSchedulesAsAbsent = async () => {
   try {
     console.log("Running job to mark past schedules as absent");
@@ -104,5 +103,6 @@ const markPastSchedulesAsAbsent = async () => {
   }
 };
 
-// Execute the past schedules job when the system starts
 markPastSchedulesAsAbsent();
+
+
