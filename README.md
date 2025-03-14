@@ -22,6 +22,9 @@ Mongodb, express, ReactJS, nodejs
 <br> Firebase - Storage for the storing image and files
 <br> Firebase - Authentication for the logins and signups using google
 
+<h3>Presentation: </h3>
+https://www.canva.com/design/DAGfRdLf6E8/wQpiZYHPC2KHYDC_D4fNFA/view?utm_content=DAGfRdLf6E8&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0d56198d1d
+
 <h3>How to Run</h3>
 To install dependencies:
 npm install
