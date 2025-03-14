@@ -17,6 +17,10 @@ mation dissemination. Usability testing conducted with UPV Constituents
  yielded a System Usability Scale (SUS) score of 88.75 , indicating an above
 average and excellent user experience for the developed system
 
+<h3>Tech Stack</h3>
+Mongodb, express, ReactJS, nodejs
+<br> Firebase - Storage for the storing image and files
+<br> Firebase - Authentication for the logins and signups using google
 
 <h3>How to Run</h3>
 To install dependencies:
